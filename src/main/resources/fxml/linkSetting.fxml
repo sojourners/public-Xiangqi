@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+
+<AnchorPane prefHeight="418.0" prefWidth="512.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.sojourners.chess.controller.LinkSettingController">
+   <children>
+      <HBox alignment="TOP_RIGHT" layoutX="42.0" layoutY="184.0" minHeight="-Infinity" minWidth="-Infinity" prefHeight="60.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
+         <children>
+            <Button contentDisplay="CENTER" mnemonicParsing="false" onAction="#okButtonClick" prefHeight="27.0" prefWidth="72.0" text="确定" textAlignment="CENTER">
+               <HBox.margin>
+                  <Insets right="20.0" />
+               </HBox.margin>
+            </Button>
+            <Button contentDisplay="CENTER" mnemonicParsing="false" onAction="#cancelButtonClick" prefHeight="27.0" prefWidth="72.0" text="取消" textAlignment="CENTER">
+               <HBox.margin>
+                  <Insets right="50.0" />
+               </HBox.margin>
+            </Button>
+         </children>
+      </HBox>
+      <Label layoutX="76.0" layoutY="237.0" text="识别线程数量" />
+      <TextField fx:id="linkThreadNum" layoutX="157.0" layoutY="232.0" prefHeight="27.0" prefWidth="60.0" />
+      <Label layoutX="221.0" layoutY="237.0" text="个" />
+      <Label layoutX="76.0" layoutY="191.0" text="识别扫描间隔" />
+      <TextField fx:id="linkScanTime" layoutX="157.0" layoutY="186.0" prefHeight="27.0" prefWidth="60.0" />
+      <Label layoutX="220.0" layoutY="193.0" text="毫秒" />
+      <CheckBox fx:id="linkAnimation" layoutX="286.0" layoutY="191.0" mnemonicParsing="false" text="开启动画确认" />
+      <CheckBox fx:id="linkShowInfo" layoutX="286.0" layoutY="237.0" mnemonicParsing="false" text="显示思考状态" />
+      <CheckBox fx:id="linkBackMode" layoutX="77.0" layoutY="283.0" mnemonicParsing="false" text="后台模式      " />
+      <Label layoutX="76.0" layoutY="54.0" text="引擎出招延迟" />
+      <TextField fx:id="engineDelayStart" layoutX="156.0" layoutY="49.0" prefHeight="27.0" prefWidth="60.0" />
+      <Label layoutX="215.0" layoutY="54.0" text="一" />
+      <TextField fx:id="engineDelayEnd" layoutX="226.0" layoutY="49.0" prefHeight="27.0" prefWidth="60.0" />
+      <Label layoutX="288.0" layoutY="54.0" text="毫秒" />
+      <Label layoutX="77.0" layoutY="98.0" text="库招出招延迟" />
+      <TextField fx:id="bookDelayStart" layoutX="157.0" layoutY="93.0" prefHeight="27.0" prefWidth="60.0" />
+      <Label layoutX="216.0" layoutY="98.0" text="一" />
+      <TextField fx:id="bookDelayEnd" layoutX="226.0" layoutY="93.0" prefHeight="27.0" prefWidth="60.0" />
+      <Label layoutX="288.0" layoutY="98.0" text="毫秒" />
+      <Label layoutX="76.0" layoutY="144.0" text="鼠标点击间隔" />
+      <TextField fx:id="mouseClickDelay" layoutX="156.0" layoutY="139.0" prefHeight="27.0" prefWidth="60.0" />
+      <Label layoutX="219.0" layoutY="144.0" text="毫秒" />
+      <Label layoutX="286.0" layoutY="144.0" text="鼠标走子间隔" />
+      <TextField fx:id="mouseMoveDelay" layoutX="366.0" layoutY="139.0" prefHeight="27.0" prefWidth="60.0" />
+      <Label layoutX="429.0" layoutY="144.0" text="毫秒" />
+   </children>
+</AnchorPane>

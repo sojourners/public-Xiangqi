@@ -1,0 +1,7 @@
+.table-row-cell:selected {
+    -fx-background-color: #87CEEB;
+
+}
+.chart-series-line {
+    -fx-stroke-width: 1px;
+}

@@ -1,0 +1,5 @@
+
+.split-pane > .split-pane-divider {
+    -fx-pref-width: 4px;
+
+}

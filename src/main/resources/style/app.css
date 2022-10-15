@@ -1,0 +1,28 @@
+.list-cell:even {
+    -fx-background-color: white;
+}
+.list-cell:odd {
+    -fx-background-color: white;
+}
+.list-cell:selected {
+    -fx-background-color: #87CEEB;
+}
+
+
+.button {
+    -fx-pref-width: 24px;
+    -fx-pref-height: 24px;
+    -fx-background-repeat: no-repeat;
+    -fx-background-position: center;
+    -fx-background-size: 70% 70%;
+    -fx-background-insets: 24px 24px;
+}
+.button:hover, button-press {
+
+    -fx-border-style: solid;
+    -fx-border-radius: 5px;
+    -fx-border-color: #C0C0C0;
+    /*-fx-background-insets:  0 0 0 0, 0, 1, 2;*/
+
+}
+

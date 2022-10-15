@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.layout.BorderPane?>
+
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="364.0" prefWidth="484.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.sojourners.chess.controller.LocalBookController">
+    <center>
+        <TableView fx:id="table" prefHeight="338.0" prefWidth="508.0" BorderPane.alignment="CENTER">
+            <columns>
+                <TableColumn prefWidth="480.0" sortable="false" text="路径" />
+            </columns>
+        </TableView>
+    </center>
+    <top>
+        <ToolBar minHeight="-Infinity" minWidth="-Infinity" prefHeight="30.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+            <items>
+                <Button contentDisplay="GRAPHIC_ONLY" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#addButtonClick" prefHeight="24.0" prefWidth="24.0" style="-fx-background-image: url('/image/add.png');" stylesheets="@../style/app.css" text="Button" />
+                <Button contentDisplay="GRAPHIC_ONLY" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#deleteButtonClick" prefHeight="24.0" prefWidth="24.0" style="-fx-background-image: url('/image/delete.png');" stylesheets="@../style/app.css" text="Button" />
+            <Button contentDisplay="GRAPHIC_ONLY" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#upButtonClick" prefHeight="24.0" prefWidth="24.0" style="-fx-background-image: url('/image/up-arrow.png');" stylesheets="@../style/app.css" text="Button" />
+            <Button contentDisplay="GRAPHIC_ONLY" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#downButtonClick" prefHeight="24.0" prefWidth="24.0" style="-fx-background-image: url('/image/down-arrow.png');" stylesheets="@../style/app.css" text="Button" />
+            </items>
+        </ToolBar>
+    </top>
+</BorderPane>
