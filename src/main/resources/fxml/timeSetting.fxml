@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.sojourners.chess.controller.TimeSettingController">
+   <bottom>
+      <HBox alignment="TOP_RIGHT" minHeight="-Infinity" minWidth="-Infinity" prefHeight="60.0" prefWidth="437.0" BorderPane.alignment="TOP_CENTER">
+         <children>
+            <Button mnemonicParsing="false" onAction="#okButtonClick" prefHeight="27.0" prefWidth="72.0" text="确定">
+               <HBox.margin>
+                  <Insets right="20.0" />
+               </HBox.margin>
+            </Button>
+            <Button mnemonicParsing="false" onAction="#cancelButtonClick" prefHeight="27.0" prefWidth="72.0" text="取消">
+               <HBox.margin>
+                  <Insets right="50.0" />
+               </HBox.margin>
+            </Button>
+         </children>
+      </HBox>
+   </bottom>
+   <center>
+  <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="257.0" prefWidth="437.0" BorderPane.alignment="CENTER">
+         <children>
+            <RadioButton fx:id="fixTimeButton" layoutX="46.0" layoutY="46.0" mnemonicParsing="false" text="固定时间" />
+            <TextField fx:id="timeText" layoutX="124.0" layoutY="42.0" prefHeight="27.0" prefWidth="108.0" />
+            <Label layoutX="234.0" layoutY="47.0" text="毫秒" />
+            <RadioButton fx:id="fixDepthButton" layoutX="46.0" layoutY="92.0" mnemonicParsing="false" text="固定深度" />
+            <TextField fx:id="depthText" layoutX="124.0" layoutY="88.0" prefHeight="27.0" prefWidth="108.0" />
+            <Label layoutX="236.0" layoutY="93.0" text="层" />
+
+             <Label layoutX="46.0" layoutY="145.0" text="引擎出招延迟" />
+             <TextField fx:id="engineDelayStart" layoutX="124.0" layoutY="139.0" prefHeight="27.0" prefWidth="60.0" />
+             <Label layoutX="184.0" layoutY="145.0" text="一" />
+             <TextField fx:id="engineDelayEnd" layoutX="196.0" layoutY="139.0" prefHeight="27.0" prefWidth="60.0" />
+             <Label layoutX="258.0" layoutY="145.0" text="毫秒" />
+             <Label layoutX="45.0" layoutY="188.0" text="库招出招延迟" />
+             <TextField fx:id="bookDelayStart" layoutX="124.0" layoutY="182.0" prefHeight="27.0" prefWidth="60.0" />
+             <Label layoutX="184.0" layoutY="188.0" text="一" />
+             <TextField fx:id="bookDelayEnd" layoutX="196.0" layoutY="182.0" prefHeight="27.0" prefWidth="60.0" />
+             <Label layoutX="258.0" layoutY="188.0" text="毫秒" />
+         </children>
+      </AnchorPane>
+   </center>
+</BorderPane>

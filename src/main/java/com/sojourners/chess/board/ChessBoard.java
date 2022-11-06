@@ -1,16 +1,10 @@
 package com.sojourners.chess.board;
 
 import com.sojourners.chess.media.SoundPlayer;
-import com.sojourners.chess.util.MathUtils;
 import com.sojourners.chess.util.PathUtils;
 import com.sojourners.chess.util.StringUtils;
 import com.sojourners.chess.util.XiangqiUtils;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.image.Image;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
-import javafx.scene.transform.Rotate;
 
 import java.util.HashMap;
 import java.util.List;
@@ -21,27 +15,21 @@ import java.util.Map;
  */
 public class ChessBoard {
 
-    private Canvas canvas;
-    private GraphicsContext gc;
+    private static BaseBoardRender boardRender;
 
     private static volatile char[][] board = new char[10][9];
 
     private static char[][] copyBoard = new char[10][9];
 
-    private BoardStyle style;
+    private BoardSize boardSize;
 
     private boolean stepTip;
 
     private boolean stepSound;
 
-    private static Image bgImage;
-
     private static SoundPlayer sound;
 
-    private Font font;
-    private int fontSize;
-
-    private static Map<Character, String> map = new HashMap<>(32);
+    public static Map<Character, String> map = new HashMap<>(32);
 
     static {
         map.put('r', "车");
@@ -69,8 +57,6 @@ public class ChessBoard {
         map.put('７', "七");
         map.put('８', "八");
         map.put('９', "九");
-
-        bgImage = new Image(ChessBoard.class.getResourceAsStream("/image/BOARD.JPG"));
 
         sound = new SoundPlayer(PathUtils.getJarPath() + "sound/click.wav",
                 PathUtils.getJarPath() + "sound/move.wav",
@@ -136,21 +122,27 @@ public class ChessBoard {
         }
     }
 
-    public enum BoardStyle {
+    public enum BoardSize {
         BIG_BOARD,
         MIDDLE_BOARD,
         SMALL_BOARD;
     }
+    public enum BoardStyle {
+        DEFAULT,
+        CUSTOM;
+    }
 
-    public ChessBoard(Canvas canvas, BoardStyle bs, boolean stepTip, boolean stepSound, String fenCode) {
-        this.canvas = canvas;
-        this.gc = canvas.getGraphicsContext2D();
+    public ChessBoard(Canvas canvas, BoardSize bs, BoardStyle style, boolean stepTip, boolean stepSound, String fenCode) {
+        if (this.boardRender == null) {
+            this.boardRender = style == BoardStyle.CUSTOM ? new CustomBoardRender(canvas) : new DefaultBoardRender(canvas);
+        }
+
         this.stepTip = stepTip;
         this.stepSound = stepSound;
         // 设置局面
         setNewBoard(fenCode);
         // 设置棋盘大小
-        setStyle(bs);
+        this.boardSize = bs;
         // 默认不翻转
         isReverse = false;
 
@@ -199,68 +191,17 @@ public class ChessBoard {
         }
     }
 
-    private void setStyle(BoardStyle bs) {
-        this.style = bs;
-        /**
-         * 棋子字体大小
-         */
-        switch (style) {
-            case BIG_BOARD: { fontSize = 36; break; }
-            case MIDDLE_BOARD: { fontSize = 32; break; }
-            case SMALL_BOARD: { fontSize = 26; break; }
-            default: { fontSize = 32; break; }
-        }
-        font = Font.loadFont(getClass().getResourceAsStream("/font/chessman.ttf"), fontSize);
-    }
-
-    /**
-     * 棋盘边距
-     * @return
-     */
-    private int getPadding() {
-        switch (style) {
-            case BIG_BOARD: {
-                return 12;
-            }
-            case MIDDLE_BOARD: {
-                return 10;
-            }
-            case SMALL_BOARD: {
-                return 8;
-            }
-            default: {
-                return 10;
-            }
-        }
-    }
-
-    /**
-     * 棋子大小
-     * @return
-     */
-    private int getPieceSize() {
-        switch (style) {
-            case BIG_BOARD: {
-                return 72;
-            }
-            case MIDDLE_BOARD: {
-                return 64;
-            }
-            case SMALL_BOARD: {
-                return 48;
-            }
-            default: {
-                return 64;
-            }
-        }
+    public void setBoardStyle(BoardStyle style, Canvas canvas) {
+        this.boardRender = style == BoardStyle.CUSTOM ? new CustomBoardRender(canvas) : new DefaultBoardRender(canvas);
+        this.paint();
     }
 
     public String mouseClick(int x, int y, boolean canRedGo, boolean canBlackGo) {
-        int padding = getPadding();
-        int piece = getPieceSize();
+        int padding = boardRender.getPadding(this.boardSize);
+        int piece = boardRender.getPieceSize(this.boardSize);
         int i = (x - padding) / piece;
         int j = (y - padding) / piece;
-        j = getReverseY(j);
+        j = boardRender.getReverseY(j, isReverse);
 
         if (i < 0 || i > 8 || j < 0 || j > 9) {
             return null;
@@ -462,328 +403,8 @@ public class ChessBoard {
         return sb.toString();
     }
 
-    /**
-     * 棋盘外矩形线条宽度
-     * @return
-     */
-    private double getOutRectWidth() {
-        switch (style) {
-            case BIG_BOARD: {
-                return 2.4;
-            }
-            case MIDDLE_BOARD: {
-                return 2.2;
-            }
-            case SMALL_BOARD: {
-                return 1.2;
-            }
-            default: {
-                return 2.2;
-            }
-        }
-    }
-
-    /**
-     * 棋盘内矩形线条宽度
-     * @return
-     */
-    private double getInnerRectWidth() {
-        switch (style) {
-            case BIG_BOARD: {
-                return 1;
-            }
-            case MIDDLE_BOARD: {
-                return 0.8;
-            }
-            case SMALL_BOARD: {
-                return 0.6;
-            }
-            default: {
-                return 0.8;
-            }
-        }
-    }
-
-    /**
-     * 获取线路序号字体大小
-     * @return
-     */
-    private double getNumberSize() {
-        switch (style) {
-            case BIG_BOARD: {
-                return 16;
-            }
-            case MIDDLE_BOARD: {
-                return 14;
-            }
-            case SMALL_BOARD: {
-                return 11;
-            }
-            default: {
-                return 14;
-            }
-        }
-    }
-
-    /**
-     * 获取楚河汉界字体大小
-     * @return
-     */
-    private double getCenterTextSize() {
-        switch (style) {
-            case BIG_BOARD: {
-                return 30;
-            }
-            case MIDDLE_BOARD: {
-                return 26;
-            }
-            case SMALL_BOARD: {
-                return 20;
-            }
-            default: {
-                return 26;
-            }
-        }
-    }
-
     private void paint() {
-        int padding = getPadding();
-        int piece = getPieceSize();
-        int pos = padding + piece / 2;
-        canvas.setWidth(2 * padding + piece * 9);
-        canvas.setHeight(2 * padding + piece * 10);
-        // 绘制背景图片
-        gc.drawImage(bgImage, 0, 0, canvas.getWidth(), canvas.getHeight());
-        // 棋盘竖线横线
-        gc.setStroke(Color.BLACK);
-        gc.setLineWidth(getOutRectWidth());
-        gc.setGlobalAlpha(0.75);
-        gc.strokeRect(pos - padding / 2, pos - padding / 2, piece * 8 + padding, piece * 9 + padding);
-        gc.setGlobalAlpha(1);
-        gc.setLineWidth(getInnerRectWidth());
-        gc.strokeRect(pos, pos, piece * 8, piece * 9);
-        for (int i = 1; i < 9; i++) {
-            gc.strokeLine(pos, pos + piece * i, pos + piece * 8, pos + piece * i);
-        }
-        for (int i = 1; i < 8; i++) {
-            gc.strokeLine(pos + piece * i, pos, pos + piece * i, pos + piece * 4);
-            gc.strokeLine(pos + piece * i, pos + piece * 5, pos + piece * i, pos + piece * 9);
-        }
-        // 九宫斜线
-        gc.strokeLine(pos + piece * 3, pos, pos + piece * 5, pos + piece * 2);
-        gc.strokeLine(pos + piece * 3, pos + piece * 2, pos + piece * 5, pos);
-        gc.strokeLine(pos + piece * 3, pos + piece * 9, pos + piece * 5, pos + piece * 7);
-        gc.strokeLine(pos + piece * 3, pos + piece * 7, pos + piece * 5, pos + piece * 9);
-        // 炮兵位置记号
-        for (int i = 0; i < 9; i += 2) {
-            String style = i == 0 ? "r" : (i == 8 ? "l" : "lr");
-            drawStarPos(pos + piece * i, pos + piece * 3, piece, style);
-            drawStarPos(pos + piece * i, pos + piece * 6, piece, style);
-        }
-        for (int i = 1; i < 9; i += 6) {
-            drawStarPos(pos + piece * i, pos + piece * 2, piece, "lr");
-            drawStarPos(pos + piece * i, pos + piece * 7, piece, "lr");
-        }
-        // 绘制线路序号
-        double numberSize = getNumberSize();
-        gc.setFont(Font.font(numberSize));
-        gc.setFill(Color.BLACK);
-        for (int i = 0; i < 9; i++) {
-            // 黑方
-            char number = (char) ('１' + i);
-            double xTop = pos + i * piece - numberSize / 2, xBottom = pos + (8 - i) * piece - numberSize / 2;
-            double yTop = pos - piece / 4, yBottom = pos + 9 * piece + piece / 2.3;
-            gc.fillText(String.valueOf(number), isReverse ? xBottom : xTop, isReverse ? yBottom : yTop);
-            // 红方
-            gc.fillText(map.get(number), isReverse ? xTop : xBottom, isReverse ? yTop : yBottom);
-        }
-        // 绘制楚河汉界
-        double centerTextSize = getCenterTextSize();
-        gc.setFont(Font.font(centerTextSize));
-        gc.setGlobalAlpha(0.55);
-        gc.fillText("楚", pos + 2 * piece - centerTextSize, pos + 4.5 * piece + centerTextSize / 3.6);
-        gc.fillText("河", pos + 3 * piece - centerTextSize, pos + 4.5 * piece + centerTextSize / 3.6);
-        gc.fillText("汉", pos + 5 * piece, pos + 4.5 * piece + centerTextSize / 3.6);
-        gc.fillText("界", pos + 6 * piece, pos + 4.5 * piece + centerTextSize / 3.6);
-        gc.setGlobalAlpha(1);
-        // 上一步走棋记号
-        if (prevStep != null) {
-            drawStepRect(pos + piece * prevStep.first.x, pos + piece * getReverseY(prevStep.first.y), piece, Color.web("#bf242a"));
-            drawStepRect(pos + piece * prevStep.second.x, pos + piece * getReverseY(prevStep.second.y), piece, Color.web("#bf242a"));
-        }
-        // 已选择棋子记号
-        if (remark != null) {
-            drawStepRect(pos + piece * remark.x, pos + piece * getReverseY(remark.y), piece, Color.web("#0000FF"));
-        }
-        // 绘制棋子
-        for (int i = 0; i < board.length; i++) {
-            for (int j = 0; j < board[0].length; j++) {
-                drawPiece(pos + piece * j, pos + piece * getReverseY(i), piece, board[i][j]);
-            }
-        }
-        // 绘制棋步提示
-        if (stepTip && tipFirst != null) {
-            drawStepTip(pos + piece * tipFirst.first.x, pos + piece * getReverseY(tipFirst.first.y),
-                    pos + piece * tipFirst.second.x, pos + piece * getReverseY(tipFirst.second.y),
-                    piece, Color.PURPLE);
-        }
-        if (stepTip && tipSecond != null) {
-            drawStepTip(pos + piece * tipSecond.first.x, pos + piece * getReverseY(tipSecond.first.y),
-                    pos + piece * tipSecond.second.x, pos + piece * getReverseY(tipSecond.second.y),
-                    piece, Color.GREEN);
-        }
-    }
-
-    private int getReverseY(int y) {
-        return isReverse ? (9 - y) : y;
-    }
-
-    private void drawStepTip(int x1, int y1, int x2, int y2, int w, Color color) {
-        gc.save();
-
-        double angle = MathUtils.calculateAngle(x1, y1, x2, y2);
-        Rotate r = new Rotate(angle, x1, y1);
-        gc.setTransform(r.getMxx(), r.getMyx(), r.getMxy(), r.getMyy(), r.getTx(), r.getTy());
-
-        gc.setGlobalAlpha(0.42);
-        gc.setFill(color);
-
-        int len = (int) MathUtils.calculateDistance(x1, y1, x2, y2);
-        x2 = x1 - len;
-
-        x1 -= w / 4;
-        double offY = w / 12.5, offX = w / 4.5, h = w / 6.5;
-        gc.fillPolygon(new double[]{x1, x2 + offX, x2 + offX + h / 2, x2, x2 + offX + h / 2, x2 + offX, x1},
-                new double[]{y1 - offY, y1 - offY, y1 - offY - h, y1, y1 + offY + h, y1 + offY, y1 + offY},
-                7);
-
-        gc.restore();
-    }
-
-    /**
-     * 棋步标识矩形线条宽度
-     * @return
-     */
-    private double getStepRectWitdh() {
-
-        switch (style) {
-            case BIG_BOARD: {
-                return 2.8;
-            }
-            case MIDDLE_BOARD: {
-                return 2.5;
-            }
-            case SMALL_BOARD: {
-                return 1.5;
-            }
-            default: {
-                return 2.5;
-            }
-        }
-
-    }
-
-    private void drawStepRect(int x, int y, int w, Color color) {
-        double len = w / 1.08;
-        gc.setLineWidth(getStepRectWitdh());
-        gc.setStroke(color);
-        gc.strokePolyline(new double[]{x - len / 2 + len / 6, x - len / 2, x - len / 2},
-                new double[]{y - len / 2, y - len / 2, y - len / 2 + len / 6},
-                3);
-        gc.strokePolyline(new double[]{x - len / 2 + len / 6, x - len / 2, x - len / 2},
-                new double[]{y + len / 2, y + len / 2, y + len / 2 - len / 6},
-                3);
-        gc.strokePolyline(new double[]{x + len / 2 - len / 6, x + len / 2, x + len / 2},
-                new double[]{y - len / 2, y - len / 2, y - len / 2 + len / 6},
-                3);
-        gc.strokePolyline(new double[]{x + len / 2 - len / 6, x + len / 2, x + len / 2},
-                new double[]{y + len / 2, y + len / 2, y + len / 2 - len / 6},
-                3);
-
-    }
-
-    /**
-     * 棋子外圈线条宽度
-     * @return
-     */
-    private double getPieceBw() {
-        switch (style) {
-            case BIG_BOARD: {
-                return 4.5;
-            }
-            case MIDDLE_BOARD: {
-                return 4;
-            }
-            case SMALL_BOARD: {
-                return 3;
-            }
-            default: {
-                return 4;
-            }
-        }
-    }
-
-    /**
-     * 棋子内圈线条宽度
-     * @return
-     */
-    private double getPieceSw() {
-        switch (style) {
-            case BIG_BOARD: {
-                return 1;
-            }
-            case MIDDLE_BOARD: {
-                return 0.8;
-            }
-            case SMALL_BOARD: {
-                return 0.6;
-            }
-            default: {
-                return 0.8;
-            }
-        }
-    }
-    private void drawPiece(int x, int y, int w, char code) {
-        String word = map.get(code);
-        if (word != null) {
-            int r = (w - w / 10) / 2;
-            double bW = getPieceBw();
-            double sW = getPieceSw();
-
-            Color color = Color.web(XiangqiUtils.isRed(code) ? "#AD1A02" : "#167B7F");
-            gc.setFill(Color.WHITE);
-            gc.fillOval(x - r, y - r, 2 * r, 2 * r);
-            gc.setStroke(color);
-            gc.setLineWidth(bW);
-            gc.strokeOval(x - r, y - r, 2 * r, 2 * r);
-            gc.setLineWidth(sW);
-            gc.strokeOval(x - r + bW * 1.8, y - r + bW * 1.8, 2 * (r - bW * 1.8), 2 * (r - bW * 1.8));
-            gc.setFill(color);
-            gc.setFont(font);
-            gc.fillText(word, x - fontSize / 2, y + fontSize / 2 - fontSize / 5.5);
-        }
-    }
-
-    private void drawStarPos(int x, int y, int w, String style) {
-        int offset = w / 16;
-        int len = w / 6;
-        if (style.contains("l")) {
-            gc.strokePolyline(new double[]{x - offset - len, x - offset, x - offset},
-                    new double[]{y - offset, y - offset, y - offset - len}, 3);
-
-            gc.strokePolyline(new double[]{x - offset - len, x - offset, x - offset},
-                    new double[]{y + offset, y + offset, y + offset + len}, 3);
-
-
-        }
-        if (style.contains("r")) {
-            gc.strokePolyline(new double[]{x + offset + len, x + offset, x + offset},
-                    new double[]{y - offset, y - offset, y - offset - len}, 3);
-
-            gc.strokePolyline(new double[]{x + offset + len, x + offset, x + offset},
-                    new double[]{y + offset, y + offset, y + offset + len}, 3);
-
-        }
+        this.boardRender.paint(boardSize, this.board, prevStep, remark, stepTip, tipFirst, tipSecond, isReverse);
     }
 
     /**
@@ -801,8 +422,8 @@ public class ChessBoard {
      * 设置棋盘样式
      * @param bs
      */
-    public void setBoardStyle(BoardStyle bs) {
-        setStyle(bs);
+    public void setBoardSize(BoardSize bs) {
+        this.boardSize = bs;
         paint();
     }
 

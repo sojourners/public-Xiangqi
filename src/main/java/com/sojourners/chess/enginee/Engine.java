@@ -226,7 +226,7 @@ public class Engine {
                 }
             }
         }
-        if (td.getDetail().size() > 1) {
+        if (td.getDetail().size() > 0) {
             cb.thinkDetail(td);
         }
     }

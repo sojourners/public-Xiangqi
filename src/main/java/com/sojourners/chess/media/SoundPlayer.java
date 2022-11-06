@@ -5,6 +5,8 @@ import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.util.Duration;
 
+import java.io.File;
+
 public class SoundPlayer {
     private MediaPlayer pick;
 
@@ -17,12 +19,11 @@ public class SoundPlayer {
     private MediaPlayer over;
 
     public SoundPlayer(String pickSound, String moveSound, String eatSound, String checkSound, String overSound) {
-        String protocol = Platform.isWindows() ? "file:/" : "file://";
-        pick = new MediaPlayer(new Media(protocol + pickSound));
-        move = new MediaPlayer(new Media(protocol + moveSound));
-        eat = new MediaPlayer(new Media(protocol + eatSound));
-        check = new MediaPlayer(new Media(protocol + checkSound));
-        over = new MediaPlayer(new Media(protocol + overSound));
+        pick = new MediaPlayer(new Media(new File(pickSound).toURI().toString()));
+        move = new MediaPlayer(new Media(new File(moveSound).toURI().toString()));
+        eat = new MediaPlayer(new Media(new File(eatSound).toURI().toString()));
+        check = new MediaPlayer(new Media(new File(checkSound).toURI().toString()));
+        over = new MediaPlayer(new Media(new File(overSound).toURI().toString()));
     }
 
     public void eat() {

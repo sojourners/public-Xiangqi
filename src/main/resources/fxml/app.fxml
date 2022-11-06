@@ -38,23 +38,49 @@
                   <MenuItem mnemonicParsing="false" onAction="#pasteButtonClick" text="粘贴局面" />
                </items>
             </Menu>
+            <Menu mnemonicParsing="false" text="开局库">
+               <items>
+                  <MenuItem mnemonicParsing="false" onAction="#bookSettingButtonClick" text="库招设置" />
+                  <MenuItem mnemonicParsing="false" onAction="#localBookManageButtonClick" text="本地库管理" />
+               </items>
+            </Menu>
+            <Menu mnemonicParsing="false" text="引擎">
+               <items>
+                  <MenuItem mnemonicParsing="false" onAction="#engineManageClick" text="引擎管理" />
+                  <MenuItem mnemonicParsing="false" onAction="#timeSettingButtonClick" text="时间设置" />
+               </items>
+            </Menu>
+            <Menu mnemonicParsing="false" text="连线">
+               <items>
+                  <MenuItem mnemonicParsing="false" onAction="#linkSettingClick" text="连线参数" />
+                  <CheckMenuItem fx:id="menuOfLinkBackMode" mnemonicParsing="false" onAction="#linkBackModeChecked" text="后台模式" />
+                  <CheckMenuItem fx:id="menuOfLinkAnimation" mnemonicParsing="false" onAction="#linkAnimationChecked" text="开启动画确认" />
+               </items>
+            </Menu>
           <Menu mnemonicParsing="false" text="设置">
             <items>
-              <MenuItem mnemonicParsing="false" onAction="#engineManageClick" text="引擎管理" />
-                  <MenuItem mnemonicParsing="false" onAction="#battleButtonClick" text="对局设置" />
-                  <MenuItem mnemonicParsing="false" onAction="#localBookManageButtonClick" text="本地库管理" />
-                  <MenuItem mnemonicParsing="false" onAction="#linkSettingClick" text="连线设置" />
                   <CheckMenuItem fx:id="menuOfStepTip" mnemonicParsing="false" onAction="#stepTipChecked" text="棋步提示" />
                   <CheckMenuItem fx:id="menuOfStepSound" mnemonicParsing="false" onAction="#stepSoundClick" text="走棋音效" />
+                  <CheckMenuItem fx:id="menuOfShowStatus" mnemonicParsing="false" onAction="#showStatusBarClick" text="显示状态栏" />
+                  <Menu mnemonicParsing="false" text="棋盘样式">
+                     <items>
+                        <RadioMenuItem fx:id="menuOfDefaultBoard" mnemonicParsing="false" onAction="#boardStyleSelected" text="默认">
+                           <toggleGroup>
+                              <ToggleGroup fx:id="boardStyle1" />
+                           </toggleGroup>
+                        </RadioMenuItem>
+                        <RadioMenuItem fx:id="menuOfCustomBoard" mnemonicParsing="false" onAction="#boardStyleSelected" text="红黑" toggleGroup="$boardStyle1" />
+                     </items>
+                  </Menu>
                   <Menu mnemonicParsing="false" text="棋盘大小">
                     <items>
-                        <RadioMenuItem fx:id="menuOfSmallBoard" mnemonicParsing="false" onAction="#boardStyleSelected" text="小棋盘">
+                        <RadioMenuItem fx:id="menuOfSmallBoard" mnemonicParsing="false" onAction="#boardSizeSelected" text="小棋盘">
                            <toggleGroup>
                               <ToggleGroup fx:id="boardStyle" />
                            </toggleGroup>
                         </RadioMenuItem>
-                        <RadioMenuItem fx:id="menuOfMiddleBoard" mnemonicParsing="false" onAction="#boardStyleSelected" text="中棋盘" toggleGroup="$boardStyle" />
-                        <RadioMenuItem fx:id="menuOfBigBoard" mnemonicParsing="false" onAction="#boardStyleSelected" text="大棋盘" toggleGroup="$boardStyle" />
+                        <RadioMenuItem fx:id="menuOfMiddleBoard" mnemonicParsing="false" onAction="#boardSizeSelected" text="中棋盘" toggleGroup="$boardStyle" />
+                        <RadioMenuItem fx:id="menuOfBigBoard" mnemonicParsing="false" onAction="#boardSizeSelected" text="大棋盘" toggleGroup="$boardStyle" />
                     </items>
                   </Menu>
             </items>
@@ -88,7 +114,7 @@
                      </opaqueInsets>
                   </Button>
                   <Separator orientation="VERTICAL" prefHeight="200.0" />
-                  <Button fx:id="backButton" contentDisplay="GRAPHIC_ONLY" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#backButtonClick" style="-fx-background-image: url('/image/back.png');" stylesheets="@../style/app.css" text="Button">
+                  <Button fx:id="backButton" contentDisplay="GRAPHIC_ONLY" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#regretButtonClick" style="-fx-background-image: url('/image/back.png');" stylesheets="@../style/app.css" text="Button">
                      <opaqueInsets>
                         <Insets />
                      </opaqueInsets>
@@ -186,8 +212,8 @@
                                                       <TableView fx:id="recordTable" onMouseClicked="#recordTableClick" prefHeight="200.0" prefWidth="200.0" style="-fx-background-insets: 100%;" stylesheets="@../style/table.css" BorderPane.alignment="CENTER">
                                                         <columns>
                                                           <TableColumn editable="false" prefWidth="60.0" sortable="false" text="序号" />
-                                                          <TableColumn editable="false" prefWidth="132.0" sortable="false" text="着法" />
-                                                            <TableColumn editable="false" prefWidth="100.0" sortable="false" text="分数" />
+                                                          <TableColumn editable="false" prefWidth="120.0" sortable="false" text="着法" />
+                                                            <TableColumn editable="false" prefWidth="90.0" sortable="false" text="分数" />
                                                         </columns>
                                                       </TableView>
                                                    </center>

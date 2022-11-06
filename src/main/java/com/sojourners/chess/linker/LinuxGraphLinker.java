@@ -17,6 +17,8 @@ public class LinuxGraphLinker extends AbstractGraphLinker {
     public void getTargetWindowId() {
         this.windowId = ShellUtils.exec("xdotool selectwindow");
         ShellUtils.exec("xdotool windowactivate --sync " + this.windowId);
+
+        scan();
     }
 
     @Override
@@ -38,16 +40,6 @@ public class LinuxGraphLinker extends AbstractGraphLinker {
         return rec;
     }
 
-//    @Override
-//    public void mouseClickByFront(Rectangle windowPos, Point p1, Point p2) {
-//
-//        Point mouse = MouseInfo.getPointerInfo().getLocation();
-//        String cmd = "xdotool mousemove " + (windowPos. x + p1.x) + " " + (windowPos. y + p1.y) + " click 1 "
-//                + "mousemove " + (windowPos. x + p2.x) + " " + (windowPos. y + p2.y) + " click 1 "
-//                + "mousemove " + mouse.x + " " + mouse.y;
-//        ShellUtils.exec(cmd);
-//    }
-
     @Override
     public BufferedImage screenshotByBack(Rectangle windowPos) {
         return null;
@@ -55,7 +47,7 @@ public class LinuxGraphLinker extends AbstractGraphLinker {
 
 
     @Override
-    public void mouseClickByByBack(Point p1, Point p2) {
+    public void mouseClickByBack(Point p1, Point p2) {
 
     }
 }

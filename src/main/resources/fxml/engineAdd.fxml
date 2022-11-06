@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="240.0" prefWidth="306.0" style="-fx-padding: 10px 0px;" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.sojourners.chess.controller.EngineAddController">
+<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="240.0" prefWidth="306.0" style="-fx-padding: 10px 0px;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.sojourners.chess.controller.EngineAddController">
    <children>
       <HBox alignment="CENTER_LEFT" minHeight="-Infinity" minWidth="-Infinity" prefHeight="55.0" prefWidth="200.0" style="-fx-padding: 0px 20px;">
          <children>
@@ -30,12 +31,16 @@
             <Label text="  " />
          </children>
       </HBox>
-      <HBox alignment="CENTER_LEFT" minHeight="-Infinity" minWidth="-Infinity" prefHeight="55.0" prefWidth="200.0" style="-fx-padding: 0px 20px;">
+      <HBox alignment="CENTER_RIGHT" minHeight="-Infinity" minWidth="-Infinity" prefHeight="55.0" prefWidth="200.0" style="-fx-padding: 0px 20px;">
          <children>
-            <Label text="          " />
-            <Button mnemonicParsing="false" onAction="#okButtonClick" text="确定" />
-            <Label text="  " />
-            <Button mnemonicParsing="false" onAction="#cancelButtonClick" text="取消" />
+            <Button mnemonicParsing="false" onAction="#okButtonClick" text="确定">
+               <HBox.margin>
+                  <Insets right="20.0" />
+               </HBox.margin></Button>
+            <Button mnemonicParsing="false" onAction="#cancelButtonClick" text="取消">
+               <HBox.margin>
+                  <Insets right="60.0" />
+               </HBox.margin></Button>
          </children>
       </HBox>
    </children>

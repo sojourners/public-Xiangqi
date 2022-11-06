@@ -1,8 +1,10 @@
 package com.sojourners.chess.linker;
 
 import com.sojourners.chess.config.Properties;
+import com.sojourners.chess.jna.User32Extra;
 import com.sojourners.chess.mouse.GlobalMouseListener;
 import com.sojourners.chess.mouse.MouseListenCallBack;
+import com.sojourners.chess.util.PathUtils;
 import com.sun.jna.Memory;
 import com.sun.jna.platform.win32.*;
 
@@ -14,8 +16,6 @@ public class WindowsGraphLinker extends AbstractGraphLinker implements MouseList
     private WinDef.HWND hwnd;
     private GlobalMouseListener listener;
 
-    private volatile boolean flag;
-
     public WindowsGraphLinker(LinkerCallBack callBack) throws AWTException {
         super(callBack);
         this.listener = new GlobalMouseListener(this);
@@ -24,11 +24,8 @@ public class WindowsGraphLinker extends AbstractGraphLinker implements MouseList
     @Override
     public void getTargetWindowId() {
         try {
-            this.flag = true;
             this.listener.startListenMouse();
-            while (flag) {
-                Thread.sleep(500);
-            }
+            selectCursor();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -38,8 +35,11 @@ public class WindowsGraphLinker extends AbstractGraphLinker implements MouseList
     public void mouseClick() {
         try {
             this.listener.stopListenMouse();
+            restoreCursor();
+
             this.hwnd = User32.INSTANCE.GetForegroundWindow();
-            this.flag = false;
+
+            scan();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -60,7 +60,7 @@ public class WindowsGraphLinker extends AbstractGraphLinker implements MouseList
     }
 
     @Override
-    public void mouseClickByByBack(Point p1, Point p2) {
+    public void mouseClickByBack(Point p1, Point p2) {
         leftClick(p1.x, p1.y);
         if (Properties.getInstance().getMouseMoveDelay() > 0) {
             sleep(Properties.getInstance().getMouseMoveDelay());
@@ -133,5 +133,14 @@ public class WindowsGraphLinker extends AbstractGraphLinker implements MouseList
             return null;
         }
 
+    }
+
+    private void selectCursor() {
+        WinDef.HCURSOR h = User32Extra.INSTANCE.LoadCursorFromFileA(PathUtils.getJarPath() + "ui/circle.ico");
+        User32Extra.INSTANCE.SetSystemCursor(h, new WinDef.DWORD(32512));
+    }
+
+    private void restoreCursor() {
+        User32Extra.INSTANCE.SystemParametersInfoA(87, 0, 0, 2);
     }
 }

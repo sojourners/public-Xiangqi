@@ -16,24 +16,6 @@ public class LinkSettingController {
     private TextField linkScanTime;
     @FXML
     private TextField linkThreadNum;
-    @FXML
-    private CheckBox linkAnimation;
-    @FXML
-    private CheckBox linkShowInfo;
-    @FXML
-    private CheckBox linkBackMode;
-
-    @FXML
-    private TextField engineDelayStart;
-
-    @FXML
-    private TextField engineDelayEnd;
-
-    @FXML
-    private TextField bookDelayStart;
-
-    @FXML
-    private TextField bookDelayEnd;
 
     @FXML
     private TextField mouseClickDelay;
@@ -64,36 +46,6 @@ public class LinkSettingController {
         }
         prop.setLinkThreadNum(Integer.parseInt(txt));
 
-        prop.setLinkAnimation(linkAnimation.isSelected());
-        prop.setLinkShowInfo(linkShowInfo.isSelected());
-        prop.setLinkBackMode(linkBackMode.isSelected());
-
-        txt = engineDelayStart.getText();
-        if (!StringUtils.isNonNegativeInt(txt)) {
-            DialogUtils.showErrorDialog("失败", "输入引擎出招延迟错误");
-            return;
-        }
-        prop.setEngineDelayStart(Integer.parseInt(txt));
-        txt = engineDelayEnd.getText();
-        if (!StringUtils.isNonNegativeInt(txt)) {
-            DialogUtils.showErrorDialog("失败", "输入引擎出招延迟错误");
-            return;
-        }
-        prop.setEngineDelayEnd(Integer.parseInt(txt));
-
-        txt = bookDelayStart.getText();
-        if (!StringUtils.isNonNegativeInt(txt)) {
-            DialogUtils.showErrorDialog("失败", "输入库招出招延迟错误");
-            return;
-        }
-        prop.setBookDelayStart(Integer.parseInt(txt));
-        txt = bookDelayEnd.getText();
-        if (!StringUtils.isNonNegativeInt(txt)) {
-            DialogUtils.showErrorDialog("失败", "输入库招出招延迟错误");
-            return;
-        }
-        prop.setBookDelayEnd(Integer.parseInt(txt));
-
         txt = mouseClickDelay.getText();
         if (!StringUtils.isNonNegativeInt(txt)) {
             DialogUtils.showErrorDialog("失败", "输入鼠标点击延迟错误");
@@ -108,8 +60,6 @@ public class LinkSettingController {
         prop.setMouseMoveDelay(Integer.parseInt(txt));
 
         App.closeLinkSetting();
-
-
     }
 
     public void initialize() {
@@ -118,15 +68,6 @@ public class LinkSettingController {
 
         linkScanTime.setText(String.valueOf(prop.getLinkScanTime()));
         linkThreadNum.setText(String.valueOf(prop.getLinkThreadNum()));
-        linkAnimation.setSelected(prop.isLinkAnimation());
-        linkShowInfo.setSelected(prop.isLinkShowInfo());
-        linkBackMode.setSelected(prop.isLinkBackMode());
-
-        engineDelayStart.setText(String.valueOf(prop.getEngineDelayStart()));
-        engineDelayEnd.setText(String.valueOf(prop.getEngineDelayEnd()));
-
-        bookDelayStart.setText(String.valueOf(prop.getBookDelayStart()));
-        bookDelayEnd.setText(String.valueOf(prop.getBookDelayEnd()));
 
         mouseClickDelay.setText(String.valueOf(prop.getMouseClickDelay()));
         mouseMoveDelay.setText(String.valueOf(prop.getMouseMoveDelay()));

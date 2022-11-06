@@ -6,7 +6,6 @@ import com.sojourners.chess.config.Properties;
 import com.sojourners.chess.enginee.Engine;
 import com.sojourners.chess.enginee.EngineCallBack;
 import com.sojourners.chess.linker.*;
-import com.sojourners.chess.linker.*;
 import com.sojourners.chess.lock.SingleLock;
 import com.sojourners.chess.lock.WorkerTask;
 import com.sojourners.chess.menu.BoardContextMenu;
@@ -15,7 +14,6 @@ import com.sojourners.chess.model.EngineConfig;
 import com.sojourners.chess.model.ManualRecord;
 import com.sojourners.chess.model.ThinkData;
 import com.sojourners.chess.openbook.OpenBookManager;
-import com.sojourners.chess.util.*;
 import com.sojourners.chess.util.*;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
@@ -90,9 +88,20 @@ public class Controller implements EngineCallBack, LinkerCallBack {
     private RadioMenuItem menuOfSmallBoard;
 
     @FXML
+    private RadioMenuItem menuOfDefaultBoard;
+    @FXML
+    private RadioMenuItem menuOfCustomBoard;
+
+    @FXML
     private CheckMenuItem menuOfStepTip;
     @FXML
     private CheckMenuItem menuOfStepSound;
+    @FXML
+    private CheckMenuItem menuOfLinkBackMode;
+    @FXML
+    private CheckMenuItem menuOfLinkAnimation;
+    @FXML
+    private CheckMenuItem menuOfShowStatus;
 
     private Properties prop;
 
@@ -171,35 +180,57 @@ public class Controller implements EngineCallBack, LinkerCallBack {
     @FXML
     void boardStyleSelected(ActionEvent event) {
         RadioMenuItem item = (RadioMenuItem) event.getTarget();
-        if (item.equals(menuOfBigBoard)) {
-            prop.setBoardStyle(ChessBoard.BoardStyle.BIG_BOARD);
-        } else if (item.equals(menuOfMiddleBoard)) {
-            prop.setBoardStyle(ChessBoard.BoardStyle.MIDDLE_BOARD);
+        if (item.equals(menuOfDefaultBoard)) {
+            prop.setBoardStyle(ChessBoard.BoardStyle.DEFAULT);
         } else {
-            prop.setBoardStyle(ChessBoard.BoardStyle.SMALL_BOARD);
+            prop.setBoardStyle(ChessBoard.BoardStyle.CUSTOM);
         }
-        board.setBoardStyle(prop.getBoardStyle());
+        board.setBoardStyle(prop.getBoardStyle(), this.canvas);
+    }
+
+    @FXML
+    void boardSizeSelected(ActionEvent event) {
+        RadioMenuItem item = (RadioMenuItem) event.getTarget();
+        if (item.equals(menuOfBigBoard)) {
+            prop.setBoardSize(ChessBoard.BoardSize.BIG_BOARD);
+        } else if (item.equals(menuOfMiddleBoard)) {
+            prop.setBoardSize(ChessBoard.BoardSize.MIDDLE_BOARD);
+        } else {
+            prop.setBoardSize(ChessBoard.BoardSize.SMALL_BOARD);
+        }
+        board.setBoardSize(prop.getBoardSize());
     }
     @FXML
     void stepTipChecked(ActionEvent event) {
         CheckMenuItem item = (CheckMenuItem) event.getTarget();
-        if (item.isSelected()) {
-            prop.setStepTip(true);
-        } else {
-            prop.setStepTip(false);
-        }
+        prop.setStepTip(item.isSelected());
         board.setStepTip(prop.isStepTip());
+    }
+
+    @FXML
+    void linkBackModeChecked(ActionEvent event) {
+        CheckMenuItem item = (CheckMenuItem) event.getTarget();
+        prop.setLinkBackMode(item.isSelected());
+    }
+
+    @FXML
+    void linkAnimationChecked(ActionEvent event) {
+        CheckMenuItem item = (CheckMenuItem) event.getTarget();
+        prop.setLinkAnimation(item.isSelected());
     }
 
     @FXML
     void stepSoundClick(ActionEvent event) {
         CheckMenuItem item = (CheckMenuItem) event.getTarget();
-        if (item.isSelected()) {
-            prop.setStepSound(true);
-        } else {
-            prop.setStepSound(false);
-        }
+        prop.setStepSound(item.isSelected());
         board.setStepSound(prop.isStepSound());
+    }
+
+    @FXML
+    void showStatusBarClick(ActionEvent event) {
+        CheckMenuItem item = (CheckMenuItem) event.getTarget();
+        prop.setLinkShowInfo(item.isSelected());
+        statusToolBar.setVisible(item.isSelected());
     }
 
     @FXML
@@ -433,6 +464,22 @@ public class Controller implements EngineCallBack, LinkerCallBack {
     }
 
     @FXML
+    public void regretButtonClick(ActionEvent event) {
+        if (linkMode.getValue()) {
+            stopGraphLink();
+        }
+        if (p > 0) {
+            if (redGo && robotRed.getValue() || !redGo && robotBlack.getValue()) {
+                p -= 1;
+            } else {
+                p -= 2;
+            }
+            if (p < 0) p = 0;
+            browseChessRecord();
+        }
+    }
+
+    @FXML
     void forwardButtonClick(ActionEvent event) {
         if (linkMode.getValue()) {
             stopGraphLink();
@@ -480,7 +527,10 @@ public class Controller implements EngineCallBack, LinkerCallBack {
 
     @FXML
     public void aboutClick(ActionEvent e) {
-        DialogUtils.showInfoDialog("关于", "中国象棋界面\nBuilt on : 20221015\nAuthor : T\nVersion : 1.0");
+        DialogUtils.showInfoDialog("关于", "中国象棋界面"
+                + System.lineSeparator() + "Built on : 20221106"
+                + System.lineSeparator() + "Author : T"
+                + System.lineSeparator() + "Version : 1.1");
     }
 
     @FXML
@@ -505,14 +555,19 @@ public class Controller implements EngineCallBack, LinkerCallBack {
     }
 
     @FXML
-    void battleButtonClick(ActionEvent e) {
-        App.openBattleSetting();
+    void timeSettingButtonClick(ActionEvent e) {
+        App.openTimeSetting();
+    }
+
+    @FXML
+    void bookSettingButtonClick(ActionEvent e) {
+        App.openBookSetting();
     }
 
     @FXML
     void linkSettingClick(ActionEvent e) {
         App.openLinkSetting();
-        statusToolBar.setVisible(prop.isLinkShowInfo());
+
     }
 
     @FXML
@@ -664,24 +719,28 @@ public class Controller implements EngineCallBack, LinkerCallBack {
 
     private void initChessBoard() {
         // 棋步提示
-        if (prop.isStepTip()) {
-            menuOfStepTip.setSelected(true);
-        } else {
-            menuOfStepTip.setSelected(false);
-        }
+        menuOfStepTip.setSelected(prop.isStepTip());
         // 走棋音效
-        if (prop.isStepSound()) {
-            menuOfStepSound.setSelected(true);
-        } else {
-            menuOfStepSound.setSelected(false);
-        }
+        menuOfStepSound.setSelected(prop.isStepSound());
+        // 连线后台模式
+        menuOfLinkBackMode.setSelected(prop.isLinkBackMode());
+        // 连线动画确认
+        menuOfLinkAnimation.setSelected(prop.isLinkAnimation());
+        // 显示状态栏
+        menuOfShowStatus.setSelected(prop.isLinkShowInfo());
         // 棋盘大小
-        if (prop.getBoardStyle() == ChessBoard.BoardStyle.BIG_BOARD) {
+        if (prop.getBoardSize() == ChessBoard.BoardSize.BIG_BOARD) {
             menuOfBigBoard.setSelected(true);
-        } else if (prop.getBoardStyle() == ChessBoard.BoardStyle.MIDDLE_BOARD) {
+        } else if (prop.getBoardSize() == ChessBoard.BoardSize.MIDDLE_BOARD) {
             menuOfMiddleBoard.setSelected(true);
         } else {
             menuOfSmallBoard.setSelected(true);
+        }
+        // 棋盘样式
+        if (prop.getBoardStyle() == ChessBoard.BoardStyle.DEFAULT) {
+            menuOfDefaultBoard.setSelected(true);
+        } else {
+            menuOfCustomBoard.setSelected(true);
         }
         // 右键菜单
         initBoardContextMenu();
@@ -725,7 +784,7 @@ public class Controller implements EngineCallBack, LinkerCallBack {
         // 引擎停止计算
         engineStop();
         // 绘制棋盘
-        board = new ChessBoard(this.canvas, prop.getBoardStyle(), prop.isStepTip(), prop.isStepSound(), fenCode);
+        board = new ChessBoard(this.canvas, prop.getBoardSize(), prop.getBoardStyle(), prop.isStepTip(), prop.isStepSound(), fenCode);
 //        board.paint();
         // 设置局面
         redGo = StringUtils.isEmpty(fenCode) ? true : fenCode.contains("w");
@@ -966,7 +1025,7 @@ public class Controller implements EngineCallBack, LinkerCallBack {
                         timeShowLabel.setText(prop.getAnalysisModel() == Engine.AnalysisModel.FIXED_TIME ? "固定时间" + prop.getAnalysisValue() / 1000d + "s" : "固定深度" + prop.getAnalysisValue() + "层");
                     }
 
-                    board.setTip(td.getDetail().get(0), td.getDetail().get(1));
+                    board.setTip(td.getDetail().get(0), td.getDetail().size() > 1 ? td.getDetail().get(1) : null);
                 });
             }
         }

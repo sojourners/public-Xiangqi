@@ -25,7 +25,7 @@ public class MacosGraphLinker extends AbstractGraphLinker {
     }
 
     @Override
-    public void mouseClickByByBack(Point p1, Point p2) {
+    public void mouseClickByBack(Point p1, Point p2) {
 
     }
 }

@@ -19,6 +19,6 @@ public interface GraphLinker {
 
     void mouseClickByFront(Rectangle windowPos, Point p1, Point p2);
 
-    void mouseClickByByBack(Point p1, Point p2);
+    void mouseClickByBack(Point p1, Point p2);
 
 }

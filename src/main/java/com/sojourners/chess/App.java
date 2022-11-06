@@ -22,7 +22,8 @@ public class App extends Application {
     private static Stage engineSetting;
     private static Stage localBookSetting;
     private static Stage mainStage;
-    private static Stage battleSetting;
+    private static Stage timeSetting;
+    private static Stage bookSetting;
     private static Stage linkSetting;
 
     @Override
@@ -30,7 +31,7 @@ public class App extends Application {
         FXMLLoader fxmlLoader = new FXMLLoader();
         fxmlLoader.setLocation(getClass().getResource("/fxml/app.fxml"));
         Parent root = fxmlLoader.load();
-        primaryStage.setTitle("中国象棋");
+        primaryStage.setTitle("中国象棋 V1.1");
         primaryStage.setScene(new Scene(root));
         primaryStage.getIcons().add(new Image(getClass().getResourceAsStream("/image/icon.png")));
 
@@ -96,19 +97,35 @@ public class App extends Application {
     }
 
     /**
-     * 对局设置
+     * 时间设置
      */
-    public static void openBattleSetting() {
+    public static void openTimeSetting() {
 
-        battleSetting = createStage("/fxml/battleSetting.fxml");
-        battleSetting.setTitle("对局设置");
-        battleSetting.initModality(Modality.APPLICATION_MODAL);
-        battleSetting.initOwner(mainStage);
+        timeSetting = createStage("/fxml/timeSetting.fxml");
+        timeSetting.setTitle("时间设置");
+        timeSetting.initModality(Modality.APPLICATION_MODAL);
+        timeSetting.initOwner(mainStage);
 
-        battleSetting.showAndWait();
+        timeSetting.showAndWait();
     }
-    public static void closeBattleSetting() {
-        battleSetting.close();
+    public static void closeTimeSetting() {
+        timeSetting.close();
+    }
+
+    /**
+     * 库招设置
+     */
+    public static void openBookSetting() {
+
+        bookSetting = createStage("/fxml/bookSetting.fxml");
+        bookSetting.setTitle("库招设置");
+        bookSetting.initModality(Modality.APPLICATION_MODAL);
+        bookSetting.initOwner(mainStage);
+
+        bookSetting.showAndWait();
+    }
+    public static void closeBookSetting() {
+        bookSetting.close();
     }
 
     /**

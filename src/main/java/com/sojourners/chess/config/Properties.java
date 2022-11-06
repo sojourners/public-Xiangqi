@@ -17,7 +17,8 @@ public class Properties implements Serializable {
 
     private static Properties prop;
 
-    private ChessBoard.BoardStyle boardStyle;
+    private ChessBoard.BoardSize boardSize;
+    private ChessBoard.BoardStyle boardStyle = ChessBoard.BoardStyle.DEFAULT;
 
     private boolean stepTip;
 
@@ -73,13 +74,13 @@ public class Properties implements Serializable {
     private int mouseClickDelay = 2;
     private int mouseMoveDelay = 0;
 
-    private Properties(ChessBoard.BoardStyle boardStyle, boolean stepTip,
-        int threadNum, int hashSize, String engineName, Engine.AnalysisModel analysisModel, long analysisValue,
+    private Properties(ChessBoard.BoardSize boardSize, boolean stepTip,
+                       int threadNum, int hashSize, String engineName, Engine.AnalysisModel analysisModel, long analysisValue,
                        boolean stepSound, double stageWidth, double stageHeight, double splitPos, double splitPos2,
                        long linkScanTime, int linkThreadNum, boolean linkAnimation, boolean linkShowInfo, boolean linkBackMode,
                        Boolean localBookFirst, Boolean useCloudBook, Boolean onlyCloudFinalPhase, Integer cloudBookTimeout, Integer offManualSteps,
                        MoveRule moveRule, Boolean bookSwitch, List<String> openBookList) {
-        this.boardStyle = boardStyle;
+        this.boardSize = boardSize;
         this.stepTip = stepTip;
         this.threadNum = threadNum;
         this.hashSize = hashSize;
@@ -128,12 +129,12 @@ public class Properties implements Serializable {
             } else {
                 try {
                     List<EngineConfig> engineConfigList = new ArrayList<>();
-                    prop = new Properties(ChessBoard.BoardStyle.MIDDLE_BOARD, true,
+                    prop = new Properties(ChessBoard.BoardSize.MIDDLE_BOARD, true,
                             1, 16, "",
                             Engine.AnalysisModel.FIXED_TIME, 5000, true,
                             924, 712, 0.64, 0.6,
                             100, 2, true, true, false,
-                            true, true, false, 2000, 999,
+                            true, true, false, 2000, 15,
                             MoveRule.BEST_SCORE, true, new ArrayList<>());
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -160,6 +161,14 @@ public class Properties implements Serializable {
                 e.printStackTrace();
             }
         }
+    }
+
+    public ChessBoard.BoardStyle getBoardStyle() {
+        return boardStyle;
+    }
+
+    public void setBoardStyle(ChessBoard.BoardStyle boardStyle) {
+        this.boardStyle = boardStyle;
     }
 
     public int getEngineDelayStart() {
@@ -402,12 +411,12 @@ public class Properties implements Serializable {
         this.engineConfigList = engineConfigList;
     }
 
-    public ChessBoard.BoardStyle getBoardStyle() {
-        return boardStyle;
+    public ChessBoard.BoardSize getBoardSize() {
+        return boardSize;
     }
 
-    public void setBoardStyle(ChessBoard.BoardStyle boardStyle) {
-        this.boardStyle = boardStyle;
+    public void setBoardSize(ChessBoard.BoardSize boardSize) {
+        this.boardSize = boardSize;
     }
 
     public boolean isStepTip() {

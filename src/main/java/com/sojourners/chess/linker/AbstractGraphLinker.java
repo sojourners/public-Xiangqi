@@ -56,6 +56,9 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
     @Override
     public void start() {
         getTargetWindowId();
+    }
+
+    void scan() {
         this.thread = new Thread(this);
         this.thread.start();
     }
@@ -486,7 +489,7 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
         Point p1 = getPosition(x1, y1);
         Point p2 = getPosition(x2, y2);
         if (prop.isLinkBackMode()) {
-            mouseClickByByBack(p1, p2);
+            mouseClickByBack(p1, p2);
         } else {
             Rectangle windowPos = getTargetWindowPosition();
             mouseClickByFront(windowPos, p1, p2);
