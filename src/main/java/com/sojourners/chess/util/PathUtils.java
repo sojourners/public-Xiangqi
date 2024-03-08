@@ -2,7 +2,11 @@ package com.sojourners.chess.util;
 
 import com.sun.jna.Platform;
 
+import java.io.File;
 
+/**
+ * Path 工具类
+ */
 public class PathUtils {
     public static String getJarPath() {
         try {
@@ -22,5 +26,13 @@ public class PathUtils {
         }
     }
 
+    /**
+     * 获取 path 的父目录
+     * @param path
+     * @return
+     */
+    public static File getParentDir(String path) {
+        return new File(path).getParentFile();
+    }
 
 }

@@ -6,13 +6,10 @@ import com.sojourners.chess.model.BookData;
 import com.sojourners.chess.model.ThinkData;
 import com.sojourners.chess.openbook.OpenBookManager;
 import com.sojourners.chess.util.ExecutorsUtils;
+import com.sojourners.chess.util.PathUtils;
 import com.sojourners.chess.util.StringUtils;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +53,7 @@ public class Engine {
         this.cb = cb;
         this.random = new SecureRandom();
 
-        process = Runtime.getRuntime().exec(path);
+        process = Runtime.getRuntime().exec(path, null, PathUtils.getParentDir(path));
         reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
         writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
 
