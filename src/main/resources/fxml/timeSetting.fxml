@@ -9,7 +9,7 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 
-<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.sojourners.chess.controller.TimeSettingController">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="316.0" prefWidth="380.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.sojourners.chess.controller.TimeSettingController">
    <bottom>
       <HBox alignment="TOP_RIGHT" minHeight="-Infinity" minWidth="-Infinity" prefHeight="60.0" prefWidth="437.0" BorderPane.alignment="TOP_CENTER">
          <children>
@@ -20,14 +20,14 @@
             </Button>
             <Button mnemonicParsing="false" onAction="#cancelButtonClick" prefHeight="27.0" prefWidth="72.0" text="取消">
                <HBox.margin>
-                  <Insets right="50.0" />
+                  <Insets right="80.0" />
                </HBox.margin>
             </Button>
          </children>
       </HBox>
    </bottom>
    <center>
-  <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="257.0" prefWidth="437.0" BorderPane.alignment="CENTER">
+  <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="0.0" minWidth="0.0" prefHeight="257.0" prefWidth="350.0" BorderPane.alignment="CENTER">
          <children>
             <RadioButton fx:id="fixTimeButton" layoutX="46.0" layoutY="46.0" mnemonicParsing="false" text="固定时间" />
             <TextField fx:id="timeText" layoutX="124.0" layoutY="42.0" prefHeight="27.0" prefWidth="108.0" />

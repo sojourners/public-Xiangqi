@@ -1,6 +1,7 @@
 package com.sojourners.chess.model;
 
 import java.io.Serializable;
+import java.util.LinkedHashMap;
 
 public class EngineConfig implements Serializable {
 
@@ -12,10 +13,21 @@ public class EngineConfig implements Serializable {
 
     private String protocol;
 
-    public EngineConfig(String name, String path, String protocol) {
+    private LinkedHashMap<String, String> options;
+
+    public EngineConfig(String name, String path, String protocol, LinkedHashMap<String, String> options) {
         this.name = name;
         this.path = path;
         this.protocol = protocol;
+        this.options = options;
+    }
+
+    public LinkedHashMap<String, String> getOptions() {
+        return options;
+    }
+
+    public void setOptions(LinkedHashMap<String, String> options) {
+        this.options = options;
     }
 
     public String getName() {

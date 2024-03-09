@@ -3,45 +3,65 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="240.0" prefWidth="306.0" style="-fx-padding: 10px 0px;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.sojourners.chess.controller.EngineAddController">
+<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="250.0" prefWidth="570.0" style="-fx-padding: 10px 0px;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.sojourners.chess.controller.EngineAddController">
    <children>
-      <HBox alignment="CENTER_LEFT" minHeight="-Infinity" minWidth="-Infinity" prefHeight="55.0" prefWidth="200.0" style="-fx-padding: 0px 20px;">
+      <HBox prefHeight="100.0" prefWidth="200.0">
          <children>
-            <Label text="路径：" />
-            <TextField fx:id="pathText" prefHeight="27.0" prefWidth="170.0" />
-            <Label text="  " />
-            <Button mnemonicParsing="false" onAction="#selectButtonClick" text="选择" />
+            <VBox prefHeight="165.0" prefWidth="300.0">
+               <children>
+                  <HBox alignment="CENTER_LEFT" minHeight="-Infinity" minWidth="-Infinity" prefHeight="55.0" prefWidth="200.0" style="-fx-padding: 0px 20px;">
+                     <children>
+                        <Label text="路径：" />
+                        <TextField fx:id="pathText" prefHeight="27.0" prefWidth="170.0" />
+                        <Label text="  " />
+                        <Button mnemonicParsing="false" onAction="#selectButtonClick" text="选择" />
+                     </children>
+                  </HBox>
+                  <HBox alignment="CENTER_LEFT" minHeight="-Infinity" minWidth="-Infinity" prefHeight="55.0" prefWidth="200.0" style="-fx-padding: 0px 20px;">
+                     <children>
+                        <Label text="名称：" />
+                        <TextField fx:id="nameText" prefHeight="27.0" prefWidth="170.0" />
+                        <Label text="  " />
+                     </children>
+                  </HBox>
+                  <HBox alignment="CENTER_LEFT" minHeight="-Infinity" minWidth="-Infinity" prefHeight="55.0" prefWidth="200.0" style="-fx-padding: 0px 20px;">
+                     <children>
+                        <Label text="协议：" />
+                        <TextField fx:id="protocolText" prefHeight="27.0" prefWidth="170.0" />
+                        <Label text="  " />
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+            <ListView fx:id="optionsListView" focusTraversable="false" prefHeight="165.0" prefWidth="250.0">
+               <opaqueInsets>
+                  <Insets />
+               </opaqueInsets>
+               <HBox.margin>
+                  <Insets bottom="5.0" top="10.0" />
+               </HBox.margin>
+            </ListView>
          </children>
       </HBox>
-      <HBox alignment="CENTER_LEFT" minHeight="-Infinity" minWidth="-Infinity" prefHeight="55.0" prefWidth="200.0" style="-fx-padding: 0px 20px;">
+      <HBox alignment="CENTER_RIGHT" minHeight="-Infinity" minWidth="-Infinity" prefHeight="55.0" prefWidth="570.0" style="-fx-padding: 0px 20px;">
          <children>
-            <Label text="名称：" />
-            <TextField fx:id="nameText" prefHeight="27.0" prefWidth="170.0" />
-            <Label text="  " />
-         </children>
-      </HBox>
-      <HBox alignment="CENTER_LEFT" minHeight="-Infinity" minWidth="-Infinity" prefHeight="55.0" prefWidth="200.0" style="-fx-padding: 0px 20px;">
-         <children>
-            <Label text="协议：" />
-            <TextField fx:id="protocolText" prefHeight="27.0" prefWidth="170.0" />
-            <Label text="  " />
-         </children>
-      </HBox>
-      <HBox alignment="CENTER_RIGHT" minHeight="-Infinity" minWidth="-Infinity" prefHeight="55.0" prefWidth="200.0" style="-fx-padding: 0px 20px;">
-         <children>
-            <Button mnemonicParsing="false" onAction="#okButtonClick" text="确定">
+            <Button mnemonicParsing="false" onAction="#okButtonClick" prefHeight="27.0" prefWidth="72.0" text="确定">
                <HBox.margin>
                   <Insets right="20.0" />
                </HBox.margin></Button>
-            <Button mnemonicParsing="false" onAction="#cancelButtonClick" text="取消">
+            <Button mnemonicParsing="false" onAction="#cancelButtonClick" prefHeight="27.0" prefWidth="72.0" text="取消">
                <HBox.margin>
-                  <Insets right="60.0" />
+                  <Insets right="20.0" />
                </HBox.margin></Button>
          </children>
+         <VBox.margin>
+            <Insets top="10.0" />
+         </VBox.margin>
       </HBox>
    </children>
 </VBox>

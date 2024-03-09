@@ -28,10 +28,10 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
-import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -528,9 +528,9 @@ public class Controller implements EngineCallBack, LinkerCallBack {
     @FXML
     public void aboutClick(ActionEvent e) {
         DialogUtils.showInfoDialog("关于", "中国象棋界面"
-                + System.lineSeparator() + "Built on : 20221106"
+                + System.lineSeparator() + "Built on : 20240309"
                 + System.lineSeparator() + "Author : T"
-                + System.lineSeparator() + "Version : 1.1");
+                + System.lineSeparator() + "Version : 1.2");
     }
 
     @FXML
@@ -963,7 +963,7 @@ public class Controller implements EngineCallBack, LinkerCallBack {
                         if (engine != null) {
                             engine.close();
                         }
-                        engine = new Engine(ec.getPath(), ec.getProtocol(), this);
+                        engine = new Engine(ec, this);
                         return;
                     }
                 }

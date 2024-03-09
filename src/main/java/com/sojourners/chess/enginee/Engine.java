@@ -3,6 +3,7 @@ package com.sojourners.chess.enginee;
 
 import com.sojourners.chess.config.Properties;
 import com.sojourners.chess.model.BookData;
+import com.sojourners.chess.model.EngineConfig;
 import com.sojourners.chess.model.ThinkData;
 import com.sojourners.chess.openbook.OpenBookManager;
 import com.sojourners.chess.util.ExecutorsUtils;
@@ -11,9 +12,7 @@ import com.sojourners.chess.util.StringUtils;
 
 import java.io.*;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -48,12 +47,12 @@ public class Engine {
         INFINITE;
     }
 
-    public Engine(String path, String protocol, EngineCallBack cb) throws IOException {
-        this.protocol = protocol;
+    public Engine(EngineConfig ec, EngineCallBack cb) throws IOException {
+        this.protocol = ec.getProtocol();
         this.cb = cb;
         this.random = new SecureRandom();
 
-        process = Runtime.getRuntime().exec(path, null, PathUtils.getParentDir(path));
+        process = Runtime.getRuntime().exec(ec.getPath(), null, PathUtils.getParentDir(ec.getPath()));
         reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
         writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
 
@@ -74,6 +73,14 @@ public class Engine {
         })).start();
 
         cmd(protocol);
+
+        for (Map.Entry<String, String> entry : ec.getOptions().entrySet()) {
+            if ("uci".equals(this.protocol)) {
+                cmd("setoption name " + entry.getKey() + " value " + entry.getValue());
+            } else if ("ucci".equals(this.protocol)) {
+                cmd("setoption " + entry.getKey() + " " + entry.getValue());
+            }
+        }
     }
 
     private void sleep(long t) {
@@ -84,7 +91,7 @@ public class Engine {
         }
     }
 
-    public static String test(String filePath) {
+    public static String test(String filePath, LinkedHashMap<String, String> options) {
         Process p = null;
         Thread h = null;
         BufferedWriter bw = null;
@@ -94,23 +101,31 @@ public class Engine {
             bw = new BufferedWriter(new OutputStreamWriter(p.getOutputStream()));
             br = new BufferedReader(new InputStreamReader(p.getInputStream()));
 
-            bw.write("uci" + System.getProperty("line.separator"));
-            bw.flush();
-
             AtomicBoolean f = new AtomicBoolean(false);
             BufferedReader finalBr = br;
             (h = new Thread(() -> {
                 try {
                     String line;
                     while ((line = finalBr.readLine()) != null) {
-                        if ("uciok".equals(line)) {
+                        if ("uciok".equals(line) || "ucciok".equals(line) ) {
                             f.set(true);
+                        }
+                        if (line.startsWith("option") && line.contains("name") && line.contains("type") && line.contains("default")
+                            && !line.contains("Threads") && !line.contains("Hash")) {
+
+                            String[] str = line.split("name|type|default");
+                            String key = str[1].trim();
+                            String value = str[3].trim().split(" ")[0];
+                            options.put(key, value);
                         }
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             })).start();
+
+            bw.write("uci" + System.getProperty("line.separator"));
+            bw.flush();
             Thread.sleep(1000);
             if (f.get()) {
                 return "uci";
@@ -118,7 +133,6 @@ public class Engine {
 
             bw.write("ucci" + System.getProperty("line.separator"));
             bw.flush();
-
             Thread.sleep(1000);
             if (f.get()) {
                 return "ucci";
