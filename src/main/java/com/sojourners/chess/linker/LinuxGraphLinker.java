@@ -5,6 +5,10 @@ import com.sojourners.chess.util.ShellUtils;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
+/**
+ * linux 连线器，基于xdotool 实现
+ * 使用方法：点击连线按钮，再点击选择目标平台，然后等待连线识别成功即可
+ */
 public class LinuxGraphLinker extends AbstractGraphLinker {
 
     private String windowId;
@@ -40,12 +44,21 @@ public class LinuxGraphLinker extends AbstractGraphLinker {
         return rec;
     }
 
+    /**
+     * 后台模式暂未实现
+     * @param windowPos
+     * @return
+     */
     @Override
     public BufferedImage screenshotByBack(Rectangle windowPos) {
         return null;
     }
 
-
+    /**
+     * 后台模式暂未实现
+     * @param p1
+     * @param p2
+     */
     @Override
     public void mouseClickByBack(Point p1, Point p2) {
 
