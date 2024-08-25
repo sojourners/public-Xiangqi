@@ -201,6 +201,7 @@ public class ChessBoard {
         int piece = boardRender.getPieceSize(this.boardSize);
         int i = (x - padding) / piece;
         int j = (y - padding) / piece;
+        i = boardRender.getReverseX(i, isReverse);
         j = boardRender.getReverseY(j, isReverse);
 
         if (i < 0 || i > 8 || j < 0 || j > 9) {
@@ -518,9 +519,9 @@ public class ChessBoard {
 
     private char getPos(int j, boolean isRed) {
         if (isRed) {
-            return (char) (isReverse ? '０' + j + 1 : '０' + 9 - j);
+            return (char) ('０' + 9 - j);
         } else {
-            return (char) (!isReverse ? '０' + j + 1 : '０' + 9 - j);
+            return (char) ('０' + j + 1);
         }
     }
 }

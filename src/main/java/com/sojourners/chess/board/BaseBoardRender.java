@@ -89,9 +89,9 @@ public abstract class BaseBoardRender implements BoardRender {
 
     @Override
     public void drawStepTips(int pos, int piece, int x1, int y1, int x2, int y2, boolean isReverse, boolean isFirst) {
-        x1 = pos + piece * x1;
+        x1 = pos + piece * getReverseX(x1, isReverse);
         y1 = pos + piece * getReverseY(y1, isReverse);
-        x2 = pos + piece * x2;
+        x2 = pos + piece * getReverseX(x2, isReverse);
         y2 = pos + piece * getReverseY(y2, isReverse);
 
         gc.save();
@@ -120,6 +120,10 @@ public abstract class BaseBoardRender implements BoardRender {
         return isReverse ? (9 - y) : y;
     }
 
+    int getReverseX(int x, boolean isReverse) {
+        return isReverse ? (8 - x) : x;
+    }
+
     /**
      * 棋步标识矩形线条宽度
      * @return
@@ -145,7 +149,7 @@ public abstract class BaseBoardRender implements BoardRender {
 
     @Override
     public void drawStepRemark(int pos, int piece, int x, int y, boolean isPrevStep, boolean isReverse, ChessBoard.BoardSize style) {
-        x = pos + piece * x;
+        x = pos + piece * getReverseX(x, isReverse);
         y = pos + piece * getReverseY(y, isReverse);
 
         double len = piece / 1.08;

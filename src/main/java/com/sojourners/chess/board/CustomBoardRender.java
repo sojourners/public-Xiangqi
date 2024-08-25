@@ -59,7 +59,7 @@ public class CustomBoardRender extends BaseBoardRender {
             for (int j = 0; j < board[0].length; j++) {
                 Image img = map.get(board[i][j]);
                 if (img != null) {
-                    int x = pos + piece * j;
+                    int x = pos + piece * getReverseX(j, isReverse);
                     int y = pos + piece * getReverseY(i, isReverse);
                     gc.drawImage(img, x - r, y - r, 2 * r, 2 * r);
                 }
