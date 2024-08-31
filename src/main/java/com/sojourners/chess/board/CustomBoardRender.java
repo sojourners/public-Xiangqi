@@ -11,12 +11,17 @@ import java.util.Map;
 public class CustomBoardRender extends BaseBoardRender {
 
     private Image bgImage;
+    private Image maskImage;
+    private Image mask2Image;
     private Map<Character, Image> map;
 
     public CustomBoardRender(Canvas canvas) {
         super(canvas);
 
         this.bgImage = new Image(new File(PathUtils.getJarPath() + "/ui/board.png").toURI().toString());
+
+        this.maskImage = new Image(new File(PathUtils.getJarPath() + "/ui/mask.png").toURI().toString());
+        this.mask2Image = new Image(new File(PathUtils.getJarPath() + "/ui/mask2.png").toURI().toString());
 
         map = new HashMap<>();
         map.put('r', new Image(new File(PathUtils.getJarPath() + "/ui/br.png").toURI().toString()));
@@ -46,10 +51,10 @@ public class CustomBoardRender extends BaseBoardRender {
 
     }
 
-//    @Override
-//    public void drawBoardLine(int pos, int padding, int piece, boolean isReverse, ChessBoard.BoardSize style) {
-//
-//    }
+    @Override
+    public void drawBoardLine(int pos, int padding, int piece, boolean isReverse, ChessBoard.BoardSize style) {
+
+    }
 
     @Override
     public void drawPieces(int pos, int piece, char[][] board, boolean isReverse, ChessBoard.BoardSize style) {
@@ -65,5 +70,17 @@ public class CustomBoardRender extends BaseBoardRender {
                 }
             }
         }
+    }
+
+    @Override
+    public void drawStepRemark(int pos, int piece, int x, int y, boolean isPrevStep, boolean isReverse, ChessBoard.BoardSize style) {
+
+        int r = (piece - piece / 32) / 2;
+
+        x = pos + piece * getReverseX(x, isReverse);
+        y = pos + piece * getReverseY(y, isReverse);
+
+        Image img = isPrevStep ? mask2Image : maskImage;
+        gc.drawImage(img, x - r, y - r, 2 * r, 2 * r);
     }
 }

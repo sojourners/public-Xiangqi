@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.canvas.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.control.Button?>
@@ -22,7 +27,7 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 
-<BorderPane fx:id="borderPane" minHeight="0.0" minWidth="0.0" prefHeight="712.0" prefWidth="924.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.sojourners.chess.controller.Controller">
+<BorderPane fx:id="borderPane" minHeight="0.0" minWidth="0.0" prefHeight="712.0" prefWidth="924.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.sojourners.chess.controller.Controller">
    <top>
       <MenuBar BorderPane.alignment="CENTER">
         <menus>
@@ -81,6 +86,7 @@
                         </RadioMenuItem>
                         <RadioMenuItem fx:id="menuOfMiddleBoard" mnemonicParsing="false" onAction="#boardSizeSelected" text="中棋盘" toggleGroup="$boardStyle" />
                         <RadioMenuItem fx:id="menuOfBigBoard" mnemonicParsing="false" onAction="#boardSizeSelected" text="大棋盘" toggleGroup="$boardStyle" />
+                        <RadioMenuItem fx:id="menuOfLargeBoard" mnemonicParsing="false" onAction="#boardSizeSelected" text="超大棋盘" toggleGroup="$boardStyle" />
                     </items>
                   </Menu>
             </items>

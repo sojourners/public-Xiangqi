@@ -79,11 +79,11 @@ public class Controller implements EngineCallBack, LinkerCallBack {
     private ComboBox<String> threadComboBox;
 
     @FXML
+    private RadioMenuItem menuOfLargeBoard;
+    @FXML
     private RadioMenuItem menuOfBigBoard;
-
     @FXML
     private RadioMenuItem menuOfMiddleBoard;
-
     @FXML
     private RadioMenuItem menuOfSmallBoard;
 
@@ -191,7 +191,9 @@ public class Controller implements EngineCallBack, LinkerCallBack {
     @FXML
     void boardSizeSelected(ActionEvent event) {
         RadioMenuItem item = (RadioMenuItem) event.getTarget();
-        if (item.equals(menuOfBigBoard)) {
+        if (item.equals(menuOfLargeBoard)) {
+            prop.setBoardSize(ChessBoard.BoardSize.LARGE_BOARD);
+        } else if (item.equals(menuOfBigBoard)) {
             prop.setBoardSize(ChessBoard.BoardSize.BIG_BOARD);
         } else if (item.equals(menuOfMiddleBoard)) {
             prop.setBoardSize(ChessBoard.BoardSize.MIDDLE_BOARD);
@@ -729,7 +731,9 @@ public class Controller implements EngineCallBack, LinkerCallBack {
         // 显示状态栏
         menuOfShowStatus.setSelected(prop.isLinkShowInfo());
         // 棋盘大小
-        if (prop.getBoardSize() == ChessBoard.BoardSize.BIG_BOARD) {
+        if (prop.getBoardSize() == ChessBoard.BoardSize.LARGE_BOARD) {
+            menuOfLargeBoard.setSelected(true);
+        } else if (prop.getBoardSize() == ChessBoard.BoardSize.BIG_BOARD) {
             menuOfBigBoard.setSelected(true);
         } else if (prop.getBoardSize() == ChessBoard.BoardSize.MIDDLE_BOARD) {
             menuOfMiddleBoard.setSelected(true);

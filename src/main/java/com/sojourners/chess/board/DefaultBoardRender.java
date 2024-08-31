@@ -62,20 +62,7 @@ public class DefaultBoardRender extends BaseBoardRender {
      * @return
      */
     private double getPieceBw(ChessBoard.BoardSize style) {
-        switch (style) {
-            case BIG_BOARD: {
-                return 4.5;
-            }
-            case MIDDLE_BOARD: {
-                return 4;
-            }
-            case SMALL_BOARD: {
-                return 3;
-            }
-            default: {
-                return 4;
-            }
-        }
+        return getPieceSize(style) /  16d;
     }
 
     /**
@@ -83,28 +70,10 @@ public class DefaultBoardRender extends BaseBoardRender {
      * @return
      */
     private double getPieceSw(ChessBoard.BoardSize style) {
-        switch (style) {
-            case BIG_BOARD: {
-                return 1;
-            }
-            case MIDDLE_BOARD: {
-                return 0.8;
-            }
-            case SMALL_BOARD: {
-                return 0.6;
-            }
-            default: {
-                return 0.8;
-            }
-        }
+        return getPieceBw(style) / 4d;
     }
 
     private int getFontSize(ChessBoard.BoardSize style) {
-        switch (style) {
-            case BIG_BOARD: { return 36; }
-            case MIDDLE_BOARD: { return 32; }
-            case SMALL_BOARD: { return 26; }
-            default: { return 32; }
-        }
+        return getPieceSize(style) / 2;
     }
 }

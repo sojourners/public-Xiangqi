@@ -7,6 +7,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.transform.Rotate;
 
+
 public abstract class BaseBoardRender implements BoardRender {
 
     private Canvas canvas;
@@ -71,20 +72,7 @@ public abstract class BaseBoardRender implements BoardRender {
      * @return
      */
     private double getCenterTextSize(ChessBoard.BoardSize style) {
-        switch (style) {
-            case BIG_BOARD: {
-                return 30;
-            }
-            case MIDDLE_BOARD: {
-                return 26;
-            }
-            case SMALL_BOARD: {
-                return 20;
-            }
-            default: {
-                return 26;
-            }
-        }
+        return getPieceSize(style) / 2.5d;
     }
 
     @Override
@@ -129,22 +117,7 @@ public abstract class BaseBoardRender implements BoardRender {
      * @return
      */
     private double getStepRectWitdh(ChessBoard.BoardSize style) {
-
-        switch (style) {
-            case BIG_BOARD: {
-                return 2.8;
-            }
-            case MIDDLE_BOARD: {
-                return 2.5;
-            }
-            case SMALL_BOARD: {
-                return 1.5;
-            }
-            default: {
-                return 2.5;
-            }
-        }
-
+        return getPieceSize(style) / 25d;
     }
 
     @Override
@@ -244,20 +217,7 @@ public abstract class BaseBoardRender implements BoardRender {
      * @return
      */
     private double getNumberSize(ChessBoard.BoardSize style) {
-        switch (style) {
-            case BIG_BOARD: {
-                return 16;
-            }
-            case MIDDLE_BOARD: {
-                return 14;
-            }
-            case SMALL_BOARD: {
-                return 11;
-            }
-            default: {
-                return 14;
-            }
-        }
+        return getPieceSize(style) / 4d;
     }
 
     /**
@@ -265,20 +225,7 @@ public abstract class BaseBoardRender implements BoardRender {
      * @return
      */
     private double getInnerRectWidth(ChessBoard.BoardSize style) {
-        switch (style) {
-            case BIG_BOARD: {
-                return 1;
-            }
-            case MIDDLE_BOARD: {
-                return 0.8;
-            }
-            case SMALL_BOARD: {
-                return 0.6;
-            }
-            default: {
-                return 0.8;
-            }
-        }
+        return getOutRectWidth(style) / 2d;
     }
 
     /**
@@ -286,20 +233,7 @@ public abstract class BaseBoardRender implements BoardRender {
      * @return
      */
     private double getOutRectWidth(ChessBoard.BoardSize style) {
-        switch (style) {
-            case BIG_BOARD: {
-                return 2.4;
-            }
-            case MIDDLE_BOARD: {
-                return 2.2;
-            }
-            case SMALL_BOARD: {
-                return 1.2;
-            }
-            default: {
-                return 2.2;
-            }
-        }
+        return getPieceSize(style) / 40d;
     }
 
     /**
@@ -308,6 +242,9 @@ public abstract class BaseBoardRender implements BoardRender {
      */
     public int getPieceSize(ChessBoard.BoardSize style) {
         switch (style) {
+            case LARGE_BOARD: {
+                return 120;
+            }
             case BIG_BOARD: {
                 return 72;
             }
@@ -328,20 +265,6 @@ public abstract class BaseBoardRender implements BoardRender {
      * @return
      */
     public int getPadding(ChessBoard.BoardSize style) {
-        switch (style) {
-            case BIG_BOARD: {
-                return 12;
-            }
-            case MIDDLE_BOARD: {
-                return 10;
-            }
-            case SMALL_BOARD: {
-                return 8;
-            }
-            default: {
-                return 10;
-            }
-        }
+        return getPieceSize(style) / 6;
     }
-
 }

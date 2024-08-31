@@ -123,6 +123,7 @@ public class ChessBoard {
     }
 
     public enum BoardSize {
+        LARGE_BOARD,
         BIG_BOARD,
         MIDDLE_BOARD,
         SMALL_BOARD;
