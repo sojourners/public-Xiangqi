@@ -530,9 +530,9 @@ public class Controller implements EngineCallBack, LinkerCallBack {
     @FXML
     public void aboutClick(ActionEvent e) {
         DialogUtils.showInfoDialog("关于", "中国象棋界面"
-                + System.lineSeparator() + "Built on : 20240309"
+                + System.lineSeparator() + "Built on : 20240831"
                 + System.lineSeparator() + "Author : T"
-                + System.lineSeparator() + "Version : 1.2");
+                + System.lineSeparator() + "Version : 1.3");
     }
 
     @FXML
