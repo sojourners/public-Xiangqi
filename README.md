@@ -1,3 +1,6 @@
+# public-Xiangqi
+基于JavaFx实现的跨平台中国象棋界面程序
+
 # 使用手册
 
 ## 1 引擎
