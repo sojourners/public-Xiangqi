@@ -32,6 +32,8 @@ public abstract class BaseBoardRender implements BoardRender {
         drawBackgroundImage(canvas.getWidth(), canvas.getHeight());
         // 绘制棋盘线
         drawBoardLine(pos, padding, piece, isReverse, boardSize);
+        // 绘制线路序号
+        drawBoardNum(pos, piece, isReverse, boardSize);
         // 绘制楚河汉界
         drawCenterText(pos, piece, boardSize);
         // 上一步走棋记号
@@ -175,6 +177,9 @@ public abstract class BaseBoardRender implements BoardRender {
             drawStarPos(pos + piece * i, pos + piece * 2, piece, "lr");
             drawStarPos(pos + piece * i, pos + piece * 7, piece, "lr");
         }
+    }
+
+    public void drawBoardNum(int pos, int piece, boolean isReverse, ChessBoard.BoardSize style) {
         // 绘制线路序号
         double numberSize = getNumberSize(style);
         gc.setFont(Font.font(numberSize));
