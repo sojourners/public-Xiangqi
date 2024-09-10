@@ -423,7 +423,7 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
         boolean isReverse = rowRedKing >= 0 && rowRedKing <= 2 || rowBlackKing >= 7 && rowBlackKing <= 9;
         if (isReverse) {
             for (int i = 0; i < 5; i++) {
-                for (int j = 0; j < 4; j++) {
+                for (int j = 0; j < 9; j++) {
                     char tmp = board[i][j];
                     board[i][j] = board[9 - i][8 - j];
                     board[9 - i][8 - j] = tmp;
