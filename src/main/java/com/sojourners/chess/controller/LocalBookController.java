@@ -4,10 +4,12 @@ import com.sojourners.chess.config.Properties;
 import com.sojourners.chess.model.LocalBook;
 import com.sojourners.chess.util.PathUtils;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.stage.FileChooser;
 
 import java.io.File;
@@ -22,7 +24,6 @@ public class LocalBookController {
 
     @FXML
     void addButtonClick(ActionEvent e) {
-
         FileChooser fileChooser = new FileChooser();
         fileChooser.setInitialDirectory(new File(PathUtils.getJarPath()));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("obk(*.obk)", "*.obk"));
@@ -40,7 +41,6 @@ public class LocalBookController {
         if (index >= 0) {
             prop.getOpenBookList().remove(index);
             refreshTable();
-
         }
     }
 
@@ -52,7 +52,6 @@ public class LocalBookController {
             prop.getOpenBookList().add(index - 1, lb);
             refreshTable();
             table.getSelectionModel().select(index - 1);
-
         }
     }
 
@@ -64,7 +63,6 @@ public class LocalBookController {
             prop.getOpenBookList().add(index + 1, lb);
             refreshTable();
             table.getSelectionModel().select(index + 1);
-
         }
     }
 
@@ -81,13 +79,18 @@ public class LocalBookController {
 
         TableColumn nameCol = (TableColumn) table.getColumns().get(0);
         nameCol.setCellValueFactory(new PropertyValueFactory<LocalBook, String>("path"));
+        // set open book path editable
+        nameCol.setCellFactory(TextFieldTableCell.forTableColumn());
+        nameCol.setOnEditCommit((EventHandler<TableColumn.CellEditEvent<LocalBook, String>>) localBookStringCellEditEvent -> {
+            int row = localBookStringCellEditEvent.getTablePosition().getRow();
+            prop.getOpenBookList().set(row, localBookStringCellEditEvent.getNewValue());
+            refreshTable();
+        });
 
         prop = Properties.getInstance();
 
         refreshTable();
 
         this.change = false;
-
     }
-
 }
