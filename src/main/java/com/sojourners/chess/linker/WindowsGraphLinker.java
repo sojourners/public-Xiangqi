@@ -15,10 +15,13 @@ public class WindowsGraphLinker extends AbstractGraphLinker implements MouseList
 
     private WinDef.HWND hwnd;
     private GlobalMouseListener listener;
+    private double screenScalingFactor;
 
     public WindowsGraphLinker(LinkerCallBack callBack) throws AWTException {
         super(callBack);
         this.listener = new GlobalMouseListener(this);
+        // 分辨率缩放系数
+        this.screenScalingFactor = getScreenScalingFactor();
     }
 
     @Override
@@ -51,7 +54,19 @@ public class WindowsGraphLinker extends AbstractGraphLinker implements MouseList
     public Rectangle getTargetWindowPosition() {
         WinDef.RECT rect = new WinDef.RECT();
         User32.INSTANCE.GetWindowRect(hwnd, rect);
-        return rect.toRectangle();
+        Rectangle rectangle = rect.toRectangle();
+        // windows缩放处理
+        rectangle.x /= screenScalingFactor;
+        rectangle.y /= screenScalingFactor;
+        rectangle.width /= screenScalingFactor;
+        rectangle.height /= screenScalingFactor;
+        return rectangle;
+    }
+
+    private double getScreenScalingFactor() {
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice gd = ge.getDefaultScreenDevice();
+        return gd.getDefaultConfiguration().getDefaultTransform().getScaleX();
     }
 
     @Override
@@ -61,6 +76,12 @@ public class WindowsGraphLinker extends AbstractGraphLinker implements MouseList
 
     @Override
     public void mouseClickByBack(Point p1, Point p2) {
+        // 处理windows缩放问题
+        p1.x *= screenScalingFactor;
+        p1.y *= screenScalingFactor;
+        p2.x *= screenScalingFactor;
+        p2.y *= screenScalingFactor;
+
         leftClick(p1.x, p1.y);
         if (Properties.getInstance().getMouseMoveDelay() > 0) {
             sleep(Properties.getInstance().getMouseMoveDelay());
@@ -88,6 +109,9 @@ public class WindowsGraphLinker extends AbstractGraphLinker implements MouseList
                 User32.INSTANCE.GetClientRect(hWnd, bounds);
                 width = bounds.right - bounds.left;
                 height = bounds.bottom - bounds.top;
+                // 处理windows缩放问题
+                width /= screenScalingFactor;
+                height /= screenScalingFactor;
                 x = 0;
                 y = 0;
             } else {

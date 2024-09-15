@@ -149,6 +149,8 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
                             if (isReverse) {
                                 action.y1 = 9 - action.y1;
                                 action.y2 = 9 - action.y2;
+                                action.x1 = 8 - action.x1;
+                                action.x2 = 8 - action.x2;
                             }
                             autoClick(action.x1, action.y1, action.x2, action.y2);
 

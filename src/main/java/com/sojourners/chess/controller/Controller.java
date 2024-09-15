@@ -538,9 +538,9 @@ public class Controller implements EngineCallBack, LinkerCallBack {
     @FXML
     public void aboutClick(ActionEvent e) {
         DialogUtils.showInfoDialog("关于", "中国象棋界面"
-                + System.lineSeparator() + "Built on : 20240831"
+                + System.lineSeparator() + "Built on : 20240915"
                 + System.lineSeparator() + "Author : T"
-                + System.lineSeparator() + "Version : 1.3");
+                + System.lineSeparator() + "Version : 1.4");
     }
 
     @FXML
@@ -1013,6 +1013,8 @@ public class Controller implements EngineCallBack, LinkerCallBack {
             if (robotBlack.getValue()) {
                 y1 = 9 - y1;
                 y2 = 9 - y2;
+                x1 = 8 - x1;
+                x2 = 8 - x2;
             }
             graphLinker.autoClick(x1, y1, x2, y2);
         }
