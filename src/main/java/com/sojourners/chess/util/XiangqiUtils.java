@@ -1,5 +1,8 @@
 package com.sojourners.chess.util;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class XiangqiUtils {
 
 
@@ -575,5 +578,53 @@ public class XiangqiUtils {
     }
     public static boolean isRed(char c) {
         return c >= 'A' && c <= 'Z';
+    }
+
+    public static boolean validateChessBoard(char[][] board) {
+        Map<Character, Integer> map = new HashMap<>(32);
+        // 校验棋子位置是否合法
+        for (int i = 0; i < 10; i++) {
+            for (int j = 0; j < 9; j++) {
+                if ((board[i][j] == 'k' || board[i][j] == 'K') && ((i > 2 && i < 7) || j < 3 || j > 5)) {
+                    return false;
+                }
+                if ((board[i][j] == 'b' || board[i][j] == 'B') &&
+                        ((i != 0 && i != 2 && i != 4 && i != 5 && i != 7 && i != 9)
+                                || (j != 0 && j != 2 && j != 4 && j != 6 && j != 8))) {
+                    return false;
+                }
+                if ((board[i][j] == 'a' || board[i][j] == 'A') && ((i > 2 && i < 7) || j < 3 || j > 5 || (i <= 2 && (i + j) % 2 == 0) || (i >= 7 && (i + j) % 2 == 1))) {
+                    return false;
+                }
+                if (board[i][j] != ' ') {
+                    if (map.containsKey(board[i][j])) {
+                        map.put(board[i][j], map.get(board[i][j]) + 1);
+                    } else {
+                        map.put(board[i][j], 1);
+                    }
+                }
+            }
+        }
+        // 校验棋子数量是否合法
+        for (Map.Entry<Character, Integer> entry : map.entrySet()) {
+            char key = entry.getKey();
+            Integer value = entry.getValue();
+            if (key == 'r' || key == 'R' || key == 'b' || key == 'B' || key == 'a' || key == 'A' || key == 'c' || key == 'C' || key == 'n' || key == 'N') {
+                if (value > 2) {
+                    return false;
+                }
+            }
+            if (key == 'k' || key == 'K') {
+                if (value != 1) {
+                    return false;
+                }
+            }
+            if (key == 'p' || key == 'P') {
+                if (value > 5) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }

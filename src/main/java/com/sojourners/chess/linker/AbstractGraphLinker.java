@@ -403,7 +403,10 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
         // 截图
         BufferedImage img = screenshot(false);
         // ai识别棋盘棋子
-        return this.aiModel.findChessBoard(img, board);
+        if (!this.aiModel.findChessBoard(img, board)) {
+            return false;
+        }
+        return XiangqiUtils.validateChessBoard(board);
     }
     private boolean reverse(char[][] board) throws Exception {
         // 是否翻转
@@ -441,9 +444,7 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
         if (!findChessBoard(board2)) {
             return false;
         }
-//        if (!validateChessBoard(board2)) {
-//            return false;
-//        }
+
         boolean isReverse = false;
         try {
             isReverse = reverse(board2);
@@ -457,25 +458,6 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
         fenCode = ChessBoard.fenCode(board2, redGo);
         // 回调，初始化棋盘
         callBack.linkerInitChessBoard(fenCode, isReverse);
-        return true;
-    }
-
-    private boolean validateChessBoard(char[][] board) {
-        for (int i = 0; i < 10; i++) {
-            for (int j = 0; j < 9; j++) {
-                if ((board[i][j] == 'k' || board[i][j] == 'K') && ((i > 2 && i < 7) || j < 3 || j > 5)) {
-                    return false;
-                }
-                if ((board[i][j] == 'b' || board[i][j] == 'B') &&
-                    ((i != 0 && i != 2 && i != 4 && i != 5 && i != 7 && i != 9)
-                    || (j != 0 && j != 2 && j != 4 && j != 6 && j != 8))) {
-                    return false;
-                }
-                if ((board[i][j] == 'a' || board[i][j] == 'A') && ((i > 2 && i < 7) || j < 3 || j > 5 || (i <= 2 && (i + j) % 2 == 0) || (i >= 7 && (i + j) % 2 == 1))) {
-                    return false;
-                }
-            }
-        }
         return true;
     }
 
