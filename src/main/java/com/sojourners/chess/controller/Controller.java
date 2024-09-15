@@ -86,6 +86,8 @@ public class Controller implements EngineCallBack, LinkerCallBack {
     private RadioMenuItem menuOfMiddleBoard;
     @FXML
     private RadioMenuItem menuOfSmallBoard;
+    @FXML
+    private RadioMenuItem menuOfAutoFitBoard;
 
     @FXML
     private RadioMenuItem menuOfDefaultBoard;
@@ -197,10 +199,15 @@ public class Controller implements EngineCallBack, LinkerCallBack {
             prop.setBoardSize(ChessBoard.BoardSize.BIG_BOARD);
         } else if (item.equals(menuOfMiddleBoard)) {
             prop.setBoardSize(ChessBoard.BoardSize.MIDDLE_BOARD);
+        } else if (item.equals(menuOfAutoFitBoard)) {
+            prop.setBoardSize(ChessBoard.BoardSize.AUTOFIT_BOARD);
         } else {
             prop.setBoardSize(ChessBoard.BoardSize.SMALL_BOARD);
         }
         board.setBoardSize(prop.getBoardSize());
+        if (prop.getBoardSize() == ChessBoard.BoardSize.AUTOFIT_BOARD) {
+            board.autoFitSize(borderPane.getWidth(), borderPane.getHeight(), splitPane.getDividerPositions()[0], prop.isLinkShowInfo());
+        }
     }
     @FXML
     void stepTipChecked(ActionEvent event) {
@@ -233,6 +240,7 @@ public class Controller implements EngineCallBack, LinkerCallBack {
         CheckMenuItem item = (CheckMenuItem) event.getTarget();
         prop.setLinkShowInfo(item.isSelected());
         statusToolBar.setVisible(item.isSelected());
+        board.autoFitSize(borderPane.getWidth(), borderPane.getHeight(), splitPane.getDividerPositions()[0], prop.isLinkShowInfo());
     }
 
     @FXML
@@ -665,8 +673,22 @@ public class Controller implements EngineCallBack, LinkerCallBack {
         initGraphLinker();
         // 按钮监听
         initButtonListener();
+        // autofit board size listener
+        initAutoFitBoardListener();
 
         useOpenBook.setValue(prop.getBookSwitch());
+    }
+
+    private void initAutoFitBoardListener() {
+        borderPane.widthProperty().addListener((observableValue, number, t1) -> {
+            board.autoFitSize(t1.doubleValue(), borderPane.getHeight(), splitPane.getDividerPositions()[0], prop.isLinkShowInfo());
+        });
+        borderPane.heightProperty().addListener((observableValue, number, t1) -> {
+            board.autoFitSize(borderPane.getWidth(), t1.doubleValue(), splitPane.getDividerPositions()[0], prop.isLinkShowInfo());
+        });
+        splitPane.getDividers().get(0).positionProperty().addListener((observableValue, number, t1) -> {
+            board.autoFitSize(borderPane.getWidth(), borderPane.getHeight(), t1.doubleValue(), prop.isLinkShowInfo());
+        });
     }
 
     private void initBookTable() {
@@ -737,6 +759,8 @@ public class Controller implements EngineCallBack, LinkerCallBack {
             menuOfBigBoard.setSelected(true);
         } else if (prop.getBoardSize() == ChessBoard.BoardSize.MIDDLE_BOARD) {
             menuOfMiddleBoard.setSelected(true);
+        } else if (prop.getBoardSize() == ChessBoard.BoardSize.AUTOFIT_BOARD) {
+            menuOfAutoFitBoard.setSelected(true);
         } else {
             menuOfSmallBoard.setSelected(true);
         }
@@ -816,8 +840,9 @@ public class Controller implements EngineCallBack, LinkerCallBack {
     private void initEngineView() {
         // 引擎列表 线程数 哈希表大小
         refreshEngineComboBox();
-
-        threadComboBox.getItems().addAll("1", "2", "4", "6", "8", "12", "16", "32", "64", "128");
+        for (int i = 1; i <= Runtime.getRuntime().availableProcessors(); i++) {
+            threadComboBox.getItems().add(String.valueOf(i));
+        }
         hashComboBox.getItems().addAll("16", "32", "64", "128", "256", "512", "1024", "2048", "4096");
         // 加载设置
         threadComboBox.setValue(String.valueOf(prop.getThreadNum()));

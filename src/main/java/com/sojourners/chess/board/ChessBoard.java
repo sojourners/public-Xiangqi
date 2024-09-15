@@ -126,7 +126,8 @@ public class ChessBoard {
         LARGE_BOARD,
         BIG_BOARD,
         MIDDLE_BOARD,
-        SMALL_BOARD;
+        SMALL_BOARD,
+        AUTOFIT_BOARD
     }
     public enum BoardStyle {
         DEFAULT,
@@ -523,6 +524,29 @@ public class ChessBoard {
             return (char) ('０' + 9 - j);
         } else {
             return (char) ('０' + j + 1);
+        }
+    }
+
+    public void autoFitSize(double width, double height, double position, boolean showStatusBar) {
+        if (boardSize == BoardSize.AUTOFIT_BOARD) {
+            position = Math.abs(position);
+            width = width * position;
+            height = height - 56;
+            if (showStatusBar) {
+                height = height - 27;
+            }
+            int pieceSize;
+            if (width / height > 1120 / 1240d) {
+                pieceSize = (int) (height / (10 + 1/3d));
+            } else {
+                pieceSize = (int) (width / (9 + 1/3d));
+            }
+            if (pieceSize < 42) {
+                pieceSize = 42;
+            }
+            boardRender.setAutoPieceSize(pieceSize);
+
+            paint();
         }
     }
 }

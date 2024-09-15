@@ -14,6 +14,8 @@ public abstract class BaseBoardRender implements BoardRender {
 
     GraphicsContext gc;
 
+    private static int autoPieceSize;
+
     public BaseBoardRender(Canvas canvas) {
         this.canvas = canvas;
         this.gc = canvas.getGraphicsContext2D();
@@ -259,6 +261,9 @@ public abstract class BaseBoardRender implements BoardRender {
             case SMALL_BOARD: {
                 return 48;
             }
+            case AUTOFIT_BOARD: {
+                return autoPieceSize;
+            }
             default: {
                 return 64;
             }
@@ -271,5 +276,9 @@ public abstract class BaseBoardRender implements BoardRender {
      */
     public int getPadding(ChessBoard.BoardSize style) {
         return getPieceSize(style) / 6;
+    }
+
+    public void setAutoPieceSize(int size) {
+        this.autoPieceSize = size;
     }
 }
