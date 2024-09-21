@@ -27,8 +27,10 @@ public class Engine {
     private AnalysisModel analysisModel;
     private long analysisValue;
 
+    private volatile boolean threadNumChange;
     private int threadNum;
 
+    private volatile boolean hashSizeChange;
     private int hashSize;
 
     private BufferedReader reader;
@@ -267,12 +269,13 @@ public class Engine {
     private void analysis(String fenCode, List<String> moves) {
         stop();
 
-        if ("uci".equals(this.protocol)) {
-            cmd("setoption name Threads value " + threadNum);
-            cmd("setoption name Hash value " + hashSize);
-        } else if ("ucci".equals(this.protocol)) {
-            cmd("setoption Threads " + threadNum);
-            cmd("setoption Hash " + hashSize);
+        if (threadNumChange) {
+            cmd(("uci".equals(this.protocol) ? "setoption name Threads value " : "setoption Threads ") + threadNum);
+            this.threadNumChange = false;
+        }
+        if (hashSizeChange) {
+            cmd(("uci".equals(this.protocol) ? "setoption name Hash value " : "setoption Hash ") + hashSize);
+            this.hashSizeChange = false;
         }
 
         StringBuilder sb = new StringBuilder();
@@ -309,13 +312,18 @@ public class Engine {
     }
 
     public void setThreadNum(int threadNum) {
-        this.threadNum = threadNum;
+        if (threadNum != this.threadNum) {
+            this.threadNum = threadNum;
+            this.threadNumChange = true;
+        }
 
     }
 
     public void setHashSize(int hashSize) {
-        this.hashSize = hashSize;
-
+        if (hashSize != this.hashSize) {
+            this.hashSize = hashSize;
+            this.hashSizeChange = true;
+        }
     }
 
     public void setAnalysisModel(AnalysisModel model, long v) {
