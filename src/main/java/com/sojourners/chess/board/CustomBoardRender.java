@@ -3,6 +3,7 @@ package com.sojourners.chess.board;
 import com.sojourners.chess.util.PathUtils;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.image.Image;
+import javafx.scene.paint.Color;
 
 import java.io.File;
 import java.util.HashMap;
@@ -70,6 +71,13 @@ public class CustomBoardRender extends BaseBoardRender {
                 }
             }
         }
+    }
+
+    @Override
+    public Color getBackgroundColor() {
+        int centerX = (int) (bgImage.getWidth() / 2);
+        int centerY = (int) (bgImage.getHeight() / 2);
+        return this.bgImage.getPixelReader().getColor(centerX, centerY);
     }
 
     @Override

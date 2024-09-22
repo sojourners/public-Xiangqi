@@ -104,6 +104,8 @@ public class Controller implements EngineCallBack, LinkerCallBack {
     private CheckMenuItem menuOfLinkAnimation;
     @FXML
     private CheckMenuItem menuOfShowStatus;
+    @FXML
+    private CheckMenuItem menuOfShowNumber;
 
     private Properties prop;
 
@@ -214,6 +216,13 @@ public class Controller implements EngineCallBack, LinkerCallBack {
         CheckMenuItem item = (CheckMenuItem) event.getTarget();
         prop.setStepTip(item.isSelected());
         board.setStepTip(prop.isStepTip());
+    }
+
+    @FXML
+    void showNumberClick(ActionEvent event) {
+        CheckMenuItem item = (CheckMenuItem) event.getTarget();
+        prop.setShowNumber(item.isSelected());
+        board.setShowNumber(prop.isShowNumber());
     }
 
     @FXML
@@ -750,6 +759,8 @@ public class Controller implements EngineCallBack, LinkerCallBack {
         menuOfLinkBackMode.setSelected(prop.isLinkBackMode());
         // 连线动画确认
         menuOfLinkAnimation.setSelected(prop.isLinkAnimation());
+        // show number
+        menuOfShowNumber.setSelected(prop.isShowNumber());
         // 显示状态栏
         menuOfShowStatus.setSelected(prop.isLinkShowInfo());
         // 棋盘大小
@@ -791,9 +802,26 @@ public class Controller implements EngineCallBack, LinkerCallBack {
                     pasteButtonClick(null);
                 } else if ("交换行棋方".equals(item.getText())) {
                     switchPlayer(true);
+                } else if ("编辑局面".equals(item.getText())) {
+                    editChessBoardClick(null);
                 }
             }
         });
+    }
+
+    @FXML
+    public void editChessBoardClick(ActionEvent e) {
+        String fenCode = App.openEditChessBoard(board.getBoard(), redGo, isReverse.getValue());
+        if (StringUtils.isNotEmpty(fenCode)) {
+            if (linkMode.getValue()) {
+                stopGraphLink();
+            }
+
+            newChessBoard(fenCode);
+            if (XiangqiUtils.isReverse(fenCode)) {
+                reverseButtonClick(null);
+            }
+        }
     }
 
     /**
@@ -812,8 +840,7 @@ public class Controller implements EngineCallBack, LinkerCallBack {
         // 引擎停止计算
         engineStop();
         // 绘制棋盘
-        board = new ChessBoard(this.canvas, prop.getBoardSize(), prop.getBoardStyle(), prop.isStepTip(), prop.isStepSound(), fenCode);
-//        board.paint();
+        board = new ChessBoard(this.canvas, prop.getBoardSize(), prop.getBoardStyle(), prop.isStepTip(), prop.isStepSound(), prop.isShowNumber(), fenCode);
         // 设置局面
         redGo = StringUtils.isEmpty(fenCode) ? true : fenCode.contains("w");
         this.fenCode = board.fenCode(redGo);

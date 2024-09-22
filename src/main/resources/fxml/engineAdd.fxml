@@ -8,7 +8,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="250.0" prefWidth="570.0" style="-fx-padding: 10px 0px;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.sojourners.chess.controller.EngineAddController">
+<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="250.0" prefWidth="575.0" style="-fx-padding: 10px 0px;" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.sojourners.chess.controller.EngineAddController">
    <children>
       <HBox prefHeight="100.0" prefWidth="200.0">
          <children>
@@ -38,7 +38,7 @@
                   </HBox>
                </children>
             </VBox>
-            <ListView fx:id="optionsListView" focusTraversable="false" prefHeight="165.0" prefWidth="250.0">
+            <ListView fx:id="optionsListView" focusTraversable="false" prefHeight="165.0" prefWidth="255.0">
                <opaqueInsets>
                   <Insets />
                </opaqueInsets>
@@ -48,7 +48,7 @@
             </ListView>
          </children>
       </HBox>
-      <HBox alignment="CENTER_RIGHT" minHeight="-Infinity" minWidth="-Infinity" prefHeight="55.0" prefWidth="570.0" style="-fx-padding: 0px 20px;">
+      <HBox alignment="CENTER_RIGHT" minHeight="-Infinity" minWidth="-Infinity" prefHeight="55.0" prefWidth="575.0" style="-fx-padding: 0px 20px;">
          <children>
             <Button mnemonicParsing="false" onAction="#okButtonClick" prefHeight="27.0" prefWidth="72.0" text="确定">
                <HBox.margin>

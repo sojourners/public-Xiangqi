@@ -614,17 +614,32 @@ public class XiangqiUtils {
                     return false;
                 }
             }
-            if (key == 'k' || key == 'K') {
-                if (value != 1) {
-                    return false;
-                }
-            }
             if (key == 'p' || key == 'P') {
                 if (value > 5) {
                     return false;
                 }
             }
         }
+        if (map.get('k') == null || map.get('k') != 1 || map.get('K') == null || map.get('K') != 1) {
+            return false;
+        }
         return true;
+    }
+
+    public static boolean isReverse(String fenCode) {
+        int rIndex = fenCode.indexOf('K');
+        int bIndex = fenCode.indexOf('k');
+        if (rIndex == -1 && bIndex == -1) {
+            return false;
+        } else if (rIndex == -1 || bIndex == -1) {
+            int xIndex = 0;
+            for (int i = 0; i < 5; i++) {
+                xIndex = fenCode.indexOf('/', xIndex + 1);
+            }
+            return rIndex == -1 ? bIndex > xIndex : rIndex < xIndex;
+        } else if (rIndex != -1 && bIndex != -1) {
+            return rIndex < bIndex;
+        }
+        return false;
     }
 }

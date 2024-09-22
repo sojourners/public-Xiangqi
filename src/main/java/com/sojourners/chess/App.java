@@ -1,6 +1,7 @@
 package com.sojourners.chess;
 
 import com.sojourners.chess.controller.Controller;
+import com.sojourners.chess.controller.EditChessBoardController;
 import com.sojourners.chess.controller.LocalBookController;
 import javafx.application.Application;
 import javafx.event.Event;
@@ -25,6 +26,7 @@ public class App extends Application {
     private static Stage timeSetting;
     private static Stage bookSetting;
     private static Stage linkSetting;
+    private static Stage editChessBoard;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -142,6 +144,35 @@ public class App extends Application {
     }
     public static void closeLinkSetting() {
         linkSetting.close();
+    }
+
+    public static String openEditChessBoard(char[][] board, boolean redGo, boolean isReverse) {
+        try {
+            Stage stage = new Stage();
+            FXMLLoader fxmlLoader = new FXMLLoader();
+            fxmlLoader.setLocation(App.class.getResource("/fxml/editChessBoard.fxml"));
+            Parent pane = fxmlLoader.load();
+            stage.setScene(new Scene(pane));
+
+            editChessBoard = stage;
+            editChessBoard.setTitle("编辑局面");
+            editChessBoard.initModality(Modality.APPLICATION_MODAL);
+            editChessBoard.initOwner(mainStage);
+
+            EditChessBoardController controller = fxmlLoader.getController();
+            controller.setBoard(board, isReverse);
+            controller.setFirstMover(redGo);
+
+            editChessBoard.showAndWait();
+            return controller.getFenCode();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    public static void closeEditChessBoard() {
+        editChessBoard.close();
     }
 
     private static Stage createStage(String resource) {

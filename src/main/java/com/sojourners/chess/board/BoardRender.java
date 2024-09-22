@@ -1,6 +1,8 @@
 package com.sojourners.chess.board;
 
 
+import javafx.scene.paint.Color;
+
 public interface BoardRender {
 
     void drawBackgroundImage(double width, double height);
@@ -16,4 +18,6 @@ public interface BoardRender {
     void drawStepTips(int pos, int piece, int x1, int y1, int x2, int y2, boolean isReverse, boolean isFirst);
 
     void setAutoPieceSize(int size);
+
+    Color getBackgroundColor();
 }

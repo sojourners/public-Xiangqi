@@ -13,6 +13,9 @@ public class BoardContextMenu extends ContextMenu {
 
     /** * 私有构造函数 */
     private BoardContextMenu() {
+        MenuItem editMenuItem = new MenuItem("编辑局面");
+        getItems().add(editMenuItem);
+        getItems().add(new SeparatorMenuItem());
 
         MenuItem copyMenuItem = new MenuItem("复制局面");
         MenuItem pasteMenuItem = new MenuItem("粘贴局面");

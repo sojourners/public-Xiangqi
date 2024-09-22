@@ -3,13 +3,13 @@ package com.sojourners.chess.controller;
 import com.sojourners.chess.App;
 import com.sojourners.chess.config.Properties;
 import com.sojourners.chess.enginee.Engine;
-import com.sojourners.chess.openbook.MoveRule;
-import com.sojourners.chess.openbook.OpenBookManager;
 import com.sojourners.chess.util.DialogUtils;
 import com.sojourners.chess.util.StringUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleGroup;
 
 
 public class TimeSettingController {

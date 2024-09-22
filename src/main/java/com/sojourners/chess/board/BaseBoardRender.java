@@ -22,7 +22,7 @@ public abstract class BaseBoardRender implements BoardRender {
     }
 
     public void paint(ChessBoard.BoardSize boardSize, char[][] board, ChessBoard.Step prevStep, ChessBoard.Point remark,
-                      boolean stepTip, ChessBoard.Step tipFirst, ChessBoard.Step tipSecond, boolean isReverse) {
+                      boolean stepTip, ChessBoard.Step tipFirst, ChessBoard.Step tipSecond, boolean isReverse, boolean showNumber) {
         int padding = getPadding(boardSize);
         int piece = getPieceSize(boardSize);
         int pos = padding + piece / 2;
@@ -35,7 +35,9 @@ public abstract class BaseBoardRender implements BoardRender {
         // 绘制棋盘线
         drawBoardLine(pos, padding, piece, isReverse, boardSize);
         // 绘制线路序号
-        drawBoardNum(pos, piece, isReverse, boardSize);
+        if (showNumber) {
+            drawBoardNum(pos, piece, isReverse, boardSize);
+        }
         // 绘制楚河汉界
         drawCenterText(pos, piece, boardSize);
         // 上一步走棋记号
@@ -58,11 +60,33 @@ public abstract class BaseBoardRender implements BoardRender {
         }
     }
 
+    // paint edit chess board demo piece
+    public void paintDemoBoard(ChessBoard.BoardSize boardSize, char[][] board, ChessBoard.Point remark) {
+        int piece = getPieceSize(boardSize);
+        int padding = getPadding(boardSize);
+        int pos = padding + piece / 2;
+
+        canvas.setWidth(2 * padding + piece * 2);
+        canvas.setHeight(2 * padding + piece * 10);
+
+        // 绘制背景
+        gc.setFill(getBackgroundColor());
+        gc.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
+        // 已选择棋子记号
+        if (remark != null) {
+            drawStepRemark(pos, piece, remark.x, remark.y, true, false, boardSize);
+        }
+        // 绘制棋子
+        drawPieces(pos, piece, board, false, boardSize);
+
+    }
+
     @Override
     public void drawCenterText(int pos, int piece, ChessBoard.BoardSize style) {
         // 绘制楚河汉界
         double centerTextSize = getCenterTextSize(style);
         gc.setFont(Font.font(centerTextSize));
+        gc.setFill(Color.BLACK);
         gc.setGlobalAlpha(0.55);
         gc.fillText("楚", pos + 2 * piece - centerTextSize, pos + 4.5 * piece + centerTextSize / 3.6);
         gc.fillText("河", pos + 3 * piece - centerTextSize, pos + 4.5 * piece + centerTextSize / 3.6);

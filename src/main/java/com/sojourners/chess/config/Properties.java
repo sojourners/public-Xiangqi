@@ -24,6 +24,8 @@ public class Properties implements Serializable {
 
     private boolean stepSound;
 
+    private boolean showNumber = true;
+
     private int threadNum;
 
     private int hashSize;
@@ -425,5 +427,13 @@ public class Properties implements Serializable {
 
     public void setStepTip(boolean stepTip) {
         this.stepTip = stepTip;
+    }
+
+    public boolean isShowNumber() {
+        return showNumber;
+    }
+
+    public void setShowNumber(boolean showNumber) {
+        this.showNumber = showNumber;
     }
 }

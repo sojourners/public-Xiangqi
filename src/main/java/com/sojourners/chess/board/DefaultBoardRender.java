@@ -22,6 +22,13 @@ public class DefaultBoardRender extends BaseBoardRender {
         gc.drawImage(bgImage, 0, 0, width, height);
     }
 
+    @Override
+    public Color getBackgroundColor() {
+        int centerX = (int) (bgImage.getWidth() / 2);
+        int centerY = (int) (bgImage.getHeight() / 2);
+        return this.bgImage.getPixelReader().getColor(centerX, centerY);
+    }
+
 
     @Override
     public void drawPieces(int pos, int piece, char[][] board, boolean isReverse, ChessBoard.BoardSize style) {

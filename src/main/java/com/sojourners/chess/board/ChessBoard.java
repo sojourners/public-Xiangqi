@@ -25,6 +25,8 @@ public class ChessBoard {
 
     private boolean stepTip;
 
+    private boolean showNumber;
+
     private boolean stepSound;
 
     private static SoundPlayer sound;
@@ -73,7 +75,7 @@ public class ChessBoard {
 
     private boolean isReverse;
 
-    public class Point {
+    public static class Point {
         int x;
         int y;
         public Point(int x, int y) {
@@ -134,13 +136,14 @@ public class ChessBoard {
         CUSTOM;
     }
 
-    public ChessBoard(Canvas canvas, BoardSize bs, BoardStyle style, boolean stepTip, boolean stepSound, String fenCode) {
+    public ChessBoard(Canvas canvas, BoardSize bs, BoardStyle style, boolean stepTip, boolean stepSound, boolean showNumber, String fenCode) {
         if (this.boardRender == null) {
             this.boardRender = style == BoardStyle.CUSTOM ? new CustomBoardRender(canvas) : new DefaultBoardRender(canvas);
         }
 
         this.stepTip = stepTip;
         this.stepSound = stepSound;
+        this.showNumber = showNumber;
         // 设置局面
         setNewBoard(fenCode);
         // 设置棋盘大小
@@ -151,43 +154,47 @@ public class ChessBoard {
         this.paint();
     }
 
-    private void setNewBoard(String fenCode) {
-        if (StringUtils.isEmpty(fenCode)) {
-            for (int i = 0; i < 10; i++) {
-                for (int j = 0; j < 9; j++) {
-                    if (i == 0 && (j == 0 || j == 8)) {
-                        board[i][j] = 'r';
-                    } else if (i == 0 && (j == 1 || j == 7)) {
-                        board[i][j] = 'n';
-                    } else if (i == 0 && (j == 2 || j == 6)) {
-                        board[i][j] = 'b';
-                    } else if (i == 0 && (j == 3 || j == 5)) {
-                        board[i][j] = 'a';
-                    } else if (i == 0 && j == 4) {
-                        board[i][j] = 'k';
-                    } else if (i == 2 && (j == 1 || j == 7)) {
-                        board[i][j] = 'c';
-                    } else if (i == 3 && (j == 0 || j == 2 || j == 4 || j == 6 || j == 8)) {
-                        board[i][j] = 'p';
-                    } else if (i == 9 && (j == 0 || j == 8)) {
-                        board[i][j] = 'R';
-                    } else if (i == 9 && (j == 1 || j == 7)) {
-                        board[i][j] = 'N';
-                    } else if (i == 9 && (j == 2 || j == 6)) {
-                        board[i][j] = 'B';
-                    } else if (i == 9 && (j == 3 || j == 5)) {
-                        board[i][j] = 'A';
-                    } else if (i == 9 && j == 4) {
-                        board[i][j] = 'K';
-                    } else if (i == 7 && (j == 1 || j == 7)) {
-                        board[i][j] = 'C';
-                    } else if (i == 6 && (j == 0 || j == 2 || j == 4 || j == 6 || j == 8)) {
-                        board[i][j] = 'P';
-                    } else {
-                        board[i][j] = ' ';
-                    }
+    public static void initChessBoard(char[][] board) {
+        for (int i = 0; i < 10; i++) {
+            for (int j = 0; j < 9; j++) {
+                if (i == 0 && (j == 0 || j == 8)) {
+                    board[i][j] = 'r';
+                } else if (i == 0 && (j == 1 || j == 7)) {
+                    board[i][j] = 'n';
+                } else if (i == 0 && (j == 2 || j == 6)) {
+                    board[i][j] = 'b';
+                } else if (i == 0 && (j == 3 || j == 5)) {
+                    board[i][j] = 'a';
+                } else if (i == 0 && j == 4) {
+                    board[i][j] = 'k';
+                } else if (i == 2 && (j == 1 || j == 7)) {
+                    board[i][j] = 'c';
+                } else if (i == 3 && (j == 0 || j == 2 || j == 4 || j == 6 || j == 8)) {
+                    board[i][j] = 'p';
+                } else if (i == 9 && (j == 0 || j == 8)) {
+                    board[i][j] = 'R';
+                } else if (i == 9 && (j == 1 || j == 7)) {
+                    board[i][j] = 'N';
+                } else if (i == 9 && (j == 2 || j == 6)) {
+                    board[i][j] = 'B';
+                } else if (i == 9 && (j == 3 || j == 5)) {
+                    board[i][j] = 'A';
+                } else if (i == 9 && j == 4) {
+                    board[i][j] = 'K';
+                } else if (i == 7 && (j == 1 || j == 7)) {
+                    board[i][j] = 'C';
+                } else if (i == 6 && (j == 0 || j == 2 || j == 4 || j == 6 || j == 8)) {
+                    board[i][j] = 'P';
+                } else {
+                    board[i][j] = ' ';
                 }
             }
+        }
+    }
+
+    private void setNewBoard(String fenCode) {
+        if (StringUtils.isEmpty(fenCode)) {
+            initChessBoard(board);
         } else {
             setBoard(fenCode);
         }
@@ -241,11 +248,11 @@ public class ChessBoard {
     private void setBoard(String fenCode) {
         try {
             String[] arr = fenCode.split(" ")[0].split("/");
-            if (fenCode.indexOf("k") > fenCode.indexOf("K")) {
+            if (XiangqiUtils.isReverse(fenCode)) {
                 for (int i = 0; i < arr.length / 2; i++) {
                     String tmp = arr[i];
-                    arr[i] = arr[arr.length - 1 - i];
-                    arr[arr.length - 1 - i] = tmp;
+                    arr[i] = new StringBuffer(arr[arr.length - 1 - i]).reverse().toString();
+                    arr[arr.length - 1 - i] = new StringBuffer(tmp).reverse().toString();
                 }
             }
             for (int i = 0; i < 10; i++) {
@@ -407,7 +414,7 @@ public class ChessBoard {
     }
 
     private void paint() {
-        this.boardRender.paint(boardSize, this.board, prevStep, remark, stepTip, tipFirst, tipSecond, isReverse);
+        this.boardRender.paint(boardSize, this.board, prevStep, remark, stepTip, tipFirst, tipSecond, isReverse, showNumber);
     }
 
     /**
@@ -415,7 +422,7 @@ public class ChessBoard {
      * @param isReverse
      */
     public void reverse(boolean isReverse) {
-        if (this.isReverse !=  isReverse) {
+        if (this.isReverse != isReverse) {
             this.isReverse = isReverse;
             paint();
         }
@@ -436,6 +443,11 @@ public class ChessBoard {
      */
     public void setStepTip(boolean f) {
         this.stepTip = f;
+        paint();
+    }
+
+    public void setShowNumber(boolean showNumber) {
+        this.showNumber = showNumber;
         paint();
     }
 
