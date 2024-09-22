@@ -879,19 +879,28 @@ public class Controller implements EngineCallBack, LinkerCallBack {
                 } else if ("编辑局面".equals(item.getText())) {
                     editChessBoardClick(null);
                 } else if ("复制局面图片".equals(item.getText())) {
-                    WritableImage writableImage = new WritableImage((int) canvas.getWidth(), (int) canvas.getHeight());
-                    canvas.snapshot(null, writableImage);
-                    BufferedImage bi =SwingFXUtils.fromFXImage(writableImage, null);
-                    ClipboardUtils.setImage(bi);
-
+                    copyImageMenuClick(null);
                 } else if ("粘贴局面图片".equals(item.getText())) {
-                    Image img = ClipboardUtils.getImage();
-                    if (img != null) {
-                        importFromBufferImage((BufferedImage) img);
-                    }
+                    pasteImageMenuClick(null);
                 }
             }
         });
+    }
+
+    @FXML
+    public void copyImageMenuClick(ActionEvent event) {
+        WritableImage writableImage = new WritableImage((int) canvas.getWidth(), (int) canvas.getHeight());
+        canvas.snapshot(null, writableImage);
+        BufferedImage bi =SwingFXUtils.fromFXImage(writableImage, null);
+        ClipboardUtils.setImage(bi);
+    }
+
+    @FXML
+    public void pasteImageMenuClick(ActionEvent event) {
+        Image img = ClipboardUtils.getImage();
+        if (img != null) {
+            importFromBufferImage((BufferedImage) img);
+        }
     }
 
     @FXML
