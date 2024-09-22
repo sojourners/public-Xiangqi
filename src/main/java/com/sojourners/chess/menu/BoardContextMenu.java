@@ -17,9 +17,14 @@ public class BoardContextMenu extends ContextMenu {
         getItems().add(editMenuItem);
         getItems().add(new SeparatorMenuItem());
 
-        MenuItem copyMenuItem = new MenuItem("复制局面");
-        MenuItem pasteMenuItem = new MenuItem("粘贴局面");
-        getItems().addAll(copyMenuItem, pasteMenuItem);
+        MenuItem copyFenMenuItem = new MenuItem("复制局面FEN");
+        MenuItem pasteFenMenuItem = new MenuItem("粘贴局面FEN");
+        getItems().addAll(copyFenMenuItem, pasteFenMenuItem);
+        getItems().add(new SeparatorMenuItem());
+
+        MenuItem copyImageMenuItem = new MenuItem("复制局面图片");
+        MenuItem pasteImageMenuItem = new MenuItem("粘贴局面图片");
+        getItems().addAll(copyImageMenuItem, pasteImageMenuItem);
         getItems().add(new SeparatorMenuItem());
 
         Menu timeMenu = new Menu("对局时间");

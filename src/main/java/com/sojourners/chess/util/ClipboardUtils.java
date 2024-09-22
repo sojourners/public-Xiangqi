@@ -40,13 +40,18 @@ public class ClipboardUtils {
     /**
      * 从剪切板获得图片。
      */
-    public static Image getImage() throws Exception {
+    public static Image getImage() {
         Clipboard sysc = Toolkit.getDefaultToolkit().getSystemClipboard();
         Transferable cc = sysc.getContents(null);
         if (cc == null)
             return null;
-        else if (cc.isDataFlavorSupported(DataFlavor.imageFlavor))
-            return (Image) cc.getTransferData(DataFlavor.imageFlavor);
+        else if (cc.isDataFlavorSupported(DataFlavor.imageFlavor)) {
+            try {
+                return (Image) cc.getTransferData(DataFlavor.imageFlavor);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         return null;
     }
 

@@ -1,5 +1,5 @@
 open module Xiangqi {
-
+    requires javafx.swing;
     requires javafx.graphics;
     requires javafx.controls;
     requires javafx.fxml;

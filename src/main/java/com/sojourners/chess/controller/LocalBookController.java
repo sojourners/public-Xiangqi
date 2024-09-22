@@ -1,5 +1,6 @@
 package com.sojourners.chess.controller;
 
+import com.sojourners.chess.App;
 import com.sojourners.chess.config.Properties;
 import com.sojourners.chess.model.LocalBook;
 import com.sojourners.chess.util.PathUtils;
@@ -28,7 +29,7 @@ public class LocalBookController {
         fileChooser.setInitialDirectory(new File(PathUtils.getJarPath()));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("obk(*.obk)", "*.obk"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("pfBook(*.pfBook)", "*.pfBook"));
-        File file = fileChooser.showOpenDialog(null);
+        File file = fileChooser.showOpenDialog(App.getLocalBookSetting());
         if (file != null) {
             prop.getOpenBookList().add(file.getPath());
             refreshTable();

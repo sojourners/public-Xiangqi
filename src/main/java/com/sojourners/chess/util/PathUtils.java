@@ -35,4 +35,12 @@ public class PathUtils {
         return new File(path).getParentFile();
     }
 
+    public static boolean isImage(String path) {
+        String[] paths = path.split("\\.");
+        String suffix = paths[paths.length - 1].toLowerCase();
+        if (suffix.equals("png") || suffix.equals("jpg") || suffix.equals("jpeg") || suffix.equals("bmp")) {
+            return true;
+        }
+        return false;
+    }
 }

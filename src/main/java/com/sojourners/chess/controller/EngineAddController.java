@@ -44,10 +44,9 @@ public class EngineAddController {
 
     @FXML
     void selectButtonClick(ActionEvent e) {
-
         FileChooser fileChooser = new FileChooser();
         fileChooser.setInitialDirectory(new File(PathUtils.getJarPath()));
-        File file = fileChooser.showOpenDialog(null);
+        File file = fileChooser.showOpenDialog(App.getEngineAdd());
         if (file != null) {
             pathText.setText(file.getPath());
             nameText.setText(file.getName());

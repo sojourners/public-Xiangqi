@@ -200,4 +200,8 @@ public class App extends Application {
     public static Stage getMainStage() {
         return mainStage;
     }
+
+    public static Stage getLocalBookSetting() {
+        return localBookSetting;
+    }
 }

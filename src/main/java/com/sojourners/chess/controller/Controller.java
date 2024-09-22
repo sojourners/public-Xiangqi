@@ -20,6 +20,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -33,16 +34,27 @@ import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.WritableImage;
+import javafx.scene.input.DragEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.stage.FileChooser;
 import javafx.util.Callback;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
+import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 public class Controller implements EngineCallBack, LinkerCallBack {
@@ -536,12 +548,38 @@ public class Controller implements EngineCallBack, LinkerCallBack {
 
     @FXML
     public void pasteButtonClick(ActionEvent e) {
-        if (linkMode.getValue()) {
-            stopGraphLink();
-        }
-
         String fenCode = ClipboardUtils.getText();
-        newChessBoard(fenCode);
+        if (StringUtils.isNotEmpty(fenCode) && fenCode.split("/").length == 10) {
+            newFromOriginFen(fenCode);
+        }
+    }
+
+    @FXML
+    public void importImageMenuClick(ActionEvent e) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setInitialDirectory(new File(PathUtils.getJarPath()));
+        File file = fileChooser.showOpenDialog(App.getMainStage());
+        if (file != null) {
+            importFromImgFile(file);
+        }
+    }
+
+    @FXML
+    public void exportImageMenuClick(ActionEvent e) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setInitialDirectory(new File(PathUtils.getJarPath()));
+        fileChooser.setInitialFileName("tchess_export_" + DateUtils.getDateTimeString(new Date()) + ".png");
+        File file = fileChooser.showSaveDialog(App.getMainStage());
+        if (file != null) {
+            try {
+                WritableImage writableImage = new WritableImage((int) this.canvas.getWidth(), (int) this.canvas.getHeight());
+                canvas.snapshot(null, writableImage);
+                RenderedImage renderedImage = SwingFXUtils.fromFXImage(writableImage, null);
+                ImageIO.write(renderedImage, "png", file);
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
     }
 
     @FXML
@@ -684,8 +722,44 @@ public class Controller implements EngineCallBack, LinkerCallBack {
         initButtonListener();
         // autofit board size listener
         initAutoFitBoardListener();
+        // canvas drag listener
+        initCanvasDragListener();
 
         useOpenBook.setValue(prop.getBookSwitch());
+    }
+
+    private void importFromBufferImage(BufferedImage img) {
+        char[][] result = graphLinker.findChessBoard(img);
+        if (result != null) {
+            if (!XiangqiUtils.validateChessBoard(result) && !DialogUtils.showConfirmDialog("提示", "检测到局面不合法，可能会导致引擎退出或者崩溃，是否继续？")) {
+                return;
+            }
+            String fenCode = ChessBoard.fenCode(result, true);
+            newFromOriginFen(fenCode);
+        }
+    }
+
+    private void importFromImgFile(File f) {
+        if (f.exists() && PathUtils.isImage(f.getAbsolutePath())) {
+            try {
+                BufferedImage img = ImageIO.read(f);
+                importFromBufferImage(img);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void initCanvasDragListener() {
+        this.canvas.setOnDragDropped(event -> {
+            File f = event.getDragboard().getFiles().get(0);
+            importFromImgFile(f);
+        });
+        this.canvas.setOnDragOver(event -> {
+            event.acceptTransferModes(TransferMode.ANY);
+            event.consume();
+        });
     }
 
     private void initAutoFitBoardListener() {
@@ -796,14 +870,25 @@ public class Controller implements EngineCallBack, LinkerCallBack {
             @Override
             public void handle(ActionEvent event) {
                 MenuItem item = (MenuItem) event.getTarget();
-                if ("复制局面".equals(item.getText())) {
+                if ("复制局面FEN".equals(item.getText())) {
                     copyButtonClick(null);
-                } else if ("粘贴局面".equals(item.getText())) {
+                } else if ("粘贴局面FEN".equals(item.getText())) {
                     pasteButtonClick(null);
                 } else if ("交换行棋方".equals(item.getText())) {
                     switchPlayer(true);
                 } else if ("编辑局面".equals(item.getText())) {
                     editChessBoardClick(null);
+                } else if ("复制局面图片".equals(item.getText())) {
+                    WritableImage writableImage = new WritableImage((int) canvas.getWidth(), (int) canvas.getHeight());
+                    canvas.snapshot(null, writableImage);
+                    BufferedImage bi =SwingFXUtils.fromFXImage(writableImage, null);
+                    ClipboardUtils.setImage(bi);
+
+                } else if ("粘贴局面图片".equals(item.getText())) {
+                    Image img = ClipboardUtils.getImage();
+                    if (img != null) {
+                        importFromBufferImage((BufferedImage) img);
+                    }
                 }
             }
         });
@@ -812,6 +897,14 @@ public class Controller implements EngineCallBack, LinkerCallBack {
     @FXML
     public void editChessBoardClick(ActionEvent e) {
         String fenCode = App.openEditChessBoard(board.getBoard(), redGo, isReverse.getValue());
+        newFromOriginFen(fenCode);
+    }
+
+    /**
+     * new from origin fen that maybe reverse, and stop link mode at the same time
+     * @param fenCode
+     */
+    private void newFromOriginFen(String fenCode) {
         if (StringUtils.isNotEmpty(fenCode)) {
             if (linkMode.getValue()) {
                 stopGraphLink();

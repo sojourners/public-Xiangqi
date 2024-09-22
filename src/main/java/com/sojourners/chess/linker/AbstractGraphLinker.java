@@ -509,4 +509,13 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
         }
     }
 
+    // find chess board from image
+    public char[][] findChessBoard(BufferedImage img) {
+        char[][] tmp = new char[10][9];
+        if (this.aiModel.findChessBoard(img, tmp)) {
+            return tmp;
+        } else {
+            return null;
+        }
+    }
 }
