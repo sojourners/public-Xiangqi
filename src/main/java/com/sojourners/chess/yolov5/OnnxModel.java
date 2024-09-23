@@ -57,46 +57,30 @@ public class OnnxModel {
             // 图像宽高的缩放比例
             List<DetectResult> results = this.predict(img);
             // 寻找棋盘
-            int boardCount = 0;
-            java.awt.Rectangle pos = new java.awt.Rectangle();
-            for (DetectResult obj : results) {
-                char label = obj.label;
-                Rectangle bound = obj.rect;
-                if (label == '0') {
-                    // 取最大的棋盘区域
-                    int w = (int) (bound.getWidth()), h = (int) (bound.getHeight());
-                    if (w > pos.width && h > pos.height) {
-                        pos.x = (int) (bound.getX() - w / 2d);
-                        pos.y = (int) (bound.getY() - h / 2d);
-                        pos.width = w;
-                        pos.height = h;
-                    }
-                    boardCount++;
-                }
-            }
-            if (boardCount == 0) {
+            java.awt.Rectangle pos = findBoardPosition(results);
+            if (pos == null) {
                 return null;
-            } else {
-                // 棋盘范围
-                double pieceWidth = pos.width / 8d, pieceHeight = pos.height / 9d;
-                pos.x -= pieceWidth * PADDING;
-                if (pos.x < 0) {
-                    pos.x = 0;
-                }
-                pos.y -= pieceHeight * PADDING;
-                if (pos.y < 0) {
-                    pos.y = 0;
-                }
-                pos.width += pieceWidth * PADDING * 2;
-                if (pos.x + pos.width > img.getWidth()) {
-                    pos.width = img.getWidth() - pos.x;
-                }
-                pos.height += pieceHeight * PADDING * 2;
-                if (pos.y + pos.height > img.getHeight()) {
-                    pos.height = img.getHeight() - pos.y;
-                }
-                return pos;
             }
+            // 棋盘范围
+            double pieceWidth = pos.width / 8d, pieceHeight = pos.height / 9d;
+            pos.x -= pieceWidth * PADDING;
+            if (pos.x < 0) {
+                pos.x = 0;
+            }
+            pos.y -= pieceHeight * PADDING;
+            if (pos.y < 0) {
+                pos.y = 0;
+            }
+            pos.width += pieceWidth * PADDING * 2;
+            if (pos.x + pos.width > img.getWidth()) {
+                pos.width = img.getWidth() - pos.x;
+            }
+            pos.height += pieceHeight * PADDING * 2;
+            if (pos.y + pos.height > img.getHeight()) {
+                pos.height = img.getHeight() - pos.y;
+            }
+            return pos;
+
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -110,6 +94,32 @@ public class OnnxModel {
             }
         }
     }
+
+    private java.awt.Rectangle findBoardPosition(List<DetectResult> results) {
+        int boardCount = 0;
+        java.awt.Rectangle boardPos = new java.awt.Rectangle();
+        // 先找到棋盘
+        for (DetectResult obj : results) {
+            char label = obj.label;
+            Rectangle bound = obj.rect;
+            if (label == '0') {
+                // 取最大的棋盘区域
+                int w = (int) (bound.getWidth()), h = (int) (bound.getHeight());
+                if (w > boardPos.width && h > boardPos.height) {
+                    boardPos.x = (int) (bound.getX() - w / 2d);
+                    boardPos.y = (int) (bound.getY() - h / 2d);
+                    boardPos.width = w;
+                    boardPos.height = h;
+                }
+                boardCount++;
+            }
+        }
+        if (boardCount == 0) {
+            return null;
+        }
+        return boardPos;
+    }
+
     /**
      * 根据图片识别棋子及其位置
      * @param img
@@ -123,21 +133,8 @@ public class OnnxModel {
             // 图像宽高的缩放比例
             List<DetectResult> results = this.predict(img);
             setBlankBoard(board);
-            int boardCount = 0;
-            java.awt.Rectangle boardPos = new java.awt.Rectangle();
-            // 先找到棋盘
-            for (DetectResult obj : results) {
-                char label = obj.label;
-                Rectangle bound = obj.rect;
-                if (label == '0') {
-                    boardPos.width = (int) (bound.getWidth());
-                    boardPos.height = (int) (bound.getHeight());
-                    boardPos.x = (int) (bound.getX() - boardPos.width / 2d);
-                    boardPos.y = (int) (bound.getY() - boardPos.height / 2d);
-                    boardCount++;
-                }
-            }
-            if (boardCount != 1) {
+            java.awt.Rectangle boardPos = findBoardPosition(results);
+            if (boardPos == null) {
                 return false;
             }
             int pieceWidth = boardPos.width / 8, pieceHeight = boardPos.height / 9;
@@ -149,7 +146,7 @@ public class OnnxModel {
                     int j = (int) ((bound.x - (boardPos.x - pieceWidth / 2)) / pieceWidth);
                     int i = (int) ((bound.y - (boardPos.y - pieceHeight / 2)) / pieceHeight);
                     if (i < 0 || i > 9 || j < 0 || j > 8) {
-                        return false;
+                        continue;
                     }
                     board[i][j] = label;
                 }

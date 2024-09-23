@@ -159,6 +159,9 @@ public class XiangqiUtils {
         }
 
         int x = isRed ? rx : bx, y = isRed ? ry : by;
+        if (x == 0 && y == 0) {
+            return false;
+        }
         boolean searchPao = false;
         for (int i = x - 1; i >=0; i--) {
             if (!searchPao) {
@@ -252,16 +255,16 @@ public class XiangqiUtils {
             }
         }
 
-        if (isRed && (board[y - 2][x + 1] == 'n' && board[y - 1][x + 1] == ' ' || board[y - 2][x - 1] == 'n' && board[y - 1][x - 1] == ' ') || !isRed && (y - 2 >= 0) && (board[y - 2][x + 1] == 'N' && board[y - 1][x + 1] == ' ' || board[y - 2][x - 1] == 'N' && board[y - 1][x - 1] == ' ')) {
+        if ((y - 2 >= 0) && (isRed && (board[y - 2][x + 1] == 'n' && board[y - 1][x + 1] == ' ' || board[y - 2][x - 1] == 'n' && board[y - 1][x - 1] == ' ') || !isRed && (board[y - 2][x + 1] == 'N' && board[y - 1][x + 1] == ' ' || board[y - 2][x - 1] == 'N' && board[y - 1][x - 1] == ' '))) {
             return true;
         }
-        if (isRed && (y + 2 < 10) && (board[y + 2][x + 1] == 'n' && board[y + 1][x + 1] == ' ' || board[y + 2][x - 1] == 'n' && board[y + 1][x - 1] == ' ') || !isRed && (board[y + 2][x + 1] == 'N' && board[y + 1][x + 1] == ' ' || board[y + 2][x - 1] == 'N' && board[y + 1][x - 1] == ' ')) {
+        if ((y + 2 < 10) && (isRed && (board[y + 2][x + 1] == 'n' && board[y + 1][x + 1] == ' ' || board[y + 2][x - 1] == 'n' && board[y + 1][x - 1] == ' ') || !isRed && (board[y + 2][x + 1] == 'N' && board[y + 1][x + 1] == ' ' || board[y + 2][x - 1] == 'N' && board[y + 1][x - 1] == ' '))) {
             return true;
         }
-        if (isRed && (board[y - 1][x - 2] == 'n' && board[y - 1][x - 1] == ' ' || y + 1 < 10 && board[y + 1][x - 2] == 'n' && board[y + 1][x - 1] == ' ') || !isRed && (y - 1 >=0 && board[y - 1][x - 2] == 'N' && board[y - 1][x - 1] == ' ' || board[y + 1][x - 2] == 'N' && board[y + 1][x - 1] == ' ')) {
+        if ((y - 1 >= 0 && y + 1 < 10) && (isRed && (board[y - 1][x - 2] == 'n' && board[y - 1][x - 1] == ' ' || y + 1 < 10 && board[y + 1][x - 2] == 'n' && board[y + 1][x - 1] == ' ') || !isRed && (y - 1 >=0 && board[y - 1][x - 2] == 'N' && board[y - 1][x - 1] == ' ' || board[y + 1][x - 2] == 'N' && board[y + 1][x - 1] == ' '))) {
             return true;
         }
-        if (isRed && (board[y - 1][x + 2] == 'n' && board[y - 1][x + 1] == ' ' || y + 1 < 10 && board[y + 1][x + 2] == 'n' && board[y + 1][x + 1] == ' ') || !isRed && (y - 1 >=0 && board[y - 1][x + 2] == 'N' && board[y - 1][x + 1] == ' ' || board[y + 1][x + 2] == 'N' && board[y + 1][x + 1] == ' ')) {
+        if ((y - 1 >= 0 && y + 1 < 10) && (isRed && (board[y - 1][x + 2] == 'n' && board[y - 1][x + 1] == ' ' || y + 1 < 10 && board[y + 1][x + 2] == 'n' && board[y + 1][x + 1] == ' ') || !isRed && (y - 1 >=0 && board[y - 1][x + 2] == 'N' && board[y - 1][x + 1] == ' ' || board[y + 1][x + 2] == 'N' && board[y + 1][x + 1] == ' '))) {
             return true;
         }
 

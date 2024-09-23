@@ -1,6 +1,7 @@
 package com.sojourners.chess.controller;
 
 import com.sojourners.chess.App;
+import com.sojourners.chess.Version;
 import com.sojourners.chess.board.ChessBoard;
 import com.sojourners.chess.config.Properties;
 import com.sojourners.chess.enginee.Engine;
@@ -585,9 +586,9 @@ public class Controller implements EngineCallBack, LinkerCallBack {
     @FXML
     public void aboutClick(ActionEvent e) {
         DialogUtils.showInfoDialog("关于", "中国象棋界面"
-                + System.lineSeparator() + "Built on : 20240915"
+                + System.lineSeparator() + "Built on : " + Version.BUILT_ON
                 + System.lineSeparator() + "Author : T"
-                + System.lineSeparator() + "Version : 1.4");
+                + System.lineSeparator() + "Version : " + Version.VERSION);
     }
 
     @FXML

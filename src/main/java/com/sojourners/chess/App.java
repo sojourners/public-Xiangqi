@@ -33,7 +33,7 @@ public class App extends Application {
         FXMLLoader fxmlLoader = new FXMLLoader();
         fxmlLoader.setLocation(getClass().getResource("/fxml/app.fxml"));
         Parent root = fxmlLoader.load();
-        primaryStage.setTitle("中国象棋 V1.4");
+        primaryStage.setTitle("中国象棋 V" + Version.VERSION);
         primaryStage.setScene(new Scene(root));
         primaryStage.getIcons().add(new Image(getClass().getResourceAsStream("/image/icon.png")));
 
