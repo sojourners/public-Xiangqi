@@ -37,7 +37,7 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
 
     private int count;
 
-    private boolean pause;
+    private volatile boolean pause;
 
     private Properties prop;
 
