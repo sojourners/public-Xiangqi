@@ -1,7 +1,6 @@
 package com.sojourners.chess.controller;
 
 import com.sojourners.chess.App;
-import com.sojourners.chess.Version;
 import com.sojourners.chess.board.ChessBoard;
 import com.sojourners.chess.config.Properties;
 import com.sojourners.chess.enginee.Engine;
@@ -36,7 +35,6 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.WritableImage;
-import javafx.scene.input.DragEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
@@ -55,7 +53,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 public class Controller implements EngineCallBack, LinkerCallBack {
@@ -586,9 +583,9 @@ public class Controller implements EngineCallBack, LinkerCallBack {
     @FXML
     public void aboutClick(ActionEvent e) {
         DialogUtils.showInfoDialog("关于", "中国象棋界面"
-                + System.lineSeparator() + "Built on : " + Version.BUILT_ON
+                + System.lineSeparator() + "Built on : " + App.BUILT_ON
                 + System.lineSeparator() + "Author : T"
-                + System.lineSeparator() + "Version : " + Version.VERSION);
+                + System.lineSeparator() + "Version : " + App.VERSION);
     }
 
     @FXML

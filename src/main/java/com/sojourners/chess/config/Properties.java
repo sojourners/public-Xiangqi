@@ -131,10 +131,10 @@ public class Properties implements Serializable {
             } else {
                 try {
                     List<EngineConfig> engineConfigList = new ArrayList<>();
-                    prop = new Properties(ChessBoard.BoardSize.MIDDLE_BOARD, true,
+                    prop = new Properties(ChessBoard.BoardSize.AUTOFIT_BOARD, true,
                             1, 16, "",
                             Engine.AnalysisModel.FIXED_TIME, 5000, true,
-                            924, 712, 0.64, 0.6,
+                            920, 737, 0.64, 0.6,
                             100, 2, true, true, false,
                             true, true, false, 2000, 15,
                             MoveRule.BEST_SCORE, true, new ArrayList<>());
