@@ -78,9 +78,7 @@ public class Engine {
                         bestMove(line);
                     }else if("info depth 0 score mate 0".equals(line)){
                         //说明是最后一步
-                        if(this.getLastScore() != null){
-                            this.lastScore = this.getLastScore() < 0 ? 30000:-30000;
-                        }
+                        this.lastScore = -30000;
                     }
                 }
             } catch (Exception e) {
