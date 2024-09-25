@@ -2,6 +2,7 @@ package com.sojourners.chess.util;
 
 import java.awt.*;
 import java.awt.datatransfer.*;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 
 public class ClipboardUtils {
@@ -47,7 +48,21 @@ public class ClipboardUtils {
             return null;
         else if (cc.isDataFlavorSupported(DataFlavor.imageFlavor)) {
             try {
-                return (Image) cc.getTransferData(DataFlavor.imageFlavor);
+                Image image = (Image) cc.getTransferData(DataFlavor.imageFlavor);
+                if (image instanceof BufferedImage) {
+                    // 当图片本身就是BufferedImage实例，直接返回
+                    return image;
+                }
+                // 否则需要从当前提供的Image对象创建一个BufferedImage
+                int width = image.getWidth(null);
+                int height = image.getHeight(null);
+                // 创建兼容型buffered image，确保图片适用于当前系统平台窗口
+                BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+                Graphics2D bGr = bufferedImage.createGraphics();
+                bGr.drawImage(image, 0, 0, null);
+                bGr.dispose();
+                // 返回已经画好的bufferedImage对象
+                return bufferedImage;
             } catch (Exception e) {
                 e.printStackTrace();
             }
