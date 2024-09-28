@@ -115,7 +115,8 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
                         continue;
                     }
 
-                    if (prop.isLinkAnimation()) {
+                    Action action = compareBoard(board2, callBack.getEngineBoard(), isReverse, callBack.isWatchMode());
+                    if (prop.isLinkAnimation() && needConfirm(board2, callBack.getEngineBoard(), action)) {
                         boolean f = false;
                         do {
                             char[][] tmp = board1;
@@ -137,9 +138,10 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
                         } while (!isSame(board1, board2));
 
                         if (f) continue;
+
+                        action = compareBoard(board2, callBack.getEngineBoard(), isReverse, callBack.isWatchMode());
                     }
 
-                    Action action = compareBoard(board2, callBack.getEngineBoard(), isReverse, callBack.isWatchMode());
                     if (action != null) {
                         System.out.println("action " + action);
                         if (action.flag == 1) {
@@ -199,6 +201,91 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
                     ", y2=" + y2 +
                     '}';
         }
+    }
+
+    private boolean needConfirm(char[][] linkBoard, char[][] engineBoard, Action action) {
+        if (action == null) {
+            return false;
+        }
+        if (action.flag == 3) {
+            return true;
+        }
+        if (action.flag != 1 || !(linkBoard[action.y2][action.x2] == 'r' || linkBoard[action.y2][action.x2] == 'R' || linkBoard[action.y2][action.x2] == 'c' || linkBoard[action.y2][action.x2] == 'C') || !(engineBoard[action.y2][action.x2] == ' ')) {
+            return false;
+        }
+        if (linkBoard[action.y2][action.x2] == 'r' || linkBoard[action.y2][action.x2] == 'R') {
+            int x = -1, y = -1;
+            if (action.x1 == action.x2) {
+                x = action.x1;
+                if (action.y2 > action.y1) {
+                    y = action.y2 + 1;
+                } else {
+                    y = action.y2 - 1;
+                }
+            }
+            if (action.y1 == action.y2) {
+                y = action.y1;
+                if (action.x2 > action.x1) {
+                    x = action.x2 + 1;
+                } else {
+                    x = action.x2 - 1;
+                }
+            }
+            if (x < 0 || x > 8 || y < 0 || y > 9 || engineBoard[y][x] != ' ' && XiangqiUtils.isRed(engineBoard[action.y1][action.x1]) == XiangqiUtils.isRed(engineBoard[y][x])) {
+                return false;
+            }
+        }
+        if (linkBoard[action.y2][action.x2] == 'c' || linkBoard[action.y2][action.x2] == 'C') {
+            if (action.x1 == action.x2) {
+                int x = action.x1, y;
+                int p;
+                if (action.y2 > action.y1) {
+                    y = action.y2 + 1;
+                    p = 1;
+                } else {
+                    y = action.y2 - 1;
+                    p = -1;
+                }
+                if (y < 0 || y > 9) {
+                    return false;
+                }
+                if (engineBoard[y][x] != ' ') {
+                    for (int i = y + p; i >= 0 && i <= 9; i += p) {
+                        if (engineBoard[i][x] != ' ' && XiangqiUtils.isRed(engineBoard[i][x]) == XiangqiUtils.isRed(engineBoard[action.y1][action.x1])) {
+                            return false;
+                        } else if (engineBoard[i][x] != ' ' && XiangqiUtils.isRed(engineBoard[i][x]) != XiangqiUtils.isRed(engineBoard[action.y1][action.x1])) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+            }
+            if (action.y1 == action.y2) {
+                int x, y = action.y1;
+                int p;
+                if (action.x2 > action.x1) {
+                    x = action.x2 + 1;
+                    p = 1;
+                } else {
+                    x = action.x2 - 1;
+                    p = -1;
+                }
+                if (x < 0 || x > 8 || y < 0 || y > 9) {
+                    return false;
+                }
+                if (engineBoard[y][x] != ' ') {
+                    for (int j = x + p; j >= 0 && j <= 8; j += p) {
+                        if (engineBoard[y][j] != ' ' && XiangqiUtils.isRed(engineBoard[y][j]) == XiangqiUtils.isRed(engineBoard[action.y1][action.x1])) {
+                            return false;
+                        } else if (engineBoard[y][j] != ' ' && XiangqiUtils.isRed(engineBoard[y][j]) != XiangqiUtils.isRed(engineBoard[action.y1][action.x1])) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**

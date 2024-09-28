@@ -7,15 +7,22 @@ import com.sojourners.chess.mouse.MouseListenCallBack;
 import com.sojourners.chess.util.PathUtils;
 import com.sun.jna.Memory;
 import com.sun.jna.platform.win32.*;
+import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.image.WritableImage;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
+import java.io.File;
+import java.io.IOException;
 
 public class WindowsGraphLinker extends AbstractGraphLinker implements MouseListenCallBack {
 
     private WinDef.HWND hwnd;
     private GlobalMouseListener listener;
     private double screenScalingFactor;
+    private boolean needScaling;
 
     public WindowsGraphLinker(LinkerCallBack callBack) throws AWTException {
         super(callBack);
@@ -42,12 +49,23 @@ public class WindowsGraphLinker extends AbstractGraphLinker implements MouseList
 
             this.hwnd = User32.INSTANCE.GetForegroundWindow();
 
+            this.needScaling = needScaling(this.hwnd);
+
             scan();
 
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+    }
+
+    private boolean needScaling(WinDef.HWND hwnd) {
+        // 获取系统DPI
+        int systemDpi = User32Extra.INSTANCE.GetDpiForSystem();
+        // 通过窗口句柄获取当前窗口的DPI
+        int windowDpi = User32Extra.INSTANCE.GetDpiForWindow(hwnd);
+        // 比较系统DPI和窗口DPI是否相同，如果不同则需要缩放处理
+        return systemDpi != windowDpi;
     }
 
     @Override
@@ -77,10 +95,12 @@ public class WindowsGraphLinker extends AbstractGraphLinker implements MouseList
     @Override
     public void mouseClickByBack(Point p1, Point p2) {
         // 处理windows缩放问题
-        p1.x *= screenScalingFactor;
-        p1.y *= screenScalingFactor;
-        p2.x *= screenScalingFactor;
-        p2.y *= screenScalingFactor;
+        if (needScaling) {
+            p1.x *= screenScalingFactor;
+            p1.y *= screenScalingFactor;
+            p2.x *= screenScalingFactor;
+            p2.y *= screenScalingFactor;
+        }
 
         leftClick(p1.x, p1.y);
         if (Properties.getInstance().getMouseMoveDelay() > 0) {
@@ -102,61 +122,65 @@ public class WindowsGraphLinker extends AbstractGraphLinker implements MouseList
     }
 
     private BufferedImage capture(WinDef.HWND hWnd, Rectangle rect) {
+        // 创建与窗口相关联的设备上下文和一个内存设备上下文以执行离屏渲染
+        WinDef.HDC hdcWindow = User32.INSTANCE.GetDC(hWnd);
+        WinDef.HDC hdcMemDC = GDI32.INSTANCE.CreateCompatibleDC(hdcWindow);
         try {
-            int x, y, width, height;
-            if (rect == null) {
-                WinDef.RECT bounds = new WinDef.RECT();
-                User32.INSTANCE.GetClientRect(hWnd, bounds);
-                width = bounds.right - bounds.left;
-                height = bounds.bottom - bounds.top;
-                // 处理windows缩放问题
+            int width, height;
+            WinDef.RECT bounds = new WinDef.RECT();
+            User32.INSTANCE.GetClientRect(hWnd, bounds);
+            width = bounds.right - bounds.left;
+            height = bounds.bottom - bounds.top;
+            // 处理windows缩放问题
+            if (needScaling) {
                 width /= screenScalingFactor;
                 height /= screenScalingFactor;
-                x = 0;
-                y = 0;
-            } else {
-                width = (int) rect.getWidth();
-                height = (int) rect.getHeight();
-                x = rect.x;
-                y = rect.y;
             }
-            if (width == 0 || height == 0) {
+            // 创建兼容的位图，并且将其选入内存设备上下文
+            WinDef.HBITMAP hBitmap = GDI32.INSTANCE.CreateCompatibleBitmap(hdcWindow, width, height);
+            WinNT.HANDLE hOld = GDI32.INSTANCE.SelectObject(hdcMemDC, hBitmap);
+            // 请求窗口自行完成绘制工作
+            if (!User32.INSTANCE.PrintWindow(hWnd, hdcMemDC, 0x1 | 0x2)) {
                 return null;
             }
 
-            WinDef.HDC hdcWindow = User32.INSTANCE.GetDC(hWnd);
-            WinDef.HDC hdcMemDC = GDI32.INSTANCE.CreateCompatibleDC(hdcWindow);
-
-            WinDef.HBITMAP hBitmap = GDI32.INSTANCE.CreateCompatibleBitmap(hdcWindow, width, height);
-
-            WinNT.HANDLE hOld = GDI32.INSTANCE.SelectObject(hdcMemDC, hBitmap);
-            GDI32.INSTANCE.BitBlt(hdcMemDC, 0, 0, width, height, hdcWindow, x, y, 0x00CC0020);
-
-            GDI32.INSTANCE.SelectObject(hdcMemDC, hOld);
-            GDI32.INSTANCE.DeleteDC(hdcMemDC);
-
+            // 将所绘制的位图转化为Java缓冲图片（BufferedImage）
+            BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
             WinGDI.BITMAPINFO bmi = new WinGDI.BITMAPINFO();
             bmi.bmiHeader.biWidth = width;
-            bmi.bmiHeader.biHeight = -height;
+            bmi.bmiHeader.biHeight = -height; // 注意：biHeight为负表示顶向下DIB
             bmi.bmiHeader.biPlanes = 1;
             bmi.bmiHeader.biBitCount = 32;
             bmi.bmiHeader.biCompression = WinGDI.BI_RGB;
 
             Memory buffer = new Memory(width * height * 4);
-            GDI32.INSTANCE.GetDIBits(hdcWindow, hBitmap, 0, height, buffer, bmi, WinGDI.DIB_RGB_COLORS);
+            GDI32.INSTANCE.GetDIBits(hdcMemDC, hBitmap, 0, height, buffer, bmi, WinGDI.DIB_RGB_COLORS);
 
-            BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-            image.setRGB(0, 0, width, height, buffer.getIntArray(0, width * height), 0, width);
+            int[] data = buffer.getIntArray(0, width * height);
+            image.setRGB(0, 0, width, height, data, 0, width);
 
+            // 清理资源
+            GDI32.INSTANCE.SelectObject(hdcMemDC, hOld);
             GDI32.INSTANCE.DeleteObject(hBitmap);
-            User32.INSTANCE.ReleaseDC(hWnd, hdcWindow);
+
+            if (rect != null) {
+                width = (int) rect.getWidth();
+                height = (int) rect.getHeight();
+                int x = rect.x;
+                int y = rect.y;
+                image = image.getSubimage(x, y, width, height);
+            }
 
             return image;
+
         } catch (Exception e) {
             e.printStackTrace();
             return null;
+        } finally {
+            // 清理设备上下文对象
+            GDI32.INSTANCE.DeleteDC(hdcMemDC);
+            User32.INSTANCE.ReleaseDC(hWnd, hdcWindow);
         }
-
     }
 
     private void selectCursor() {

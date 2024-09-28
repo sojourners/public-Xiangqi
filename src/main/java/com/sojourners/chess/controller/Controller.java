@@ -238,6 +238,9 @@ public class Controller implements EngineCallBack, LinkerCallBack {
     @FXML
     void linkBackModeChecked(ActionEvent event) {
         CheckMenuItem item = (CheckMenuItem) event.getTarget();
+        if (linkMode.getValue()) {
+            stopGraphLink();
+        }
         prop.setLinkBackMode(item.isSelected());
     }
 

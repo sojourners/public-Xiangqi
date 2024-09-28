@@ -10,4 +10,7 @@ public interface User32Extra extends User32 {
     BOOL SetSystemCursor(HCURSOR hcur, DWORD id);
     BOOL SystemParametersInfoA(int uiAction, int uiParam, int pvParam, int fWinIni);
     HCURSOR LoadCursorFromFileA(String lpFileName);
+
+    int GetDpiForSystem();
+    int GetDpiForWindow(HWND hwnd);
 }

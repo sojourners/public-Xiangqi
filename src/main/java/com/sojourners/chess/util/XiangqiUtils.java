@@ -7,6 +7,9 @@ public class XiangqiUtils {
 
 
     public static boolean canGo(char[][] board, int x1, int y1, int x2, int y2) {
+        if (board[x1][y1] == ' ' || board[x2][y2] != ' ' && isRed(board[x1][y1]) == isRed(board[x2][y2])) {
+            return false;
+        }
         switch (board[x1][y1]) {
             case 'r':
             case 'R': {
@@ -34,8 +37,8 @@ public class XiangqiUtils {
             }
             case 'n':
             case 'N': {
-                int absX = Math.abs(x1 - x2), abxY = Math.abs(y1 - y2);
-                if (!(absX == 1 && abxY == 2 || absX == 2 && abxY == 1)) {
+                int absX = Math.abs(x1 - x2), absY = Math.abs(y1 - y2);
+                if (!(absX == 1 && absY == 2 || absX == 2 && absY == 1)) {
                     return false;
                 }
                 char c;
@@ -75,8 +78,8 @@ public class XiangqiUtils {
                 if (isRed && x2 < 7 || !isRed && x2 > 2) {
                     return false;
                 }
-                int absX = Math.abs(x1 - x2), abxY = Math.abs(y1 - y2);
-                return absX == 1 && abxY == 1;
+                int absX = Math.abs(x1 - x2), absY = Math.abs(y1 - y2);
+                return absX == 1 && absY == 1;
             }
             case 'k':
             case 'K': {
