@@ -665,6 +665,8 @@ public class Controller implements EngineCallBack {
         initEngineView();
         // 加载引擎
         loadEngine(prop.getEngineName());
+        // 连线器
+        initGraphLinker();
         // 按钮监听
         initButtonListener();
         // autofit board size listener
@@ -895,6 +897,11 @@ public class Controller implements EngineCallBack {
         hashComboBox.setValue(String.valueOf(prop.getHashSize()));
     }
 
+
+    private void initGraphLinker() {
+        linkComboBox.getItems().addAll("自动走棋", "观战模式");
+        linkComboBox.setValue("自动走棋");
+    }
 
     private void refreshEngineComboBox() {
         engineComboBox.getItems().clear();
