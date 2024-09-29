@@ -7,7 +7,6 @@ open module Xiangqi {
     requires javafx.media;
     requires com.sun.jna.platform;
     requires jnativehook;
-    requires com.microsoft.onnxruntime;
     requires java.desktop;
     requires java.sql;
 

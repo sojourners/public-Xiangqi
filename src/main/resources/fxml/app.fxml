@@ -38,7 +38,6 @@
                   <MenuItem mnemonicParsing="false" onAction="#copyButtonClick" text="复制局面FEN" />
                   <MenuItem mnemonicParsing="false" onAction="#pasteButtonClick" text="粘贴局面FEN" />
                   <MenuItem mnemonicParsing="false" onAction="#copyImageMenuClick" text="复制局面图片" />
-                  <MenuItem mnemonicParsing="false" onAction="#pasteImageMenuClick" text="粘贴局面图片" />
                   <MenuItem mnemonicParsing="false" onAction="#importImageMenuClick" text="图片导入局面" />
                   <MenuItem mnemonicParsing="false" onAction="#exportImageMenuClick" text="局面导出图片" />
                </items>
@@ -53,13 +52,6 @@
                <items>
                   <MenuItem mnemonicParsing="false" onAction="#engineManageClick" text="引擎管理" />
                   <MenuItem mnemonicParsing="false" onAction="#timeSettingButtonClick" text="时间设置" />
-               </items>
-            </Menu>
-            <Menu mnemonicParsing="false" text="连线">
-               <items>
-                  <MenuItem mnemonicParsing="false" onAction="#linkSettingClick" text="连线参数" />
-                  <CheckMenuItem fx:id="menuOfLinkBackMode" mnemonicParsing="false" onAction="#linkBackModeChecked" text="后台模式" />
-                  <CheckMenuItem fx:id="menuOfLinkAnimation" mnemonicParsing="false" onAction="#linkAnimationChecked" text="开启动画确认" />
                </items>
             </Menu>
           <Menu mnemonicParsing="false" text="设置">

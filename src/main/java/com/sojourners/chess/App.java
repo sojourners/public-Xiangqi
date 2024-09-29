@@ -133,21 +133,6 @@ public class App extends Application {
         bookSetting.close();
     }
 
-    /**
-     * 连线设置
-     */
-    public static void openLinkSetting() {
-
-        linkSetting = createStage("/fxml/linkSetting.fxml");
-        linkSetting.setTitle("连线设置");
-        linkSetting.initModality(Modality.APPLICATION_MODAL);
-        linkSetting.initOwner(mainStage);
-
-        linkSetting.showAndWait();
-    }
-    public static void closeLinkSetting() {
-        linkSetting.close();
-    }
 
     public static String openEditChessBoard(char[][] board, boolean redGo, boolean isReverse) {
         try {

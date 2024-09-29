@@ -5,7 +5,6 @@ import com.sojourners.chess.board.ChessBoard;
 import com.sojourners.chess.config.Properties;
 import com.sojourners.chess.enginee.Engine;
 import com.sojourners.chess.enginee.EngineCallBack;
-import com.sojourners.chess.linker.*;
 import com.sojourners.chess.lock.SingleLock;
 import com.sojourners.chess.lock.WorkerTask;
 import com.sojourners.chess.menu.BoardContextMenu;
@@ -55,7 +54,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class Controller implements EngineCallBack, LinkerCallBack {
+public class Controller implements EngineCallBack {
 
     @FXML
     private Canvas canvas;
@@ -109,10 +108,6 @@ public class Controller implements EngineCallBack, LinkerCallBack {
     @FXML
     private CheckMenuItem menuOfStepSound;
     @FXML
-    private CheckMenuItem menuOfLinkBackMode;
-    @FXML
-    private CheckMenuItem menuOfLinkAnimation;
-    @FXML
     private CheckMenuItem menuOfShowStatus;
     @FXML
     private CheckMenuItem menuOfShowNumber;
@@ -122,8 +117,6 @@ public class Controller implements EngineCallBack, LinkerCallBack {
     private Engine engine;
 
     private ChessBoard board;
-
-    private AbstractGraphLinker graphLinker;
 
     @FXML
     private Button analysisButton;
@@ -185,7 +178,6 @@ public class Controller implements EngineCallBack, LinkerCallBack {
     @FXML
     public void newButtonClick(ActionEvent event) {
         if (linkMode.getValue()) {
-            stopGraphLink();
         }
 
         newChessBoard(null);
@@ -239,7 +231,6 @@ public class Controller implements EngineCallBack, LinkerCallBack {
     void linkBackModeChecked(ActionEvent event) {
         CheckMenuItem item = (CheckMenuItem) event.getTarget();
         if (linkMode.getValue()) {
-            stopGraphLink();
         }
         prop.setLinkBackMode(item.isSelected());
     }
@@ -281,7 +272,6 @@ public class Controller implements EngineCallBack, LinkerCallBack {
         immediateButton.setDisable(robotAnalysis.getValue());
 
         if (linkMode.getValue() && !robotAnalysis.getValue()) {
-            stopGraphLink();
         }
     }
 
@@ -306,10 +296,6 @@ public class Controller implements EngineCallBack, LinkerCallBack {
         }
         if (!robotBlack.getValue() && !redGo) {
             engineStop();
-        }
-
-        if (linkMode.getValue() && !robotBlack.getValue()) {
-            stopGraphLink();
         }
     }
 
@@ -343,26 +329,9 @@ public class Controller implements EngineCallBack, LinkerCallBack {
         }
 
         if (linkMode.getValue() && !robotRed.getValue()) {
-            stopGraphLink();
         }
     }
 
-    private void stopGraphLink() {
-        graphLinker.stop();
-
-        engineStop();
-
-        redButton.setDisable(false);
-        robotRed.setValue(false);
-
-        blackButton.setDisable(false);
-        robotBlack.setValue(false);
-
-        analysisButton.setDisable(false);
-        robotAnalysis.setValue(false);
-
-        linkMode.setValue(false);
-    }
 
     private void engineGo() {
         if (engine == null) {
@@ -474,9 +443,6 @@ public class Controller implements EngineCallBack, LinkerCallBack {
 
     @FXML
     void recordTableClick(MouseEvent event) {
-        if (linkMode.getValue()) {
-            stopGraphLink();
-        }
         int index = recordTable.getSelectionModel().getSelectedIndex();
         if (index != p && index >= 0) {
             p = index;
@@ -486,9 +452,6 @@ public class Controller implements EngineCallBack, LinkerCallBack {
 
     @FXML
     public void backButtonClick(ActionEvent event) {
-        if (linkMode.getValue()) {
-            stopGraphLink();
-        }
         if (p > 0) {
             p--;
             browseChessRecord();
@@ -498,7 +461,6 @@ public class Controller implements EngineCallBack, LinkerCallBack {
     @FXML
     public void regretButtonClick(ActionEvent event) {
         if (linkMode.getValue()) {
-            stopGraphLink();
         }
         if (p > 0) {
             if (redGo && robotRed.getValue() || !redGo && robotBlack.getValue()) {
@@ -513,9 +475,6 @@ public class Controller implements EngineCallBack, LinkerCallBack {
 
     @FXML
     void forwardButtonClick(ActionEvent event) {
-        if (linkMode.getValue()) {
-            stopGraphLink();
-        }
         if (p < moveList.size()) {
             p++;
             browseChessRecord();
@@ -525,7 +484,6 @@ public class Controller implements EngineCallBack, LinkerCallBack {
     @FXML
     void finalButtonClick(ActionEvent event) {
         if (linkMode.getValue()) {
-            stopGraphLink();
         }
         if (p < moveList.size()) {
             p = moveList.size();
@@ -622,11 +580,6 @@ public class Controller implements EngineCallBack, LinkerCallBack {
         App.openBookSetting();
     }
 
-    @FXML
-    void linkSettingClick(ActionEvent e) {
-        App.openLinkSetting();
-
-    }
 
     @FXML
     public void reverseButtonClick(ActionEvent event) {
@@ -643,11 +596,6 @@ public class Controller implements EngineCallBack, LinkerCallBack {
     @FXML
     private void linkButtonClick(ActionEvent e) {
         linkMode.setValue(!linkMode.getValue());
-        if (linkMode.getValue()) {
-            graphLinker.start();
-        } else {
-            stopGraphLink();
-        }
     }
 
     private void initLineChart() {
@@ -717,8 +665,6 @@ public class Controller implements EngineCallBack, LinkerCallBack {
         initEngineView();
         // 加载引擎
         loadEngine(prop.getEngineName());
-        // 连线器
-        initGraphLinker();
         // 按钮监听
         initButtonListener();
         // autofit board size listener
@@ -729,23 +675,10 @@ public class Controller implements EngineCallBack, LinkerCallBack {
         useOpenBook.setValue(prop.getBookSwitch());
     }
 
-    private void importFromBufferImage(BufferedImage img) {
-        char[][] result = graphLinker.findChessBoard(img);
-        if (result != null) {
-            if (!XiangqiUtils.validateChessBoard(result) && !DialogUtils.showConfirmDialog("提示", "检测到局面不合法，可能会导致引擎退出或者崩溃，是否继续？")) {
-                return;
-            }
-            String fenCode = ChessBoard.fenCode(result, true);
-            newFromOriginFen(fenCode);
-        }
-    }
-
     private void importFromImgFile(File f) {
         if (f.exists() && PathUtils.isImage(f.getAbsolutePath())) {
             try {
                 BufferedImage img = ImageIO.read(f);
-                importFromBufferImage(img);
-
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -820,7 +753,6 @@ public class Controller implements EngineCallBack, LinkerCallBack {
         blackButton.setTooltip(new Tooltip("引擎执黑"));
         analysisButton.setTooltip(new Tooltip("分析模式"));
         immediateButton.setTooltip(new Tooltip("立即出招"));
-        linkButton.setTooltip(new Tooltip("连线"));
         bookSwitchButton.setTooltip(new Tooltip("启用库招"));
 
     }
@@ -830,10 +762,6 @@ public class Controller implements EngineCallBack, LinkerCallBack {
         menuOfStepTip.setSelected(prop.isStepTip());
         // 走棋音效
         menuOfStepSound.setSelected(prop.isStepSound());
-        // 连线后台模式
-        menuOfLinkBackMode.setSelected(prop.isLinkBackMode());
-        // 连线动画确认
-        menuOfLinkAnimation.setSelected(prop.isLinkAnimation());
         // show number
         menuOfShowNumber.setSelected(prop.isShowNumber());
         // 显示状态栏
@@ -881,8 +809,6 @@ public class Controller implements EngineCallBack, LinkerCallBack {
                     editChessBoardClick(null);
                 } else if ("复制局面图片".equals(item.getText())) {
                     copyImageMenuClick(null);
-                } else if ("粘贴局面图片".equals(item.getText())) {
-                    pasteImageMenuClick(null);
                 }
             }
         });
@@ -896,13 +822,6 @@ public class Controller implements EngineCallBack, LinkerCallBack {
         ClipboardUtils.setImage(bi);
     }
 
-    @FXML
-    public void pasteImageMenuClick(ActionEvent event) {
-        Image img = ClipboardUtils.getImage();
-        if (img != null) {
-            importFromBufferImage((BufferedImage) img);
-        }
-    }
 
     @FXML
     public void editChessBoardClick(ActionEvent e) {
@@ -916,9 +835,6 @@ public class Controller implements EngineCallBack, LinkerCallBack {
      */
     private void newFromOriginFen(String fenCode) {
         if (StringUtils.isNotEmpty(fenCode)) {
-            if (linkMode.getValue()) {
-                stopGraphLink();
-            }
 
             newChessBoard(fenCode);
             if (XiangqiUtils.isReverse(fenCode)) {
@@ -980,19 +896,6 @@ public class Controller implements EngineCallBack, LinkerCallBack {
     }
 
 
-    private void initGraphLinker() {
-        try {
-            this.graphLinker = com.sun.jna.Platform.isWindows() ?
-                    new WindowsGraphLinker(this) : (com.sun.jna.Platform.isLinux() ?
-                    new LinuxGraphLinker(this) : new MacosGraphLinker(this));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        linkComboBox.getItems().addAll("自动走棋", "观战模式");
-        linkComboBox.setValue("自动走棋");
-    }
-
     private void refreshEngineComboBox() {
         engineComboBox.getItems().clear();
         for (EngineConfig ec : prop.getEngineConfigList()) {
@@ -1037,10 +940,6 @@ public class Controller implements EngineCallBack, LinkerCallBack {
                     robotRed.setValue(false);
                     robotBlack.setValue(false);
                     robotAnalysis.setValue(false);
-                    // 停止连线
-                    if (linkMode.getValue()) {
-                        stopGraphLink();
-                    }
                     // 加载新引擎
                     loadEngine(t1);
                 }
@@ -1146,7 +1045,6 @@ public class Controller implements EngineCallBack, LinkerCallBack {
                 x1 = 8 - x1;
                 x2 = 8 - x2;
             }
-            graphLinker.autoClick(x1, y1, x2, y2);
         }
         this.isThinking = false;
     }
@@ -1219,8 +1117,6 @@ public class Controller implements EngineCallBack, LinkerCallBack {
         OpenBookManager.getInstance().close();
         ExecutorsUtils.getInstance().close();
 
-        graphLinker.stop();
-
         prop.setStageWidth(borderPane.getWidth());
         prop.setStageHeight(borderPane.getHeight());
         prop.setSplitPos(splitPane.getDividerPositions()[0]);
@@ -1231,58 +1127,12 @@ public class Controller implements EngineCallBack, LinkerCallBack {
         Platform.exit();
     }
 
-    /**
-     * 图形连线初始化棋盘
-     * @param fenCode
-     * @param isReverse
-     */
-    @Override
-    public void linkerInitChessBoard(String fenCode, boolean isReverse) {
-        Platform.runLater(() -> {
-            newChessBoard(fenCode);
-            if (isReverse) {
-                reverseButtonClick(null);
-            }
-            setLinkMode(linkComboBox.getValue());
-        });
-    }
 
-    @Override
-    public char[][] getEngineBoard() {
-        return board.getBoard();
-    }
 
-    @Override
-    public boolean isThinking() {
-        return this.isThinking;
-    }
 
-    @Override
-    public boolean isWatchMode() {
-        return "观战模式".equals(linkComboBox.getValue());
-    }
-
-    @Override
-    public void linkerMove(int x1, int y1, int x2, int y2) {
-        Platform.runLater(() -> {
-            String move = board.move(x1, y1, x2, y2);
-            if (move != null) {
-                boolean red = XiangqiUtils.isRed(board.getBoard()[y2][x2]);
-                if (isWatchMode() && (!redGo && red || redGo && !red)) {
-                    System.out.println(move + "," + red + ", " + redGo);
-                    // 连线识别行棋方错误，自动切换行棋方
-                    switchPlayer(false);
-                } else {
-                    goCallBack(move);
-                }
-            }
-        });
-    }
 
     private void switchPlayer(boolean f) {
         engineStop();
-
-        graphLinker.pause();
 
         boolean tmpRed = robotRed.getValue(), tmpBlack = robotBlack.getValue(), tmpAnalysis = robotAnalysis.getValue(), tmpLink = linkMode.getValue(), tmpReverse = isReverse.getValue();
 
@@ -1296,7 +1146,6 @@ public class Controller implements EngineCallBack, LinkerCallBack {
         robotAnalysis.setValue(tmpAnalysis);
         linkMode.setValue(tmpLink);
 
-        graphLinker.resume();
         if (robotRed.getValue() && redGo || robotBlack.getValue() && !redGo || robotAnalysis.getValue()) {
             engineGo();
         }
