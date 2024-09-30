@@ -170,16 +170,8 @@ public class Controller implements EngineCallBack {
      */
     private boolean redGo;
 
-    /**
-     * 正在思考（用于连线判断）
-     */
-    private volatile boolean isThinking;
-
     @FXML
     public void newButtonClick(ActionEvent event) {
-        if (linkMode.getValue()) {
-        }
-
         newChessBoard(null);
     }
 
@@ -337,12 +329,6 @@ public class Controller implements EngineCallBack {
         if (engine == null) {
             DialogUtils.showWarningDialog("提示", "引擎未加载");
             return;
-        }
-
-        if (robotRed.getValue() && redGo || robotBlack.getValue() && !redGo) {
-            this.isThinking = true;
-        } else {
-            this.isThinking = false;
         }
 
         engine.setThreadNum(prop.getThreadNum());
@@ -1038,24 +1024,6 @@ public class Controller implements EngineCallBack {
         }
     }
 
-    /**
-     * 连线模式下自动点击走棋
-     * @param step
-     */
-    private void trickAutoClick(ChessBoard.Step step) {
-        if (step != null) {
-            int x1 = step.getFirst().getX(), y1 = step.getFirst().getY();
-            int x2 = step.getSecond().getX(), y2 = step.getSecond().getY();
-            if (robotBlack.getValue()) {
-                y1 = 9 - y1;
-                y2 = 9 - y2;
-                x1 = 8 - x1;
-                x2 = 8 - x2;
-            }
-        }
-        this.isThinking = false;
-    }
-
     @Override
     public void bestMove(String first, String second) {
         if (redGo && robotRed.getValue() || !redGo && robotBlack.getValue()) {
@@ -1067,10 +1035,6 @@ public class Controller implements EngineCallBack {
 
                 goCallBack(first);
             });
-
-            if (linkMode.getValue()) {
-                trickAutoClick(s);
-            }
         }
     }
 
