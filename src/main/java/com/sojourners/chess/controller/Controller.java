@@ -143,9 +143,6 @@ public class Controller implements EngineCallBack {
     private Button immediateButton;
     @FXML
     private Button bookSwitchButton;
-    @FXML
-    private Button linkButton;
-
     private String fenCode;
     private List<String> moveList;
     private int p;
@@ -162,7 +159,6 @@ public class Controller implements EngineCallBack {
     private SimpleObjectProperty<Boolean> robotBlack = new SimpleObjectProperty<>(false);
     private SimpleObjectProperty<Boolean> robotAnalysis = new SimpleObjectProperty<>(false);
     private SimpleObjectProperty<Boolean> isReverse = new SimpleObjectProperty<>(false);
-    private SimpleObjectProperty<Boolean> linkMode = new SimpleObjectProperty<>(false);
     private SimpleObjectProperty<Boolean> useOpenBook = new SimpleObjectProperty<>(false);
 
     /**
@@ -219,19 +215,6 @@ public class Controller implements EngineCallBack {
         board.setShowNumber(prop.isShowNumber());
     }
 
-    @FXML
-    void linkBackModeChecked(ActionEvent event) {
-        CheckMenuItem item = (CheckMenuItem) event.getTarget();
-        if (linkMode.getValue()) {
-        }
-        prop.setLinkBackMode(item.isSelected());
-    }
-
-    @FXML
-    void linkAnimationChecked(ActionEvent event) {
-        CheckMenuItem item = (CheckMenuItem) event.getTarget();
-        prop.setLinkAnimation(item.isSelected());
-    }
 
     @FXML
     void stepSoundClick(ActionEvent event) {
@@ -262,9 +245,6 @@ public class Controller implements EngineCallBack {
         redButton.setDisable(robotAnalysis.getValue());
         blackButton.setDisable(robotAnalysis.getValue());
         immediateButton.setDisable(robotAnalysis.getValue());
-
-        if (linkMode.getValue() && !robotAnalysis.getValue()) {
-        }
     }
 
     private void engineStop() {
@@ -318,9 +298,6 @@ public class Controller implements EngineCallBack {
         }
         if (!robotRed.getValue() && redGo) {
             engineStop();
-        }
-
-        if (linkMode.getValue() && !robotRed.getValue()) {
         }
     }
 
@@ -446,8 +423,6 @@ public class Controller implements EngineCallBack {
 
     @FXML
     public void regretButtonClick(ActionEvent event) {
-        if (linkMode.getValue()) {
-        }
         if (p > 0) {
             if (redGo && robotRed.getValue() || !redGo && robotBlack.getValue()) {
                 p -= 1;
@@ -469,8 +444,6 @@ public class Controller implements EngineCallBack {
 
     @FXML
     void finalButtonClick(ActionEvent event) {
-        if (linkMode.getValue()) {
-        }
         if (p < moveList.size()) {
             p = moveList.size();
             browseChessRecord();
@@ -499,15 +472,6 @@ public class Controller implements EngineCallBack {
         }
     }
 
-    @FXML
-    public void importImageMenuClick(ActionEvent e) {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setInitialDirectory(new File(PathUtils.getJarPath()));
-        File file = fileChooser.showOpenDialog(App.getMainStage());
-        if (file != null) {
-            importFromImgFile(file);
-        }
-    }
 
     @FXML
     public void exportImageMenuClick(ActionEvent e) {
@@ -579,10 +543,6 @@ public class Controller implements EngineCallBack {
         prop.setBookSwitch(useOpenBook.getValue());
     }
 
-    @FXML
-    private void linkButtonClick(ActionEvent e) {
-        linkMode.setValue(!linkMode.getValue());
-    }
 
     private void initLineChart() {
         final NumberAxis xAxis = new NumberAxis();
@@ -902,7 +862,6 @@ public class Controller implements EngineCallBack {
         addListener(blackButton, robotBlack);
         addListener(analysisButton, robotAnalysis);
         addListener(reverseButton, isReverse);
-        addListener(linkButton, linkMode);
         addListener(bookSwitchButton, useOpenBook);
 
         threadComboBox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
@@ -941,60 +900,10 @@ public class Controller implements EngineCallBack {
         linkComboBox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue<? extends String> observableValue, String s, String t1) {
-                setLinkMode(t1);
             }
         });
     }
 
-    private void setLinkMode(String t1) {
-        if (linkMode.getValue()) {
-            if ("自动走棋".equals(t1)) {
-                // 观战模式切换自动走棋，先停止引擎
-                engineStop();
-                // 走黑棋/红棋
-                if (isReverse.getValue()) {
-                    blackButton.setDisable(false);
-                    robotBlack.setValue(true);
-
-                    redButton.setDisable(true);
-                    robotRed.setValue(false);
-
-                    analysisButton.setDisable(true);
-                    robotAnalysis.setValue(false);
-
-                    if (!redGo) {
-                        engineGo();
-                    }
-                } else {
-                    redButton.setDisable(false);
-                    robotRed.setValue(true);
-
-                    blackButton.setDisable(true);
-                    robotBlack.setValue(false);
-
-                    analysisButton.setDisable(true);
-                    robotAnalysis.setValue(false);
-
-                    if (redGo) {
-                        engineGo();
-                    }
-                }
-            } else {
-                analysisButton.setDisable(false);
-                robotAnalysis.setValue(true);
-
-                blackButton.setDisable(true);
-                robotBlack.setValue(false);
-
-                redButton.setDisable(true);
-                robotRed.setValue(false);
-
-                immediateButton.setDisable(true);
-
-                engineGo();
-            }
-        }
-    }
 
     private void addListener(Button button, ObjectProperty property) {
         property.addListener((ChangeListener<Boolean>) (observableValue, aBoolean, t1) -> {
@@ -1105,7 +1014,8 @@ public class Controller implements EngineCallBack {
     private void switchPlayer(boolean f) {
         engineStop();
 
-        boolean tmpRed = robotRed.getValue(), tmpBlack = robotBlack.getValue(), tmpAnalysis = robotAnalysis.getValue(), tmpLink = linkMode.getValue(), tmpReverse = isReverse.getValue();
+        boolean tmpRed = robotRed.getValue(), tmpBlack = robotBlack.getValue(), tmpAnalysis = robotAnalysis.getValue()
+                , tmpReverse = isReverse.getValue();
 
         String fenCode = board.fenCode(f ? !redGo : redGo);
         newChessBoard(fenCode);
@@ -1115,7 +1025,6 @@ public class Controller implements EngineCallBack {
         robotRed.setValue(tmpRed);
         robotBlack.setValue(tmpBlack);
         robotAnalysis.setValue(tmpAnalysis);
-        linkMode.setValue(tmpLink);
 
         if (robotRed.getValue() && redGo || robotBlack.getValue() && !redGo || robotAnalysis.getValue()) {
             engineGo();
