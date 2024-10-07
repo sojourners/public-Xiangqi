@@ -106,7 +106,7 @@ public class WindowsGraphLinker extends AbstractGraphLinker implements MouseList
     }
 
     private void leftClick(int x, int y) {
-//        User32.INSTANCE.PostMessage(hwnd, 0x0200, new WinDef.WPARAM(1), new WinDef.LPARAM(makeLParam(x, y)));
+        User32.INSTANCE.PostMessage(hwnd, 0x0200, new WinDef.WPARAM(1), new WinDef.LPARAM(makeLParam(x, y)));
         User32.INSTANCE.PostMessage(hwnd, 0x0201, new WinDef.WPARAM(1), new WinDef.LPARAM(makeLParam(x, y)));
         if (Properties.getInstance().getMouseClickDelay() > 0) {
             sleep(Properties.getInstance().getMouseClickDelay());
