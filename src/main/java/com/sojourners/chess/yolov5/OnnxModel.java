@@ -191,9 +191,13 @@ public class OnnxModel {
         int destW = Math.round(image.getWidth() * rate);
         int destH = Math.round(image.getHeight() * rate);
         BufferedImage resizedImage = new BufferedImage(destW, destH, BufferedImage.TYPE_INT_RGB);
-        Graphics g = resizedImage.createGraphics();
-        g.drawImage(image, 0, 0, destW, destH, null);
-        g.dispose();
+        Graphics2D g2d = resizedImage.createGraphics();
+        // 改进的绘制参数设置
+        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR); // 或者 VALUE_INTERPOLATION_BICUBIC
+        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.drawImage(image, 0, 0, destW, destH, null);
+        g2d.dispose();
 
         int resizedWidth = resizedImage.getWidth();
         int resizedHeight = resizedImage.getHeight();

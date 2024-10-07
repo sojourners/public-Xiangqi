@@ -117,6 +117,9 @@ public class Controller implements EngineCallBack, LinkerCallBack {
     @FXML
     private CheckMenuItem menuOfShowNumber;
 
+    @FXML
+    private CheckMenuItem menuOfTopWindow;
+
     private Properties prop;
 
     private Engine engine;
@@ -233,6 +236,13 @@ public class Controller implements EngineCallBack, LinkerCallBack {
         CheckMenuItem item = (CheckMenuItem) event.getTarget();
         prop.setShowNumber(item.isSelected());
         board.setShowNumber(prop.isShowNumber());
+    }
+
+    @FXML
+    void topWindowClick(ActionEvent event) {
+        CheckMenuItem item = (CheckMenuItem) event.getTarget();
+        prop.setTopWindow(item.isSelected());
+        App.topWindow(prop.isTopWindow());
     }
 
     @FXML
@@ -808,6 +818,10 @@ public class Controller implements EngineCallBack, LinkerCallBack {
         borderPane.setPrefHeight(prop.getStageHeight());
         splitPane.setDividerPosition(0, prop.getSplitPos());
         splitPane2.setDividerPosition(0, prop.getSplitPos2());
+
+        // 窗口置顶
+        menuOfTopWindow.setSelected(prop.isTopWindow());
+        App.topWindow(prop.isTopWindow());
     }
 
     private void setButtonTips() {

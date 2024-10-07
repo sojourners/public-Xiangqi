@@ -322,6 +322,7 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
             return new Action(3);
         }
 
+        Action action = null;
         int flag = 0, sum = 0;
         Point from = null, to = null;
         for (int i = 0; i < diffList.size(); i++) {
@@ -384,12 +385,13 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
                 }
                 if (f && (flag == 1 && XiangqiUtils.canGo(engineBoard, from.x, from.y, to.x, to.y) || flag == 2 && XiangqiUtils.canGo(linkBoard, from.x, from.y, to.x, to.y))) {
                     sum++;
+                    action = new Action(flag, from.y, from.x, to.y, to.x);
                 }
             }
         }
 
         if (sum == 1) {
-            return new Action(flag, from.y, from.x, to.y, to.x);
+            return action;
         }
 
 //        if (diff1 + diff2 + diff3 == 1) {
@@ -487,6 +489,7 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
             return img;
         }
     }
+
 
     private boolean findChessBoard(char[][] board) {
         // 截图

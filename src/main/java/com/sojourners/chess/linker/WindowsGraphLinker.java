@@ -7,15 +7,9 @@ import com.sojourners.chess.mouse.MouseListenCallBack;
 import com.sojourners.chess.util.PathUtils;
 import com.sun.jna.Memory;
 import com.sun.jna.platform.win32.*;
-import javafx.embed.swing.SwingFXUtils;
-import javafx.scene.image.WritableImage;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.awt.image.RenderedImage;
-import java.io.File;
-import java.io.IOException;
 
 public class WindowsGraphLinker extends AbstractGraphLinker implements MouseListenCallBack {
 
@@ -47,7 +41,9 @@ public class WindowsGraphLinker extends AbstractGraphLinker implements MouseList
             this.listener.stopListenMouse();
             restoreCursor();
 
-            this.hwnd = User32.INSTANCE.GetForegroundWindow();
+            long[] getPos = new long[1];
+            User32Extra.INSTANCE.GetCursorPos(getPos);
+            this.hwnd = User32Extra.INSTANCE.WindowFromPoint(getPos[0]);
 
             this.needScaling = needScaling(this.hwnd);
 
@@ -110,7 +106,7 @@ public class WindowsGraphLinker extends AbstractGraphLinker implements MouseList
     }
 
     private void leftClick(int x, int y) {
-        User32.INSTANCE.PostMessage(hwnd, 0x0200, new WinDef.WPARAM(1), new WinDef.LPARAM(makeLParam(x, y)));
+//        User32.INSTANCE.PostMessage(hwnd, 0x0200, new WinDef.WPARAM(1), new WinDef.LPARAM(makeLParam(x, y)));
         User32.INSTANCE.PostMessage(hwnd, 0x0201, new WinDef.WPARAM(1), new WinDef.LPARAM(makeLParam(x, y)));
         if (Properties.getInstance().getMouseClickDelay() > 0) {
             sleep(Properties.getInstance().getMouseClickDelay());

@@ -26,6 +26,8 @@ public class Properties implements Serializable {
 
     private boolean showNumber = true;
 
+    private boolean topWindow = false;
+
     private int threadNum;
 
     private int hashSize;
@@ -435,5 +437,13 @@ public class Properties implements Serializable {
 
     public void setShowNumber(boolean showNumber) {
         this.showNumber = showNumber;
+    }
+
+    public boolean isTopWindow() {
+        return topWindow;
+    }
+
+    public void setTopWindow(boolean topWindow) {
+        this.topWindow = topWindow;
     }
 }

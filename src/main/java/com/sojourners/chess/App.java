@@ -60,6 +60,10 @@ public class App extends Application {
         primaryStage.show();
     }
 
+    public static void topWindow(boolean top) {
+        mainStage.setAlwaysOnTop(top);
+    }
+
     /**
      * 引擎管理对话框
      */
