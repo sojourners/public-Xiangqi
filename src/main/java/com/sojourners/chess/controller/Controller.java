@@ -141,6 +141,8 @@ public class Controller implements EngineCallBack {
     private Button immediateButton;
     @FXML
     private Button bookSwitchButton;
+    @FXML
+    private Button replayButton;
     private String fenCode;
     private List<String> moveList;
     private int p;
@@ -541,6 +543,10 @@ public class Controller implements EngineCallBack {
         prop.setBookSwitch(useOpenBook.getValue());
     }
 
+    @FXML
+    private void replayButtonClick(ActionEvent e) {
+    }
+
 
     private void initLineChart() {
         final NumberAxis xAxis = new NumberAxis();
@@ -698,7 +704,7 @@ public class Controller implements EngineCallBack {
         analysisButton.setTooltip(new Tooltip("分析模式"));
         immediateButton.setTooltip(new Tooltip("立即出招"));
         bookSwitchButton.setTooltip(new Tooltip("启用库招"));
-
+        replayButton.setTooltip(new Tooltip("复盘"));
     }
 
     private void initChessBoard() {
