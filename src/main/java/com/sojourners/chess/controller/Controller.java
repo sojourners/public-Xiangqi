@@ -78,8 +78,6 @@ public class Controller implements EngineCallBack {
     @FXML
     private ComboBox<String> engineComboBox;
 
-    @FXML
-    private ComboBox<String> linkComboBox;
 
     @FXML
     private ComboBox<String> hashComboBox;
@@ -611,8 +609,6 @@ public class Controller implements EngineCallBack {
         initEngineView();
         // 加载引擎
         loadEngine(prop.getEngineName());
-        // 连线器
-        initGraphLinker();
         // 按钮监听
         initButtonListener();
         // autofit board size listener
@@ -844,11 +840,6 @@ public class Controller implements EngineCallBack {
     }
 
 
-    private void initGraphLinker() {
-        linkComboBox.getItems().addAll("自动走棋", "观战模式");
-        linkComboBox.setValue("自动走棋");
-    }
-
     private void refreshEngineComboBox() {
         engineComboBox.getItems().clear();
         for (EngineConfig ec : prop.getEngineConfigList()) {
@@ -895,11 +886,6 @@ public class Controller implements EngineCallBack {
                     // 加载新引擎
                     loadEngine(t1);
                 }
-            }
-        });
-        linkComboBox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
-            @Override
-            public void changed(ObservableValue<? extends String> observableValue, String s, String t1) {
             }
         });
     }
