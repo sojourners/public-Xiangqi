@@ -151,10 +151,6 @@ public class Controller implements EngineCallBack {
     @FXML
     private TableView<ManualRecord> recordTable;
 
-    public TableView<ManualRecord> getRecordTable(){
-        return recordTable;
-    }
-
     @FXML
     private TableView<BookData> bookTable;
 
@@ -169,6 +165,14 @@ public class Controller implements EngineCallBack {
      * 走棋方
      */
     private boolean redGo;
+
+    public XYChart.Series getLineChartSeries(){
+        return lineChartSeries;
+    }
+
+    public TableView<ManualRecord> getRecordTable(){
+        return recordTable;
+    }
 
     @FXML
     public void newButtonClick(ActionEvent event) {
@@ -604,7 +608,7 @@ public class Controller implements EngineCallBack {
     }
 
 
-    private void initLineChart() {
+    public void initLineChart() {
         final NumberAxis xAxis = new NumberAxis();
         final NumberAxis yAxis = new NumberAxis(-1000, 1000, 500);
         xAxis.setTickLabelsVisible(false);
