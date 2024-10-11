@@ -592,7 +592,7 @@ public class Controller implements EngineCallBack {
                     engine.analysis(fenCode, moveList.subList(0, p), this.board.getBoard(), redGo);
                     sleep(1200L);
                     Integer lastScore = engine.getLastScore();
-                    scoreList.add(lastScore);
+                    scoreList.add(redGo?lastScore:-lastScore);
                 }
                 replayFlag.setValue(false);
             }catch (Exception e2){
