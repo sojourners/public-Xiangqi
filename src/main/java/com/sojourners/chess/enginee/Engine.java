@@ -27,6 +27,11 @@ public class Engine {
     private AnalysisModel analysisModel;
     private long analysisValue;
 
+    /**
+     * 最后的分数
+     */
+    private Integer lastScore;
+
     private volatile boolean threadNumChange;
     private int threadNum;
 
@@ -47,6 +52,10 @@ public class Engine {
         FIXED_TIME,
         FIXED_STEPS,
         INFINITE;
+    }
+
+    public Integer getLastScore() {
+        return lastScore;
     }
 
     public Engine(EngineConfig ec, EngineCallBack cb) throws IOException {
@@ -240,6 +249,7 @@ public class Engine {
             }
         }
         if (td.getDetail().size() > 0) {
+            lastScore = td.getScore();
             cb.thinkDetail(td);
         }
     }

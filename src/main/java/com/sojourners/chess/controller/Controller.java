@@ -8,10 +8,7 @@ import com.sojourners.chess.enginee.EngineCallBack;
 import com.sojourners.chess.lock.SingleLock;
 import com.sojourners.chess.lock.WorkerTask;
 import com.sojourners.chess.menu.BoardContextMenu;
-import com.sojourners.chess.model.BookData;
-import com.sojourners.chess.model.EngineConfig;
-import com.sojourners.chess.model.ManualRecord;
-import com.sojourners.chess.model.ThinkData;
+import com.sojourners.chess.model.*;
 import com.sojourners.chess.openbook.OpenBookManager;
 import com.sojourners.chess.util.*;
 import javafx.application.Platform;
@@ -19,6 +16,8 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -152,9 +151,14 @@ public class Controller implements EngineCallBack {
     @FXML
     private TableView<ManualRecord> recordTable;
 
+    public TableView<ManualRecord> getRecordTable(){
+        return recordTable;
+    }
+
     @FXML
     private TableView<BookData> bookTable;
 
+    private SimpleObjectProperty<Boolean> replayFlag = new SimpleObjectProperty<>(false);
     private SimpleObjectProperty<Boolean> robotRed = new SimpleObjectProperty<>(false);
     private SimpleObjectProperty<Boolean> robotBlack = new SimpleObjectProperty<>(false);
     private SimpleObjectProperty<Boolean> robotAnalysis = new SimpleObjectProperty<>(false);
@@ -305,6 +309,10 @@ public class Controller implements EngineCallBack {
     private void engineGo() {
         if (engine == null) {
             DialogUtils.showWarningDialog("提示", "引擎未加载");
+            return;
+        }
+        if(replayFlag.getValue()){
+            DialogUtils.showWarningDialog("提示", "引擎复盘分析中");
             return;
         }
 
@@ -545,6 +553,53 @@ public class Controller implements EngineCallBack {
 
     @FXML
     private void replayButtonClick(ActionEvent e) {
+
+        if (engine == null) {
+            DialogUtils.showWarningDialog("提示", "引擎未加载");
+            return;
+        }
+        if(replayFlag.getValue()){
+            DialogUtils.showWarningDialog("提示", "复盘分析中");
+            return;
+        }
+        replayFlag.setValue(true);
+        robotRed.setValue(false);
+        robotBlack.setValue(false);
+        robotAnalysis.setValue(false);
+        ObservableList<Integer> scoreList = FXCollections.observableArrayList();
+        scoreList.addListener(new MyListChangeListener(this, moveList.size()+1));
+        new Thread(() -> {
+            try{
+                for(int i = 0 ;i<= moveList.size();i++){
+                    p = i;
+                    // 设置行棋方
+                    redGo = fenCode.contains("w");
+                    if (p % 2 != 0) {
+                        redGo = !redGo;
+                    }
+                    engine.setThreadNum(1);
+                    engine.setHashSize(128);
+                    engine.setAnalysisModel(Engine.AnalysisModel.FIXED_TIME, 1000L);
+                    engine.analysis(fenCode, moveList.subList(0, p), this.board.getBoard(), redGo);
+                    sleep(1200L);
+                    Integer lastScore = engine.getLastScore();
+                    scoreList.add(lastScore);
+                }
+                replayFlag.setValue(false);
+            }catch (Exception e2){
+                e2.printStackTrace();
+                replayFlag.setValue(false);
+            }
+
+        }).start();
+    }
+
+    private void sleep(long time){
+        try {
+            Thread.sleep(time);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
