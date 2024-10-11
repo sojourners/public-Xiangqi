@@ -71,7 +71,7 @@ public class Engine {
             try {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    System.out.println(line);
+//                    System.out.println(line);
                     if (line.contains("nps")) {
                         thinkDetail(line);
                     } else if (line.contains("bestmove")) {
