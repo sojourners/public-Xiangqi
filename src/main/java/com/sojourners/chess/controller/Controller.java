@@ -562,6 +562,7 @@ public class Controller implements EngineCallBack {
             DialogUtils.showWarningDialog("提示", "复盘分析中");
             return;
         }
+        engineStop();
         replayFlag.setValue(true);
         robotRed.setValue(false);
         robotBlack.setValue(false);

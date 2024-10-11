@@ -148,7 +148,7 @@
                         <Insets />
                      </opaqueInsets>
                   </Button>
-                  <Button fx:id="replayButton" contentDisplay="GRAPHIC_ONLY" layoutX="254.0" layoutY="8.0" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#replayButtonClick" style="-fx-background-image: url('/image/cloud.png');" stylesheets="@../style/app.css" text="Button">
+                  <Button fx:id="replayButton" contentDisplay="GRAPHIC_ONLY" layoutX="254.0" layoutY="8.0" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#replayButtonClick" style="-fx-background-image: url('/image/link.png');" stylesheets="@../style/app.css" text="Button">
                       <opaqueInsets>
                           <Insets />
                       </opaqueInsets>
