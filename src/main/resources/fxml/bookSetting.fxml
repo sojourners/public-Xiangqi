@@ -29,10 +29,10 @@
    <center>
   <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="240.0" prefWidth="437.0" BorderPane.alignment="CENTER">
          <children>
-            <CheckBox fx:id="useCloudBook" layoutX="50.0" layoutY="40.0" mnemonicParsing="false" text="开启云库,  超时时间" />
-            <TextField fx:id="cloudBookTimeout" layoutX="183.0" layoutY="35.0" prefHeight="27.0" prefWidth="72.0" />
-            <Label layoutX="260.0" layoutY="41.0" text="毫秒" />
-            <CheckBox fx:id="onlyCloudFinalPhase" layoutX="50.0" layoutY="70.0" mnemonicParsing="false" text="只使用云残局库" />
+            <CheckBox visible="false" fx:id="useCloudBook" layoutX="50.0" layoutY="40.0" mnemonicParsing="false" text="开启云库,  超时时间" />
+            <TextField visible="false" fx:id="cloudBookTimeout" layoutX="183.0" layoutY="35.0" prefHeight="27.0" prefWidth="72.0" />
+            <Label visible="false" layoutX="260.0" layoutY="41.0" text="毫秒" />
+            <CheckBox visible="false" fx:id="onlyCloudFinalPhase" layoutX="50.0" layoutY="70.0" mnemonicParsing="false" text="只使用云残局库" />
             <CheckBox fx:id="localBookFirst" layoutX="50.0" layoutY="107.0" mnemonicParsing="false" text="优先使用本地库" />
             <Button layoutX="177.0" layoutY="103.0" mnemonicParsing="false" onAction="#localBookManageButtonClick" text="本地库管理" />
             <RadioButton fx:id="bestScoreRadioButton" layoutX="49.0" layoutY="147.0" mnemonicParsing="false" text="取最高分" />
