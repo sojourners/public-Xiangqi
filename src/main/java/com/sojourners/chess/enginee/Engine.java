@@ -256,7 +256,7 @@ public class Engine {
 
     public void analysis(String fenCode, List<String> moves, char[][] board, boolean redGo) {
         ExecutorsUtils.getInstance().exec(() -> {
-            if (Properties.getInstance().getBookSwitch()) {
+            if (Properties.getInstance().getBookSwitch() && !cb.getReplayFlag()) {
                 long s = System.currentTimeMillis();
                 List<BookData> results = OpenBookManager.getInstance().queryBook(board, redGo, moves.size() / 2 >= Properties.getInstance().getOffManualSteps());
                 System.out.println("查询库时间" + (System.currentTimeMillis() - s));

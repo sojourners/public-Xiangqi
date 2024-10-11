@@ -16,4 +16,6 @@ public interface EngineCallBack {
     void thinkDetail(ThinkData td);
 
     void showBookResults(List<BookData> list);
+
+    Boolean getReplayFlag();
 }

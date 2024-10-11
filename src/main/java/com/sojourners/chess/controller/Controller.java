@@ -174,6 +174,10 @@ public class Controller implements EngineCallBack {
         return recordTable;
     }
 
+    public Boolean getReplayFlag() {
+        return replayFlag.get();
+    }
+
     @FXML
     public void newButtonClick(ActionEvent event) {
         newChessBoard(null);
