@@ -249,7 +249,21 @@ public class Engine {
             }
         }
         if (td.getDetail().size() > 0) {
-            lastScore = td.getScore();
+            if(cb.getReplayFlag()){
+                if(td.getScore() != null){
+                    lastScore = td.getScore() > 1000 ? 1000 : (td.getScore() < -1000 ? -1000 : td.getScore());
+                }else {
+                    String wdl = msg.substring(msg.indexOf("wdl")+4);
+                    String[] wdlInfo = wdl.split(" ");
+                    if(Integer.valueOf(wdlInfo[0])>400){
+                        lastScore = 1001;
+                    }else if (Integer.valueOf(wdlInfo[2])>400){
+                        lastScore = -1001;
+                    }else {
+                        lastScore = 0;
+                    }
+                }
+            }
             cb.thinkDetail(td);
         }
     }
