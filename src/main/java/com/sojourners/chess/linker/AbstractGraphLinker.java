@@ -3,7 +3,8 @@ package com.sojourners.chess.linker;
 import com.sojourners.chess.board.ChessBoard;
 import com.sojourners.chess.config.Properties;
 import com.sojourners.chess.util.XiangqiUtils;
-import com.sojourners.chess.yolov5.OnnxModel;
+import com.sojourners.chess.yolo.YoloModel;
+import com.sojourners.chess.yolo.Yolov11Model;
 
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -29,7 +30,7 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
 
     private char[][] board1 = new char[10][9];
 
-    private OnnxModel aiModel;
+    private YoloModel aiModel;
 
     private LinkerCallBack callBack;
 
@@ -45,7 +46,7 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
         this.callBack = callBack;
         robot = new Robot();
         this.count = 0;
-        this.aiModel = new OnnxModel();
+        this.aiModel = new Yolov11Model();
         this.prop = Properties.getInstance();
         this.pause = false;
     }
@@ -572,10 +573,10 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
         }
     }
     private Point getPosition(int x, int y) {
-        double pieceWith = boardPos.width / (8 + OnnxModel.PADDING * 2);
-        double pieceHeight = boardPos.height / (9 + OnnxModel.PADDING * 2);
-        Point p = new Point((int) (boardPos.x + pieceWith * OnnxModel.PADDING + (x * pieceWith)),
-                (int) (boardPos.y + pieceHeight * OnnxModel.PADDING + (y * pieceHeight)));
+        double pieceWith = boardPos.width / (8 + YoloModel.PADDING * 2);
+        double pieceHeight = boardPos.height / (9 + YoloModel.PADDING * 2);
+        Point p = new Point((int) (boardPos.x + pieceWith * YoloModel.PADDING + (x * pieceWith)),
+                (int) (boardPos.y + pieceHeight * YoloModel.PADDING + (y * pieceHeight)));
         if (x == 0) {
             p.x += 0.2 * pieceWith;
         } else if (x == 8) {
