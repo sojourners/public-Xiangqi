@@ -76,6 +76,9 @@ public class Engine {
                         thinkDetail(line);
                     } else if (line.contains("bestmove")) {
                         bestMove(line);
+                    }else if("info depth 0 score mate 0".equals(line)){
+                        //说明是最后一步
+                        this.lastScore = -1001;
                     }
                 }
             } catch (Exception e) {
@@ -255,9 +258,9 @@ public class Engine {
                 }else {
                     String wdl = msg.substring(msg.indexOf("wdl")+4);
                     String[] wdlInfo = wdl.split(" ");
-                    if(Integer.valueOf(wdlInfo[0])>400){
+                    if(Integer.parseInt(wdlInfo[0])>400){
                         lastScore = 1001;
-                    }else if (Integer.valueOf(wdlInfo[2])>400){
+                    }else if (Integer.parseInt(wdlInfo[2])>400){
                         lastScore = -1001;
                     }else {
                         lastScore = 0;
