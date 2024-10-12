@@ -599,6 +599,9 @@ public class Controller implements EngineCallBack {
                 e2.printStackTrace();
                 replayFlag.setValue(false);
             }
+            Platform.runLater(() ->{
+                DialogUtils.showWarningDialog("提示", "复盘结束");
+            });
 
         }).start();
     }
@@ -903,7 +906,7 @@ public class Controller implements EngineCallBack {
         for (int i = 1; i <= Runtime.getRuntime().availableProcessors(); i++) {
             threadComboBox.getItems().add(String.valueOf(i));
         }
-        hashComboBox.getItems().addAll("16", "32", "64", "128", "256", "512", "1024", "2048", "4096");
+        hashComboBox.getItems().addAll("64", "128", "256", "512", "1024", "2048");
         // 加载设置
         threadComboBox.setValue(String.valueOf(prop.getThreadNum()));
         hashComboBox.setValue(String.valueOf(prop.getHashSize()));
@@ -1010,7 +1013,7 @@ public class Controller implements EngineCallBack {
             if (td.getValid()) {
                 Platform.runLater(() -> {
                     listView.getItems().add(0, td);
-                    if (listView.getItems().size() > 128) {
+                    if (listView.getItems().size() > 64) {
                         listView.getItems().remove(listView.getItems().size() - 1);
                     }
 
