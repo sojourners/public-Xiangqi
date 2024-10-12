@@ -595,7 +595,7 @@ public class Controller implements EngineCallBack, LinkerCallBack {
 
     @FXML
     public void aboutClick(ActionEvent e) {
-        DialogUtils.showInfoDialog("关于", "中国象棋界面"
+        DialogUtils.showInfoDialog("关于", "TCHESS 象棋"
                 + System.lineSeparator() + "Built on : " + App.BUILT_ON
                 + System.lineSeparator() + "Author : T"
                 + System.lineSeparator() + "Version : " + App.VERSION);

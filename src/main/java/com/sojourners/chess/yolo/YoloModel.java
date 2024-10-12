@@ -180,7 +180,8 @@ public class YoloModel {
             }
         }
 
-        System.gc();System.out.println(System.currentTimeMillis() - s);
+//        System.gc();
+        System.out.println(System.currentTimeMillis() - s);
         return list;
     }
 
