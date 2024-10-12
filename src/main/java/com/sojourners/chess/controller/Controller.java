@@ -52,6 +52,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
 
 public class Controller implements EngineCallBack {
 
@@ -690,6 +691,8 @@ public class Controller implements EngineCallBack {
         initCanvasDragListener();
 
         useOpenBook.setValue(prop.getBookSwitch());
+
+        initCacheConsumer();
     }
 
     private void importFromImgFile(File f) {
@@ -1006,25 +1009,49 @@ public class Controller implements EngineCallBack {
         }
     }
 
+    /**
+     * 做个缓冲 避免界面卡顿
+     */
+    private  ArrayBlockingQueue<ThinkData> CACHE_TD_QUEUE = new ArrayBlockingQueue<>(10);
+
+    private void initCacheConsumer(){
+        Thread thread = new Thread(() -> {
+            while (true) {
+                try {
+                    ThinkData td = CACHE_TD_QUEUE.take();
+                    Platform.runLater(() -> {
+                        listView.getItems().add(0, td);
+                        if (listView.getItems().size() > 10) {
+                            listView.getItems().remove(listView.getItems().size() - 1);
+                        }
+
+                        if (prop.isLinkShowInfo()) {
+                            infoShowLabel.setText(td.getTitle() + " | " + td.getBody());
+                            infoShowLabel.setTextFill(td.getScore() >= 0 ? Color.BLUE : Color.RED);
+                            timeShowLabel.setText(prop.getAnalysisModel() == Engine.AnalysisModel.FIXED_TIME ? "固定时间" + prop.getAnalysisValue() / 1000d + "s" : "固定深度" + prop.getAnalysisValue() + "层");
+                        }
+
+                        board.setTip(td.getDetail().get(0), td.getDetail().size() > 1 ? td.getDetail().get(1) : null);
+                    });
+                    Thread.sleep(100L);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        thread.setDaemon(true);
+        thread.start();
+    }
+
     @Override
     public void thinkDetail(ThinkData td) {
         if (redGo && robotRed.getValue() || !redGo && robotBlack.getValue() || robotAnalysis.getValue()) {
             td.generate(redGo, isReverse.getValue(), board);
             if (td.getValid()) {
-                Platform.runLater(() -> {
-                    listView.getItems().add(0, td);
-                    if (listView.getItems().size() > 32) {
-                        listView.getItems().remove(listView.getItems().size() - 1);
-                    }
-
-                    if (prop.isLinkShowInfo()) {
-                        infoShowLabel.setText(td.getTitle() + " | " + td.getBody());
-                        infoShowLabel.setTextFill(td.getScore() >= 0 ? Color.BLUE : Color.RED);
-                        timeShowLabel.setText(prop.getAnalysisModel() == Engine.AnalysisModel.FIXED_TIME ? "固定时间" + prop.getAnalysisValue() / 1000d + "s" : "固定深度" + prop.getAnalysisValue() + "层");
-                    }
-
-                    board.setTip(td.getDetail().get(0), td.getDetail().size() > 1 ? td.getDetail().get(1) : null);
-                });
+                if (!CACHE_TD_QUEUE.offer(td)) {
+                    CACHE_TD_QUEUE.poll();
+                    CACHE_TD_QUEUE.offer(td);
+                }
             }
         }
     }
