@@ -167,6 +167,14 @@ public class Controller implements EngineCallBack {
      */
     private boolean redGo;
 
+    public Boolean isReverse() {
+        return isReverse.get();
+    }
+
+    public boolean isRedGo() {
+        return redGo;
+    }
+
     public XYChart.Series getLineChartSeries(){
         return lineChartSeries;
     }
@@ -593,7 +601,7 @@ public class Controller implements EngineCallBack {
                     engine.analysis(fenCode, moveList.subList(0, p), this.board.getBoard(), redGo);
                     sleep(1200L);
                     Integer lastScore = engine.getLastScore();
-                    scoreList.add(redGo?lastScore:-lastScore);
+                    scoreList.add(lastScore);
                 }
                 replayFlag.setValue(false);
             }catch (Exception e2){

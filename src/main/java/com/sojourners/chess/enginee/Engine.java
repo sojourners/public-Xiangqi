@@ -78,7 +78,7 @@ public class Engine {
                         bestMove(line);
                     }else if("info depth 0 score mate 0".equals(line)){
                         //说明是最后一步
-                        this.lastScore = -30000;
+                        this.lastScore = this.cb.isRedGo()? -30000 : 30000;
                     }
                 }
             } catch (Exception e) {
@@ -253,15 +253,7 @@ public class Engine {
         }
         if (td.getDetail().size() > 0) {
             if(cb.getReplayFlag()){
-                if(td.getScore() != null){
-                    lastScore = td.getScore();
-                }else {
-                    if(td.getMate() != null ){
-                        if(td.getMate() != 0){
-                            lastScore = 30000-td.getMate();
-                        }
-                    }
-                }
+                this.lastScore = td.calculateScore(this.cb.isRedGo(),this.cb.isReverse());
             }
             cb.thinkDetail(td);
         }

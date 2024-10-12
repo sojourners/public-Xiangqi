@@ -31,6 +31,29 @@ public class ThinkData {
 
     }
 
+
+    /**
+     * 单纯计算分数
+     *
+     * @param redGo redGo
+     * @param isReverse isReverse
+     * @return score
+     */
+    public Integer calculateScore(boolean redGo, boolean isReverse){
+        Integer result = score;
+        if (result == null) {
+            result = mate;
+        }
+        if (redGo && isReverse || !redGo && !isReverse) {
+            result = -result;
+        }
+
+        if (mate != null) {
+            result = (result < 0 ? -30000 : 30000) - result;
+        }
+        return result;
+    }
+
     public void generate(boolean redGo, boolean isReverse, ChessBoard board) {
         // 生成title
         StringBuilder sb = new StringBuilder();

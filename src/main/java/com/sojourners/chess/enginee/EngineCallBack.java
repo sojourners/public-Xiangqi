@@ -18,4 +18,8 @@ public interface EngineCallBack {
     void showBookResults(List<BookData> list);
 
     Boolean getReplayFlag();
+
+    Boolean isReverse();
+
+    boolean isRedGo();
 }
