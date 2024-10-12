@@ -42,7 +42,6 @@ public class ThinkData {
             f = true;
         } else {
             sb.append("分数: ");
-            score = score;
         }
         if (redGo && isReverse || !redGo && !isReverse) {
             score = -score;

@@ -1013,7 +1013,7 @@ public class Controller implements EngineCallBack {
             if (td.getValid()) {
                 Platform.runLater(() -> {
                     listView.getItems().add(0, td);
-                    if (listView.getItems().size() > 64) {
+                    if (listView.getItems().size() > 32) {
                         listView.getItems().remove(listView.getItems().size() - 1);
                     }
 
