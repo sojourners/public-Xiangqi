@@ -78,7 +78,9 @@ public class Engine {
                         bestMove(line);
                     }else if("info depth 0 score mate 0".equals(line)){
                         //说明是最后一步
-                        this.lastScore = -1001;
+                        if(this.getLastScore() != null){
+                            this.lastScore = this.getLastScore() < 0 ? 30000:-30000;
+                        }
                     }
                 }
             } catch (Exception e) {
@@ -254,16 +256,12 @@ public class Engine {
         if (td.getDetail().size() > 0) {
             if(cb.getReplayFlag()){
                 if(td.getScore() != null){
-                    lastScore = td.getScore() > 1000 ? 1000 : (td.getScore() < -1000 ? -1000 : td.getScore());
+                    lastScore = td.getScore();
                 }else {
-                    String wdl = msg.substring(msg.indexOf("wdl")+4);
-                    String[] wdlInfo = wdl.split(" ");
-                    if(Integer.parseInt(wdlInfo[0])>400){
-                        lastScore = 1001;
-                    }else if (Integer.parseInt(wdlInfo[2])>400){
-                        lastScore = -1001;
-                    }else {
-                        lastScore = 0;
+                    if(td.getMate() != null ){
+                        if(td.getMate() != 0){
+                            lastScore = 30000-td.getMate();
+                        }
                     }
                 }
             }

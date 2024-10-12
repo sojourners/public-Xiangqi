@@ -588,9 +588,9 @@ public class Controller implements EngineCallBack {
                     }
                     engine.setThreadNum(2);
                     engine.setHashSize(256);
-                    engine.setAnalysisModel(Engine.AnalysisModel.FIXED_TIME, 2000L);
+                    engine.setAnalysisModel(Engine.AnalysisModel.FIXED_TIME, 1000L);
                     engine.analysis(fenCode, moveList.subList(0, p), this.board.getBoard(), redGo);
-                    sleep(2200L);
+                    sleep(1200L);
                     Integer lastScore = engine.getLastScore();
                     scoreList.add(redGo?lastScore:-lastScore);
                 }
