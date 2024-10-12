@@ -78,7 +78,8 @@ public class Engine {
                         bestMove(line);
                     }else if("info depth 0 score mate 0".equals(line)){
                         //说明是最后一步
-                        this.lastScore = this.cb.isRedGo()? -30000 : 30000;
+                        int tmpScore = this.cb.isRedGo()? -30000 : 30000;
+                        this.lastScore = this.cb.isReverse()? -tmpScore:tmpScore;
                     }
                 }
             } catch (Exception e) {

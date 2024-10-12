@@ -138,7 +138,7 @@
                         <Insets />
                      </opaqueInsets>
                   </Button>
-                  <Button fx:id="immediateButton" contentDisplay="GRAPHIC_ONLY" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#immediateButtonClick" style="-fx-background-image: url('/image/goim.png');" stylesheets="@../style/app.css" text="Button">
+                  <Button visible="false" fx:id="immediateButton" contentDisplay="GRAPHIC_ONLY" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#immediateButtonClick" style="-fx-background-image: url('/image/goim.png');" stylesheets="@../style/app.css" text="Button">
                      <opaqueInsets>
                         <Insets />
                      </opaqueInsets>
