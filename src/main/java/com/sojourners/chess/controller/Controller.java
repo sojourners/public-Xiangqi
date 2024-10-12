@@ -374,10 +374,14 @@ public class Controller implements EngineCallBack {
         moveList.add(move);
         p++;
         int score = getScore();
-        recordTable.getItems().add(new ManualRecord(p, board.translate(move, true), score));
+        ManualRecord tmr = recordTable.getItems().get(recordTable.getItems().size() - 1);
+        ManualRecord newTmr = new ManualRecord(tmr.getId(),tmr.getName(),score);
+        recordTable.getItems().remove(recordTable.getItems().size() - 1);
+        recordTable.getItems().add(newTmr);
+        recordTable.getItems().add(new ManualRecord(p, board.translate(move, true), 0));
         reLocationTable();
         // 趋势图
-        lineChartSeries.getData().add(new XYChart.Data<>(p, score > 1000 ? 1000 : (score < -1000 ? -1000 : score)));
+        lineChartSeries.getData().add(new XYChart.Data<>(p-1, score > 1000 ? 1000 : (score < -1000 ? -1000 : score)));
         // 切换行棋方
         redGo = !redGo;
         // 触发引擎走棋
@@ -1029,11 +1033,11 @@ public class Controller implements EngineCallBack {
                             listView.getItems().remove(listView.getItems().size() - 1);
                         }
 
-                        if (prop.isLinkShowInfo()) {
-                            infoShowLabel.setText(td.getTitle() + " | " + td.getBody());
-                            infoShowLabel.setTextFill(td.getScore() >= 0 ? Color.BLUE : Color.RED);
-                            timeShowLabel.setText(prop.getAnalysisModel() == Engine.AnalysisModel.FIXED_TIME ? "固定时间" + prop.getAnalysisValue() / 1000d + "s" : "固定深度" + prop.getAnalysisValue() + "层");
-                        }
+//                        if (prop.isLinkShowInfo()) {
+//                            infoShowLabel.setText(td.getTitle() + " | " + td.getBody());
+//                            infoShowLabel.setTextFill(td.getScore() >= 0 ? Color.BLUE : Color.RED);
+//                            timeShowLabel.setText(prop.getAnalysisModel() == Engine.AnalysisModel.FIXED_TIME ? "固定时间" + prop.getAnalysisValue() / 1000d + "s" : "固定深度" + prop.getAnalysisValue() + "层");
+//                        }
 
                         board.setTip(td.getDetail().get(0), td.getDetail().size() > 1 ? td.getDetail().get(1) : null);
                     });
