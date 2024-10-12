@@ -600,10 +600,6 @@ public class Controller implements EngineCallBack {
                 e2.printStackTrace();
                 replayFlag.setValue(false);
             }
-            Platform.runLater(() ->{
-                DialogUtils.showWarningDialog("提示", "复盘结束");
-            });
-
         }).start();
     }
 
