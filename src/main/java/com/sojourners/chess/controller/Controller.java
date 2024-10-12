@@ -1039,14 +1039,6 @@ public class Controller implements EngineCallBack {
         }
     }
 
-    private void callWorker(WorkerTask task) {
-        lock.lock();
-        Platform.runLater(() -> {
-            task.call();
-            lock.unlock();
-        });
-    }
-
     @FXML
     public void exit() {
         if (engine != null) {
