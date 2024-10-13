@@ -18,18 +18,18 @@ public class Yolov11Model extends YoloModel {
             int maxIndex = 0;
 
             for(int c = 0; c < sizeClasses; ++c) {
-                if (output[reshape(indexBase + c + 4, size)] > maxClass) {
-                    maxClass = output[reshape(indexBase + c + 4, size)];
+                if (output[reshape(indexBase + c + 4, stride, size)] > maxClass) {
+                    maxClass = output[reshape(indexBase + c + 4, stride, size)];
                     maxIndex = c;
                 }
             }
 
             float score = maxClass;
             if (score > CONFIDENCE) {
-                float xPos = output[reshape(indexBase, size)];
-                float yPos = output[reshape(indexBase + 1, size)];
-                float w = output[reshape(indexBase + 2, size)];
-                float h = output[reshape(indexBase + 3, size)];
+                float xPos = output[reshape(indexBase, stride, size)];
+                float yPos = output[reshape(indexBase + 1, stride, size)];
+                float w = output[reshape(indexBase + 2, stride, size)];
+                float h = output[reshape(indexBase + 3, stride, size)];
                 Rectangle rect = new Rectangle(xPos / rate, yPos / rate, w / rate, h / rate);
                 list.add(new DetectResult(labels[maxIndex], rect, score));
             }
@@ -38,9 +38,9 @@ public class Yolov11Model extends YoloModel {
         return nms(list);
     }
 
-    private int reshape(int i, int size) {
-        int n = i / 19;
-        int m = i % 19;
+    private int reshape(int i, int stride, int size) {
+        int n = i / stride;
+        int m = i % stride;
         return n + m * size;
     }
 }
