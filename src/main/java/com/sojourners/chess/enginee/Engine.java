@@ -197,7 +197,7 @@ public class Engine {
         }
         if (Properties.getInstance().getEngineDelayEnd() > 0 && Properties.getInstance().getEngineDelayEnd() >= Properties.getInstance().getEngineDelayStart()) {
             int t = random.nextInt(Properties.getInstance().getEngineDelayStart(), Properties.getInstance().getEngineDelayEnd());
-            if(!AnalysisModel.INFINITE.equals(this.analysisModel)){
+            if(!AnalysisModel.INFINITE.equals(this.analysisModel) && !this.cb.getReplayFlag()){
                 sleep(t);
             }
         }
@@ -272,7 +272,7 @@ public class Engine {
                 if (results.size() > 0 && this.analysisModel != AnalysisModel.INFINITE) {
                     if (Properties.getInstance().getBookDelayEnd() > 0 && Properties.getInstance().getBookDelayEnd() >= Properties.getInstance().getBookDelayStart()) {
                         int t = random.nextInt(Properties.getInstance().getBookDelayStart(), Properties.getInstance().getBookDelayEnd());
-                        if(!AnalysisModel.INFINITE.equals(this.analysisModel)){
+                        if(!AnalysisModel.INFINITE.equals(this.analysisModel) && !this.cb.getReplayFlag()){
                             sleep(t);
                         }
                     }
