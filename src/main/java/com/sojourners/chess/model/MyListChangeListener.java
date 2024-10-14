@@ -21,11 +21,19 @@ public class MyListChangeListener implements ListChangeListener<Integer> {
     public void onChanged(Change<? extends Integer> change) {
         ObservableList<? extends Integer> originList = change.getList();
         if(originList.size() >= flag){
+            final int startIndex = (!this.cb.isReverse()&&this.cb.firstIsRed())||(this.cb.isReverse()&&!this.cb.firstIsRed())?1 :2;
             for(int i = 0 ;i< originList.size();i++){
                 int t = i;
                 Platform.runLater(() -> {
                     ManualRecord originManualRecord = this.cb.getRecordTable().getItems().get(t);
                     ManualRecord newManualRecord = new ManualRecord(originManualRecord.getId(),originManualRecord.getName(),originList.get(t));
+                    if(t >= startIndex){
+                        if(originList.get(t-1) - originList.get(t) >= 500){
+                            newManualRecord.setDesc("臭棋");
+                        }else if(originList.get(t-1) - originList.get(t) >= 250){
+                            newManualRecord.setDesc("漏招");
+                        }
+                    }
                     this.cb.getRecordTable().getItems().set(t,newManualRecord);
 
                     // 趋势图

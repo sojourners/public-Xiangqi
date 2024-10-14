@@ -8,6 +8,16 @@ public class ManualRecord {
 
     private Integer score;
 
+    private String desc = "";
+
+    public String getDesc() {
+        return desc;
+    }
+
+    public void setDesc(String desc) {
+        this.desc = desc;
+    }
+
     public ManualRecord(Integer id, String name, Integer score) {
         this.id = id;
         this.name = name;

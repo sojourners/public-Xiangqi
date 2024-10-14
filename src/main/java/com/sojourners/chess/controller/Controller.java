@@ -145,6 +145,15 @@ public class Controller implements EngineCallBack {
     @FXML
     private Button replayButton;
     private String fenCode;
+
+    /**
+     * 第一步是否红先
+     * @return
+     */
+    public boolean firstIsRed(){
+        return fenCode.contains("w");
+    }
+
     private List<String> moveList;
     private int p;
 
@@ -768,6 +777,8 @@ public class Controller implements EngineCallBack {
         nameCol.setCellValueFactory(new PropertyValueFactory<ManualRecord, String>("name"));
         TableColumn scoreCol = recordTable.getColumns().get(2);
         scoreCol.setCellValueFactory(new PropertyValueFactory<ManualRecord, String>("score"));
+        TableColumn descCol = recordTable.getColumns().get(3);
+        descCol.setCellValueFactory(new PropertyValueFactory<ManualRecord, String>("desc"));
     }
 
     public void initStage() {

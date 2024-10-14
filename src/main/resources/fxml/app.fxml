@@ -211,6 +211,7 @@
                                                           <TableColumn editable="false" prefWidth="60.0" sortable="false" text="序号" />
                                                           <TableColumn editable="false" prefWidth="120.0" sortable="false" text="着法" />
                                                             <TableColumn editable="false" prefWidth="90.0" sortable="false" text="分数" />
+                                                            <TableColumn editable="false" prefWidth="150.0" sortable="false" text="说明" />
                                                         </columns>
                                                       </TableView>
                                                    </center>
