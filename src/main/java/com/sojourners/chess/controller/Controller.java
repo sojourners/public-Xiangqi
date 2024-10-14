@@ -18,6 +18,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -329,7 +330,7 @@ public class Controller implements EngineCallBack {
             return;
         }
         if(replayFlag.getValue()){
-            DialogUtils.showWarningDialog("提示", "引擎复盘分析中");
+            DialogUtils.showWarningDialog("提示", "复盘分析中");
             return;
         }
 
@@ -590,29 +591,34 @@ public class Controller implements EngineCallBack {
         robotAnalysis.setValue(false);
         ObservableList<Integer> scoreList = FXCollections.observableArrayList();
         scoreList.addListener(new MyListChangeListener(this, moveList.size()+1));
-        new Thread(() -> {
-            try{
-                for(int i = 0 ;i<= moveList.size();i++){
-                    p = i;
-                    // 设置行棋方
-                    redGo = fenCode.contains("w");
-                    if (p % 2 != 0) {
-                        redGo = !redGo;
+
+        ProgressStage.of(App.getMainStage(), new Task<Object>() {
+            @Override
+            protected Object call() throws Exception {
+                try{
+                    for(int i = 0 ;i<= moveList.size();i++){
+                        p = i;
+                        // 设置行棋方
+                        redGo = fenCode.contains("w");
+                        if (p % 2 != 0) {
+                            redGo = !redGo;
+                        }
+                        engine.setThreadNum(2);
+                        engine.setHashSize(256);
+                        engine.setAnalysisModel(Engine.AnalysisModel.FIXED_TIME, 1000L);
+                        engine.analysis(fenCode, moveList.subList(0, p), board.getBoard(), redGo);
+                        sleep(1200L);
+                        Integer lastScore = engine.getLastScore();
+                        scoreList.add(lastScore);
                     }
-                    engine.setThreadNum(2);
-                    engine.setHashSize(256);
-                    engine.setAnalysisModel(Engine.AnalysisModel.FIXED_TIME, 1000L);
-                    engine.analysis(fenCode, moveList.subList(0, p), this.board.getBoard(), redGo);
-                    sleep(1200L);
-                    Integer lastScore = engine.getLastScore();
-                    scoreList.add(lastScore);
+                    replayFlag.setValue(false);
+                }catch (Exception e2){
+                    e2.printStackTrace();
+                    replayFlag.setValue(false);
                 }
-                replayFlag.setValue(false);
-            }catch (Exception e2){
-                e2.printStackTrace();
-                replayFlag.setValue(false);
+                return null;
             }
-        }).start();
+        },"复盘中").show();
     }
 
     private void sleep(long time){

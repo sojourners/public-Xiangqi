@@ -21,9 +21,6 @@ public class MyListChangeListener implements ListChangeListener<Integer> {
     public void onChanged(Change<? extends Integer> change) {
         ObservableList<? extends Integer> originList = change.getList();
         if(originList.size() >= flag){
-            Platform.runLater(() ->{
-                DialogUtils.showWarningDialog("提示", "复盘结束");
-            });
             for(int i = 0 ;i< originList.size();i++){
                 int t = i;
                 Platform.runLater(() -> {
