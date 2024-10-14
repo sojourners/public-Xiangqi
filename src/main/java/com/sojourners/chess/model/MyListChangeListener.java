@@ -32,7 +32,7 @@ public class MyListChangeListener implements ListChangeListener<Integer> {
                             newManualRecord.setDesc("臭棋!");
                         }else if(originList.get(t-1) - originList.get(t) >= 250){
                             newManualRecord.setDesc("漏招!");
-                        }else if(t>=2 && originList.get(t-2)-originList.get(t-1)>=500&&Math.abs(originList.get(t-1) - originList.get(t))<100){
+                        }else if(t>=2 && originList.get(t-1)-originList.get(t-2)>=500&&Math.abs(originList.get(t-1) - originList.get(t))<100){
                             newManualRecord.setDesc("敏锐!");
                         }
                     }
