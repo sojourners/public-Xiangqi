@@ -4,12 +4,9 @@ import com.sojourners.chess.media.SoundPlayer;
 import com.sojourners.chess.util.PathUtils;
 import com.sojourners.chess.util.StringUtils;
 import com.sojourners.chess.util.XiangqiUtils;
-import javafx.scene.PerspectiveCamera;
 import javafx.scene.canvas.Canvas;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 棋盘
@@ -494,6 +491,20 @@ public class ChessBoard {
         return this.board;
     }
 
+
+    private char[][] copyArray(char[][] originalArray ){
+        char[][] copiedArray = new char[originalArray.length][];
+
+        for (int i = 0; i < originalArray.length; i++) {
+            copiedArray[i] = new char[originalArray[i].length];
+            System.arraycopy(originalArray[i], 0, copiedArray[i], 0, originalArray[i].length);
+        }
+        return copiedArray;
+    }
+
+    private static final String[] THREE_P= new String[]{"前","中","后"};
+    private static final String[] FOUR_AND_FIVE_P= new String[]{"一","二","三","四","五"};
+
     private void translateStep(char[][] board, StringBuilder sb, String move, boolean hasGo) {
         if (StringUtils.isEmpty(move) || move.length() < 4) {
             sb.append(move);
@@ -506,7 +517,31 @@ public class ChessBoard {
         //针对棋盘上同时存在前后的情况进行处理 马八进九 h0g2
         char piece = hasGo?board[toI][toJ] : board[fromI][fromJ];
         String oneTwo = "";
-        if(!(piece == 'a' || piece == 'b' || piece== 'A' || piece == 'B')){
+        List<Integer> samePieceIndexList = new ArrayList<>();
+        if(piece == 'p' || piece == 'P'){
+            //先还原棋盘
+            char[][] copyBoard = copyArray(board);
+            copyBoard[toI][toJ] = ' ';
+            copyBoard[fromI][fromJ] = piece;
+            for(int i = 0;i<10;i++){
+                if(piece == copyBoard[i][fromJ]){
+                    samePieceIndexList.add(i);
+                }
+            }
+        }
+        if(samePieceIndexList.size()>2){
+            if(!isRed){
+                Collections.reverse(samePieceIndexList);
+            }
+            int count = samePieceIndexList.indexOf(fromI);
+            if(samePieceIndexList.size() == 3){
+                //三个兵
+                oneTwo = THREE_P[count]+ map.get(piece);
+            }else{
+                //大于3个兵
+                oneTwo = FOUR_AND_FIVE_P[count]+ map.get(piece);
+            }
+        }else if(!(piece == 'a' || piece == 'b' || piece== 'A' || piece == 'B')){
             for(int i =0;i<10;i++){
                 if((!hasGo &&i == fromI)||(hasGo&&fromJ == toJ&&i == toI)){
                     continue;
@@ -514,9 +549,9 @@ public class ChessBoard {
                 if(piece == board[i][fromJ]){
                     //说明有重复情况
                     if((isRed&&i>fromI) || (!isRed&&i<fromI)){
-                        oneTwo = oneTwo+"前"+ map.get(piece);
+                        oneTwo = "前"+ map.get(piece);
                     }else{
-                        oneTwo = oneTwo+"后"+ map.get(piece);
+                        oneTwo = "后"+ map.get(piece);
                     }
                     break;
                 }
