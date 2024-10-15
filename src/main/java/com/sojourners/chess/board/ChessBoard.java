@@ -4,6 +4,7 @@ import com.sojourners.chess.media.SoundPlayer;
 import com.sojourners.chess.util.PathUtils;
 import com.sojourners.chess.util.StringUtils;
 import com.sojourners.chess.util.XiangqiUtils;
+import javafx.scene.PerspectiveCamera;
 import javafx.scene.canvas.Canvas;
 
 import java.util.HashMap;
@@ -505,18 +506,20 @@ public class ChessBoard {
         //针对棋盘上同时存在前后的情况进行处理 马八进九 h0g2
         char piece = hasGo?board[toI][toJ] : board[fromI][fromJ];
         String oneTwo = "";
-        for(int i =0;i<9;i++){
-            if((!hasGo &&i == fromI)||(hasGo&&fromJ == toJ&&i == toI)){
-                continue;
-            }
-            if(piece == board[i][fromJ]){
-                //说明有重复情况
-                if((isRed&&i>fromI) || (!isRed&&i<fromI)){
-                    oneTwo = oneTwo+"前"+ map.get(piece);
-                }else{
-                    oneTwo = oneTwo+"后"+ map.get(piece);
+        if(!(piece == 'a' || piece == 'b' || piece== 'A' || piece == 'B')){
+            for(int i =0;i<10;i++){
+                if((!hasGo &&i == fromI)||(hasGo&&fromJ == toJ&&i == toI)){
+                    continue;
                 }
-                break;
+                if(piece == board[i][fromJ]){
+                    //说明有重复情况
+                    if((isRed&&i>fromI) || (!isRed&&i<fromI)){
+                        oneTwo = oneTwo+"前"+ map.get(piece);
+                    }else{
+                        oneTwo = oneTwo+"后"+ map.get(piece);
+                    }
+                    break;
+                }
             }
         }
 
