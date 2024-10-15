@@ -501,10 +501,33 @@ public class ChessBoard {
         char a = move.charAt(0), b = move.charAt(1), c = move.charAt(2), d = move.charAt(3);
         int fromI = 9 - Integer.parseInt(String.valueOf(b)), toI = 9 - Integer.parseInt(String.valueOf(d));
         int fromJ = a - 'a', toJ = c - 'a';
-        sb.append(map.get(hasGo ? board[toI][toJ] : board[fromI][fromJ]));
         boolean isRed = XiangqiUtils.isRed(hasGo ? board[toI][toJ] : board[fromI][fromJ]);
+        //针对棋盘上同时存在前后的情况进行处理 马八进九 h0g2
+        char piece = hasGo?board[toI][toJ] : board[fromI][fromJ];
+        String oneTwo = "";
+        for(int i =0;i<9;i++){
+            if((!hasGo &&i == fromI)||(hasGo&&fromJ == toJ&&i == toI)){
+                continue;
+            }
+            if(piece == board[i][fromJ]){
+                //说明有重复情况
+                if((isRed&&i>fromI) || (!isRed&&i<fromI)){
+                    oneTwo = oneTwo+"前"+ map.get(piece);
+                }else{
+                    oneTwo = oneTwo+"后"+ map.get(piece);
+                }
+                break;
+            }
+        }
+
         char pos = getPos(fromJ, isRed);
-        sb.append(isRed ? map.get(pos) : pos);
+        if(StringUtils.isNotEmpty(oneTwo)){
+            sb.append(oneTwo);
+        }else{
+            sb.append(map.get(hasGo ? board[toI][toJ] : board[fromI][fromJ]));
+            sb.append(isRed ? map.get(pos) : pos);
+        }
+
         if (fromI == toI && fromJ != toJ) {
             sb.append("平");
             pos = getPos(toJ, isRed);
