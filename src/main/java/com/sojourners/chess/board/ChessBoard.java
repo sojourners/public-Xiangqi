@@ -6,9 +6,7 @@ import com.sojourners.chess.util.StringUtils;
 import com.sojourners.chess.util.XiangqiUtils;
 import javafx.scene.canvas.Canvas;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 棋盘
@@ -20,6 +18,9 @@ public class ChessBoard {
     private static volatile char[][] board = new char[10][9];
 
     private static char[][] copyBoard = new char[10][9];
+
+    private static final String[] THREE_P= new String[]{"前","中","后"};
+    private static final String[] FOUR_AND_FIVE_P= new String[]{"一","二","三","四","五"};
 
     private BoardSize boardSize;
 
@@ -493,6 +494,7 @@ public class ChessBoard {
         return this.board;
     }
 
+
     private void translateStep(char[][] board, StringBuilder sb, String move, boolean hasGo) {
         if (StringUtils.isEmpty(move) || move.length() < 4) {
             sb.append(move);
@@ -501,10 +503,18 @@ public class ChessBoard {
         char a = move.charAt(0), b = move.charAt(1), c = move.charAt(2), d = move.charAt(3);
         int fromI = 9 - Integer.parseInt(String.valueOf(b)), toI = 9 - Integer.parseInt(String.valueOf(d));
         int fromJ = a - 'a', toJ = c - 'a';
-        sb.append(map.get(hasGo ? board[toI][toJ] : board[fromI][fromJ]));
         boolean isRed = XiangqiUtils.isRed(hasGo ? board[toI][toJ] : board[fromI][fromJ]);
+        //获取前两步的描述
+        String specialFirstAndSecondStep = buildSpecialFirstAndSecondStep(hasGo,toI,toJ,fromI,fromJ,isRed);
+
         char pos = getPos(fromJ, isRed);
-        sb.append(isRed ? map.get(pos) : pos);
+        if(StringUtils.isEmpty(specialFirstAndSecondStep)){
+            sb.append(map.get(hasGo ? board[toI][toJ] : board[fromI][fromJ]));
+            sb.append(isRed ? map.get(pos) : pos);
+        }else{
+            sb.append(specialFirstAndSecondStep);
+        }
+
         if (fromI == toI && fromJ != toJ) {
             sb.append("平");
             pos = getPos(toJ, isRed);
@@ -529,6 +539,132 @@ public class ChessBoard {
         sb.append("  ");
         copyBoard[toI][toJ] = copyBoard[fromI][fromJ];
         copyBoard[fromI][fromJ] = ' ';
+    }
+
+    /**
+     * 获取前两步的描述
+     *
+     * @param hasGo 是否走棋
+     * @param toI toI
+     * @param toJ toJ
+     * @param fromI fromI
+     * @param fromJ fromJ
+     * @param isRed 是否红棋走
+     * @return specialFirstAndSecondStep
+     */
+    private String buildSpecialFirstAndSecondStep(boolean hasGo,int toI,int toJ,int fromI,int fromJ,boolean isRed) {
+        //针对棋盘上同时存在前后的情况进行处理 马八进九 h0g2
+        char piece = hasGo?board[toI][toJ] : board[fromI][fromJ];
+        //不是士象 不是兵的情况 处理前后
+        if(!(piece == 'a' || piece == 'b' || piece== 'A' || piece == 'B' || piece == 'p' || piece == 'P')){
+            return normalFrontAndBack(piece,hasGo,toI,toJ,fromI,fromJ,isRed);
+        }
+        //非兵的情况下 前面已经判断过重复情况 无需处理了
+        if(piece != 'p' && piece != 'P'){
+            return "";
+        }
+
+        //先还原棋盘
+        char[][] tempBoard = XiangqiUtils.copyArray(board);
+        tempBoard[toI][toJ] = ' ';
+        tempBoard[fromI][fromJ] = piece;
+        //起始列有几个相同棋子 及坐标信息保存
+        List<Integer> samePieceIndexList = new ArrayList<>();
+        for(int i = 0;i<10;i++){
+            if(piece == tempBoard[i][fromJ]){
+                samePieceIndexList.add(i);
+            }
+        }
+        if(samePieceIndexList.size() == 1){
+            return "";
+        }
+        //两个以上情况
+        if(!isRed){
+            Collections.reverse(samePieceIndexList);
+        }
+        if(samePieceIndexList.size() == 2){
+            //检查其他线是否有前后兵
+            int index = -1;
+            //其他列前后兵有几个
+            int sameCount =0;
+            for(int j =0;j<9;j++){
+                if(j == fromJ){
+                    continue;
+                }
+                for(int i = 0;i<10;i++){
+                    if(piece == tempBoard[i][j]){
+                        sameCount ++;
+                    }
+                }
+                if(sameCount >= 2){
+                    index = j;
+                    break;
+                }
+                sameCount = 0;
+            }
+            if(index == -1){
+                return normalFrontAndBack(piece,hasGo,toI,toJ,fromI,fromJ,isRed);
+            }
+            if((isRed&&index > fromJ) || (!isRed && index <fromJ)){
+                return FOUR_AND_FIVE_P[sameCount+samePieceIndexList.indexOf(fromI)]+ map.get(piece);
+            }else {
+                return FOUR_AND_FIVE_P[samePieceIndexList.indexOf(fromI)]+ map.get(piece);
+            }
+        }
+
+        //位于这一列的第几个记录一下
+        int count = samePieceIndexList.indexOf(fromI);
+        if(samePieceIndexList.size() == 3){
+            //检查其他列是否有前后兵
+            int index = -1;
+            //其他列前后兵有几个
+            int sameCount =0;
+            for(int j =0;j<9;j++){
+                if(j == fromJ){
+                    continue;
+                }
+                for(int i = 0;i<10;i++){
+                    if(piece == tempBoard[i][j]){
+                        sameCount ++;
+                    }
+                }
+                if(sameCount == 2){
+                    index = j;
+                    break;
+                }
+                sameCount = 0;
+            }
+            if(index == -1){
+                //说明不存在
+                return THREE_P[count]+ map.get(piece);
+            }
+            //说明存在
+            if((isRed&&index>fromJ) || (!isRed&&index < fromJ)){
+                return FOUR_AND_FIVE_P[sameCount+count]+ map.get(piece);
+            }
+            return FOUR_AND_FIVE_P[count]+ map.get(piece);
+        }
+        //大于3个兵
+        return FOUR_AND_FIVE_P[count]+ map.get(piece);
+    }
+
+    /**
+     * 普通情况下的前后检查处理
+     */
+    private String normalFrontAndBack(char piece,boolean hasGo,int toI,int toJ,int fromI,int fromJ,boolean isRed) {
+        for(int i =0;i<10;i++){
+            if((!hasGo &&i == fromI)||(hasGo&&fromJ == toJ&&i == toI)){
+                continue;
+            }
+            if(piece == board[i][fromJ]){
+                //说明有重复情况
+                if((isRed&&i>fromI) || (!isRed&&i<fromI)){
+                    return "前"+ map.get(piece);
+                }
+                return "后"+ map.get(piece);
+            }
+        }
+        return "";
     }
 
     private char getPos(int j, boolean isRed) {
