@@ -530,6 +530,9 @@ public class ChessBoard {
                 }
             }
             if(samePieceIndexList.size() == 2){
+                if(!isRed){
+                    Collections.reverse(samePieceIndexList);
+                }
                 int count = samePieceIndexList.indexOf(fromI);
                 //检查其他列是否有前后兵
                 int index = -1;
