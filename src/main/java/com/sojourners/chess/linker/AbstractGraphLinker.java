@@ -3,8 +3,8 @@ package com.sojourners.chess.linker;
 import com.sojourners.chess.board.ChessBoard;
 import com.sojourners.chess.config.Properties;
 import com.sojourners.chess.util.XiangqiUtils;
-import com.sojourners.chess.yolo.YoloModel;
-import com.sojourners.chess.yolo.Yolov11Model;
+import com.sojourners.chess.yolo.OnnxModel;
+import com.sojourners.chess.yolo.Yolo11Model;
 
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -30,7 +30,7 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
 
     private char[][] board1 = new char[10][9];
 
-    private YoloModel aiModel;
+    private OnnxModel aiModel;
 
     private LinkerCallBack callBack;
 
@@ -46,7 +46,7 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
         this.callBack = callBack;
         robot = new Robot();
         this.count = 0;
-        this.aiModel = new Yolov11Model();
+        this.aiModel = new Yolo11Model();
         this.prop = Properties.getInstance();
         this.pause = false;
     }
@@ -499,7 +499,16 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
         if (!this.aiModel.findChessBoard(img, board)) {
             return false;
         }
-        return XiangqiUtils.validateChessBoard(board);
+        boolean f = XiangqiUtils.validateChessBoard(board);
+        if (!f) {
+            for (int i = 0; i < 10; i++) {
+                for (int j = 0; j < 9; j++) {
+                    System.out.print(board[i][j]);
+                }
+                System.out.println();
+            }
+        }
+        return f;
     }
     private boolean reverse(char[][] board) throws Exception {
         // 是否翻转
@@ -573,10 +582,10 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
         }
     }
     private Point getPosition(int x, int y) {
-        double pieceWith = boardPos.width / (8 + YoloModel.PADDING * 2);
-        double pieceHeight = boardPos.height / (9 + YoloModel.PADDING * 2);
-        Point p = new Point((int) (boardPos.x + pieceWith * YoloModel.PADDING + (x * pieceWith)),
-                (int) (boardPos.y + pieceHeight * YoloModel.PADDING + (y * pieceHeight)));
+        double pieceWith = boardPos.width / (8 + OnnxModel.PADDING * 2);
+        double pieceHeight = boardPos.height / (9 + OnnxModel.PADDING * 2);
+        Point p = new Point((int) (boardPos.x + pieceWith * OnnxModel.PADDING + (x * pieceWith)),
+                (int) (boardPos.y + pieceHeight * OnnxModel.PADDING + (y * pieceHeight)));
         if (x == 0) {
             p.x += 0.2 * pieceWith;
         } else if (x == 8) {
