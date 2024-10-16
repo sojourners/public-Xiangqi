@@ -559,12 +559,7 @@ public class ChessBoard {
         if(piece == 'a' || piece == 'b' || piece== 'A' || piece == 'B'){
             return "";
         }
-        //非兵的情况下
-        if(piece != 'p' && piece != 'P'){
-            return normalFrontAndBack(piece,hasGo,toI,toJ,fromI,fromJ,isRed);
-        }
-
-        //兵卒场景 先还原棋盘
+        //先还原棋盘
         char[][] tempBoard = XiangqiUtils.copyArray(board);
         tempBoard[toI][toJ] = ' ';
         tempBoard[fromI][fromJ] = piece;
@@ -578,93 +573,61 @@ public class ChessBoard {
         if(samePieceIndexList.size() == 1){
             return "";
         }
+
         //两个以上情况
         if(!isRed){
             Collections.reverse(samePieceIndexList);
         }
-        if(samePieceIndexList.size() == 2){
-            //检查其他线是否有前后兵
-            int index = -1;
-            //其他列前后兵有几个
-            int sameCount =0;
-            for(int j =0;j<9;j++){
-                if(j == fromJ){
-                    continue;
-                }
-                for(int i = 0;i<10;i++){
-                    if(piece == tempBoard[i][j]){
-                        sameCount ++;
-                    }
-                }
-                if(sameCount >= 2){
-                    index = j;
-                    break;
-                }
-                sameCount = 0;
-            }
-            if(index == -1){
-                return normalFrontAndBack(piece,hasGo,toI,toJ,fromI,fromJ,isRed);
-            }
-            if((isRed&&index > fromJ) || (!isRed && index <fromJ)){
-                return FOUR_AND_FIVE_P[sameCount+samePieceIndexList.indexOf(fromI)]+ map.get(piece);
-            }else {
-                return FOUR_AND_FIVE_P[samePieceIndexList.indexOf(fromI)]+ map.get(piece);
-            }
-        }
-
         //位于这一列的第几个记录一下
         int count = samePieceIndexList.indexOf(fromI);
-        if(samePieceIndexList.size() == 3){
-            //检查其他列是否有前后兵
-            int index = -1;
-            //其他列前后兵有几个
-            int sameCount =0;
-            for(int j =0;j<9;j++){
-                if(j == fromJ){
-                    continue;
-                }
-                for(int i = 0;i<10;i++){
-                    if(piece == tempBoard[i][j]){
-                        sameCount ++;
-                    }
-                }
-                if(sameCount == 2){
-                    index = j;
-                    break;
-                }
-                sameCount = 0;
-            }
-            if(index == -1){
-                //说明不存在
-                return THREE_P[count]+ map.get(piece);
-            }
-            //说明存在
-            if((isRed&&index>fromJ) || (!isRed&&index < fromJ)){
-                return FOUR_AND_FIVE_P[sameCount+count]+ map.get(piece);
-            }
-            return FOUR_AND_FIVE_P[count]+ map.get(piece);
-        }
-        //大于3个兵
-        return FOUR_AND_FIVE_P[count]+ map.get(piece);
-    }
 
-    /**
-     * 普通情况下的前后检查处理
-     */
-    private String normalFrontAndBack(char piece,boolean hasGo,int toI,int toJ,int fromI,int fromJ,boolean isRed) {
-        for(int i =0;i<10;i++){
-            if((!hasGo &&i == fromI)||(hasGo&&fromJ == toJ&&i == toI)){
+        //非兵的情况下
+        if(piece != 'p' && piece != 'P'){
+            if(count == 0){
+                return "前"+ map.get(piece);
+            }
+            return "后" + map.get(piece);
+        }
+
+        //检查其他线是否有前后兵
+        int index = -1;
+        //其他列前后兵有几个
+        int sameCount =0;
+        for(int j =0;j<9;j++){
+            if(j == fromJ){
                 continue;
             }
-            if(piece == board[i][fromJ]){
-                //说明有重复情况
-                if((isRed&&i>fromI) || (!isRed&&i<fromI)){
+            for(int i = 0;i<10;i++){
+                if(piece == tempBoard[i][j]){
+                    sameCount ++;
+                }
+            }
+            if(sameCount >= 2){
+                index = j;
+                break;
+            }
+            sameCount = 0;
+        }
+        if(index == -1){
+            //其他列无前后情况
+            if(samePieceIndexList.size() == 2){
+                if(count == 0){
                     return "前"+ map.get(piece);
                 }
-                return "后"+ map.get(piece);
+                return "后" + map.get(piece);
+            }
+            if(samePieceIndexList.size() == 3 ){
+                return THREE_P[count]+ map.get(piece);
+            }
+            if(samePieceIndexList.size() > 3){
+                return FOUR_AND_FIVE_P[count]+ map.get(piece);
             }
         }
-        return "";
+        //其他列也有重复的情况下
+        if((isRed&&index>fromJ) || (!isRed&&index < fromJ)){
+            return FOUR_AND_FIVE_P[sameCount+count]+ map.get(piece);
+        }
+        return FOUR_AND_FIVE_P[count]+ map.get(piece);
     }
 
     private char getPos(int j, boolean isRed) {
