@@ -518,9 +518,10 @@ public class ChessBoard {
         char piece = hasGo?board[toI][toJ] : board[fromI][fromJ];
         String oneTwo = "";
         List<Integer> samePieceIndexList = new ArrayList<>();
+
         if(piece == 'p' || piece == 'P'){
             //先还原棋盘
-            char[][] copyBoard = copyArray(board);
+            copyBoard = copyArray(board);
             copyBoard[toI][toJ] = ' ';
             copyBoard[fromI][fromJ] = piece;
             for(int i = 0;i<10;i++){
@@ -528,20 +529,93 @@ public class ChessBoard {
                     samePieceIndexList.add(i);
                 }
             }
-        }
-        if(samePieceIndexList.size()>2){
-            if(!isRed){
-                Collections.reverse(samePieceIndexList);
+            if(samePieceIndexList.size() == 2){
+                int count = samePieceIndexList.indexOf(fromI);
+                //检查其他列是否有前后兵
+                int index = -1;
+                int sameCount =0;
+                for(int j =0;j<9;j++){
+                    if(j == fromJ){
+                        continue;
+                    }
+                    for(int i = 0;i<10;i++){
+                        if(piece == copyBoard[i][j]){
+                            sameCount ++;
+                        }
+                    }
+                    if(sameCount >= 2){
+                        index = j;
+                        break;
+                    }else{
+                        sameCount = 0;
+                    }
+                }
+                if(index == -1){
+                    //直接按前后处理
+                    for(int i =0;i<10;i++){
+                        if((!hasGo &&i == fromI)||(hasGo&&fromJ == toJ&&i == toI)){
+                            continue;
+                        }
+                        if(piece == board[i][fromJ]){
+                            //说明有重复情况
+                            if((isRed&&i>fromI) || (!isRed&&i<fromI)){
+                                oneTwo = "前"+ map.get(piece);
+                            }else{
+                                oneTwo = "后"+ map.get(piece);
+                            }
+                            break;
+                        }
+                    }
+                }else{
+                    if((isRed&&index > fromJ) || (!isRed && index <fromJ)){
+                        oneTwo = FOUR_AND_FIVE_P[sameCount+count]+ map.get(piece);
+                    }else {
+                        oneTwo = FOUR_AND_FIVE_P[count]+ map.get(piece);
+                    }
+                }
+
+            }else if(samePieceIndexList.size()>2){
+                if(!isRed){
+                    Collections.reverse(samePieceIndexList);
+                }
+                int count = samePieceIndexList.indexOf(fromI);
+                if(samePieceIndexList.size() == 3){
+                    //三个兵
+                    //检查其他列是否有前后兵
+                    int index = -1;
+                    for(int j =0;j<9;j++){
+                        if(j == fromJ){
+                            continue;
+                        }
+                        int sameCount =0;
+                        for(int i = 0;i<10;i++){
+                            if(piece == copyBoard[i][j]){
+                                sameCount ++;
+                            }
+                        }
+                        if(sameCount == 2){
+                            index = j;
+                            break;
+                        }
+                    }
+                    if(index == -1){
+                        //说明不存在
+                        oneTwo = THREE_P[count]+ map.get(piece);
+                    }else{
+                        //说明存在
+                        if((isRed&&index>fromJ) || (!isRed&&index < fromJ)){
+                            oneTwo = FOUR_AND_FIVE_P[count+2]+ map.get(piece);
+                        }else {
+                            oneTwo = FOUR_AND_FIVE_P[count]+ map.get(piece);
+                        }
+                    }
+
+                }else{
+                    //大于3个兵
+                    oneTwo = FOUR_AND_FIVE_P[count]+ map.get(piece);
+                }
             }
-            int count = samePieceIndexList.indexOf(fromI);
-            if(samePieceIndexList.size() == 3){
-                //三个兵
-                oneTwo = THREE_P[count]+ map.get(piece);
-            }else{
-                //大于3个兵
-                oneTwo = FOUR_AND_FIVE_P[count]+ map.get(piece);
-            }
-        }else if(!(piece == 'a' || piece == 'b' || piece== 'A' || piece == 'B')){
+        } else if(!(piece == 'a' || piece == 'b' || piece== 'A' || piece == 'B')){
             for(int i =0;i<10;i++){
                 if((!hasGo &&i == fromI)||(hasGo&&fromJ == toJ&&i == toI)){
                     continue;
