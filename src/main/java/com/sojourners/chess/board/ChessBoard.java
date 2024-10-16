@@ -555,16 +555,16 @@ public class ChessBoard {
     private String buildSpecialFirstAndSecondStep(boolean hasGo,int toI,int toJ,int fromI,int fromJ,boolean isRed) {
         //针对棋盘上同时存在前后的情况进行处理 马八进九 h0g2
         char piece = hasGo?board[toI][toJ] : board[fromI][fromJ];
-        //不是士象 不是兵的情况 处理前后
-        if(!(piece == 'a' || piece == 'b' || piece== 'A' || piece == 'B' || piece == 'p' || piece == 'P')){
-            return normalFrontAndBack(piece,hasGo,toI,toJ,fromI,fromJ,isRed);
-        }
-        //非兵的情况下 前面已经判断过重复情况 无需处理了
-        if(piece != 'p' && piece != 'P'){
+        //士象不特殊处理
+        if(piece == 'a' || piece == 'b' || piece== 'A' || piece == 'B'){
             return "";
         }
+        //非兵的情况下
+        if(piece != 'p' && piece != 'P'){
+            return normalFrontAndBack(piece,hasGo,toI,toJ,fromI,fromJ,isRed);
+        }
 
-        //先还原棋盘
+        //兵卒场景 先还原棋盘
         char[][] tempBoard = XiangqiUtils.copyArray(board);
         tempBoard[toI][toJ] = ' ';
         tempBoard[fromI][fromJ] = piece;
