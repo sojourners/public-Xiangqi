@@ -58,7 +58,7 @@
             <Menu mnemonicParsing="false" text="连线">
                <items>
                   <MenuItem mnemonicParsing="false" onAction="#linkSettingClick" text="连线参数" />
-                  <CheckMenuItem fx:id="menuOfLinkBackMode" mnemonicParsing="false" onAction="#linkBackModeChecked" text="后台模式" />
+                  <CheckMenuItem fx:id="menuOfLinkBackMode" mnemonicParsing="false" onAction="#linkBackModeChecked" text="后台连线" />
                   <CheckMenuItem fx:id="menuOfLinkAnimation" mnemonicParsing="false" onAction="#linkAnimationChecked" text="开启动画确认" />
                </items>
             </Menu>
@@ -248,7 +248,7 @@
                                              <content>
                                                 <BorderPane prefHeight="200.0" prefWidth="200.0">
                                                    <center>
-                                                      <TableView fx:id="bookTable" prefHeight="200.0" prefWidth="200.0" style="-fx-background-insets: 100%;" stylesheets="@../style/table.css" BorderPane.alignment="CENTER">
+                                                      <TableView fx:id="bookTable" onMouseClicked="#bookTableClick" prefHeight="200.0" prefWidth="200.0" style="-fx-background-insets: 100%;" stylesheets="@../style/table.css" BorderPane.alignment="CENTER">
                                                         <columns>
                                                           <TableColumn editable="false" prefWidth="75.0" sortable="false" text="招法" />
                                                           <TableColumn editable="false" prefWidth="64.0" sortable="false" text="分数" />

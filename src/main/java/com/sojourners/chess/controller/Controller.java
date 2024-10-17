@@ -1216,6 +1216,19 @@ public class Controller implements EngineCallBack, LinkerCallBack {
         }
     }
 
+    @FXML
+    public void bookTableClick(MouseEvent event) {
+        if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
+            if (robotAnalysis.getValue()) {
+                BookData bd = bookTable.getSelectionModel().getSelectedItem();
+                Platform.runLater(() -> {
+                    board.move(bd.getMove());
+                    goCallBack(bd.getMove());
+                });
+            }
+        }
+    }
+
     private void callWorker(WorkerTask task) {
         lock.lock();
         Platform.runLater(() -> {

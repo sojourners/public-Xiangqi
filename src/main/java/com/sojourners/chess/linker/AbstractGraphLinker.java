@@ -319,7 +319,7 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
             }
         }
 
-        if (diff1 > 2 || diff2 >= 2 && diff3 >= 2) {
+        if (diff1 > 2 || diff2 >= 2 && diff3 > 2) {
             return new Action(3);
         }
 

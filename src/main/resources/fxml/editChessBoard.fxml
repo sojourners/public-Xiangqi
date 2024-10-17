@@ -7,45 +7,45 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="816.0" prefWidth="842.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.sojourners.chess.controller.EditChessBoardController">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="724.0" prefWidth="745.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.sojourners.chess.controller.EditChessBoardController">
     <center>
-        <Canvas fx:id="canvas" height="744.0" onMouseClicked="#canvasClick" width="672.0">
+        <Canvas fx:id="canvas" height="656.0" onMouseClicked="#canvasClick" width="592.0">
             <BorderPane.margin>
                 <Insets />
             </BorderPane.margin>
         </Canvas>
     </center>
     <bottom>
-        <HBox alignment="TOP_RIGHT" prefHeight="72.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+        <HBox alignment="TOP_RIGHT" prefHeight="68.0" BorderPane.alignment="CENTER">
             <children>
                 <Button contentDisplay="RIGHT" mnemonicParsing="false" onMouseClicked="#initChessBoard" prefHeight="27.0" prefWidth="72.0" text="初始局面">
                     <HBox.margin>
-                        <Insets right="20.0" />
+                        <Insets right="15.0" />
                     </HBox.margin>
                 </Button>
                 <Button contentDisplay="RIGHT" mnemonicParsing="false" onMouseClicked="#cleanChessBoard" prefHeight="27.0" prefWidth="72.0" text="清空局面">
                     <HBox.margin>
-                        <Insets right="20.0" />
+                        <Insets right="15.0" />
                     </HBox.margin>
                 </Button>
                 <Button contentDisplay="RIGHT" mnemonicParsing="false" onMouseClicked="#udReverse" prefHeight="27.0" prefWidth="72.0" text="上下翻转">
                     <HBox.margin>
-                        <Insets right="20.0" />
+                        <Insets right="15.0" />
                     </HBox.margin>
                 </Button>
                 <Button contentDisplay="RIGHT" mnemonicParsing="false" onMouseClicked="#lrReverse" prefHeight="27.0" prefWidth="72.0" text="左右翻转">
                     <HBox.margin>
-                        <Insets right="32.0" />
+                        <Insets right="20.0" />
                     </HBox.margin>
                 </Button>
                 <RadioButton fx:id="redFirstButton" mnemonicParsing="false" text="红先">
                     <HBox.margin>
-                        <Insets right="16.0" top="5.0" />
+                        <Insets right="10.0" top="7.0" />
                     </HBox.margin>
                 </RadioButton>
                 <RadioButton fx:id="blackFirstButton" mnemonicParsing="false" text="黑先">
                     <HBox.margin>
-                        <Insets right="100.0" top="5.0" />
+                        <Insets right="60.0" top="7.0" />
                     </HBox.margin>
                 </RadioButton>
                 <Button contentDisplay="RIGHT" mnemonicParsing="false" onMouseClicked="#okButtonClick" prefHeight="27.0" prefWidth="72.0" text="确定">
@@ -68,7 +68,7 @@
         </HBox>
     </bottom>
     <right>
-        <Canvas fx:id="demoCanvas" height="528.0" onMouseClicked="#demoCanvasClick" width="168.0" BorderPane.alignment="CENTER">
+        <Canvas fx:id="demoCanvas" height="656.0" onMouseClicked="#demoCanvasClick" width="140.0" BorderPane.alignment="CENTER">
          <BorderPane.margin>
             <Insets left="1.0" />
          </BorderPane.margin></Canvas>
