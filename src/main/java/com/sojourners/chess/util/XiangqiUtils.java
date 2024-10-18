@@ -573,6 +573,17 @@ public class XiangqiUtils {
                 return false;
         }
     }
+
+    public static char[][] copyArray(char[][] originalArray ){
+        char[][] copiedArray = new char[originalArray.length][];
+
+        for (int i = 0; i < originalArray.length; i++) {
+            copiedArray[i] = new char[originalArray[i].length];
+            System.arraycopy(originalArray[i], 0, copiedArray[i], 0, originalArray[i].length);
+        }
+        return copiedArray;
+    }
+
     private static boolean jieJiang(char[][] board, boolean isRed, int x1, int y1, int x2, int y2) {
         char tmp = board[y2][x2];
         board[y2][x2] = board[y1][x1];
