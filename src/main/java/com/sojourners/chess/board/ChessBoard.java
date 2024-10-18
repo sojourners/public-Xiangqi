@@ -655,25 +655,6 @@ public class ChessBoard {
         return samePieceIndexList;
     }
 
-    /**
-     * 普通情况下的前后检查处理
-     */
-    private String normalFrontAndBack(char piece,boolean hasGo,int toI,int toJ,int fromI,int fromJ,boolean isRed) {
-        for(int i =0;i<10;i++){
-            if((!hasGo &&i == fromI)||(hasGo&&fromJ == toJ&&i == toI)){
-                continue;
-            }
-            if(piece == board[i][fromJ]){
-                //说明有重复情况
-                if((isRed&&i>fromI) || (!isRed&&i<fromI)){
-                    return "前"+ map.get(piece);
-                }
-                return "后"+ map.get(piece);
-            }
-        }
-        return "";
-    }
-
     private char getPos(int j, boolean isRed) {
         if (isRed) {
             return (char) ('０' + 9 - j);
