@@ -19,8 +19,8 @@ import javafx.stage.WindowEvent;
  */
 public class App extends Application {
 
-    public static final String VERSION = "1.5";
-    public static final String BUILT_ON = "20240925";
+    public static final String VERSION = "1.6";
+    public static final String BUILT_ON = "20241020";
 
     private static Stage engineAdd;
     private static Stage engineSetting;
@@ -36,7 +36,7 @@ public class App extends Application {
         FXMLLoader fxmlLoader = new FXMLLoader();
         fxmlLoader.setLocation(getClass().getResource("/fxml/app.fxml"));
         Parent root = fxmlLoader.load();
-        primaryStage.setTitle("TCHESS V" + VERSION);
+        primaryStage.setTitle("TCHESS  V" + VERSION);
         primaryStage.setScene(new Scene(root));
         primaryStage.getIcons().add(new Image(getClass().getResourceAsStream("/image/icon.png")));
 
