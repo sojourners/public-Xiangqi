@@ -11,7 +11,7 @@ public class Yolo11Model extends Yolo5Model {
 
     @Override
     public String getModelPath() {
-        return "model/yolov11n.onnx";
+        return "model/yolov11.onnx";
     }
 
     float[][][] processInput(BufferedImage image, float rate) {
