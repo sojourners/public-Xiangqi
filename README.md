@@ -1,5 +1,5 @@
 # public-Xiangqi
-基于JavaFx实现的跨平台中国象棋界面程序
+支持uci和ucci协议引擎的象棋界面程序，具有加载引擎、对弈、分析、连线、开局库等功能，支持windows、linux、macos系统，访问[Release](https://github.com/sojourners/public-Xiangqi/releases)下载最新版本。
 
 # 使用手册
 
