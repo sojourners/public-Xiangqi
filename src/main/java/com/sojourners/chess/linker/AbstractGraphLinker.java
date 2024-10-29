@@ -60,7 +60,7 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
     }
 
     void scan() {
-        this.thread = new Thread(this);
+        this.thread = Thread.ofVirtual().unstarted(this);
         this.thread.start();
     }
 
@@ -411,6 +411,7 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
             Thread.sleep(time);
         } catch (InterruptedException e) {
             e.printStackTrace();
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -605,7 +606,7 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
     @Override
     public void stop() {
         if (thread != null && thread.isAlive()) {
-            thread.stop();
+            thread.interrupt();
         }
     }
 

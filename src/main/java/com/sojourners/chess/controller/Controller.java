@@ -1244,7 +1244,7 @@ public class Controller implements EngineCallBack, LinkerCallBack {
         }
 
         OpenBookManager.getInstance().close();
-        ExecutorsUtils.getInstance().close();
+//        ExecutorsUtils.getInstance().close();
 
         graphLinker.stop();
 

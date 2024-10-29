@@ -58,7 +58,7 @@ public class Engine {
         reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
         writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
 
-        (thread = new Thread(() -> {
+        thread = Thread.startVirtualThread(() -> {
             try {
                 String line;
                 while ((line = reader.readLine()) != null) {
@@ -72,7 +72,7 @@ public class Engine {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        })).start();
+        });
 
         cmd(protocol);
 
@@ -105,7 +105,7 @@ public class Engine {
 
             AtomicBoolean f = new AtomicBoolean(false);
             BufferedReader finalBr = br;
-            (h = new Thread(() -> {
+            (h = Thread.ofVirtual().unstarted(() -> {
                 try {
                     String line;
                     while ((line = finalBr.readLine()) != null) {
@@ -150,7 +150,7 @@ public class Engine {
                 p.destroy();
             }
             if (h.isAlive()) {
-                h.stop();
+                h.interrupt();
             }
             try {
                 if (bw != null) {
@@ -245,7 +245,7 @@ public class Engine {
     }
 
     public void analysis(String fenCode, List<String> moves, char[][] board, boolean redGo) {
-        ExecutorsUtils.getInstance().exec(() -> {
+        Thread.startVirtualThread(() -> {
             if (Properties.getInstance().getBookSwitch()) {
                 long s = System.currentTimeMillis();
                 List<BookData> results = OpenBookManager.getInstance().queryBook(board, redGo, moves.size() / 2 >= Properties.getInstance().getOffManualSteps());
@@ -338,7 +338,7 @@ public class Engine {
             }
 
             if (thread.isAlive()) {
-                thread.stop();
+                thread.interrupt();
             }
 
             if (process.isAlive()) {
