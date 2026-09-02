@@ -5,6 +5,7 @@ import ai.onnxruntime.OnnxTensor;
 import ai.onnxruntime.OnnxValue;
 import ai.onnxruntime.OrtException;
 import ai.onnxruntime.OrtSession;
+import com.sojourners.chess.util.XiangqiUtils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -32,7 +33,7 @@ public class Yolo5Model extends OnnxModel {
             // 图像宽高的缩放比例
             List<DetectResult> results = this.predict(img);
             // 寻找棋盘
-            java.awt.Rectangle pos = findBoardPosition(results);
+            java.awt.Rectangle pos = findBoardPosition(results, img);
             if (pos == null) {
                 return null;
             }
@@ -70,29 +71,217 @@ public class Yolo5Model extends OnnxModel {
         }
     }
 
-    private java.awt.Rectangle findBoardPosition(List<DetectResult> results) {
-        int boardCount = 0;
-        java.awt.Rectangle boardPos = new java.awt.Rectangle();
-        // 先找到棋盘
+    protected float PIECE_CONFIDENCE = 0.4f;
+
+    protected float RETRY_PIECE_CONFIDENCE = 0.35f;
+
+    protected float RECOVERY_PIECE_CONFIDENCE = 0.3f;
+
+    /**
+     * 上一次识别成功的棋盘位置，同一局内棋盘位置不变，可复用避免中局偏移歧义
+     */
+    private java.awt.Rectangle lastBoardPos;
+
+    protected float getBoardConfidence() {
+        return CONFIDENCE;
+    }
+
+    protected float getPieceConfidence() {
+        return CONFIDENCE;
+    }
+
+    protected float getRetryPieceConfidence() {
+        return RETRY_PIECE_CONFIDENCE;
+    }
+
+    protected float getRecoveryPieceConfidence() {
+        return RECOVERY_PIECE_CONFIDENCE;
+    }
+
+    private java.awt.Rectangle findBoardPosition(List<DetectResult> results, BufferedImage img) {
+        // 候选1：模型检测到的所有棋盘框（按面积从大到小），优先返回局面校验通过的位置
+        List<java.awt.Rectangle> modelRects = findBoardsByModel(results);
+        for (java.awt.Rectangle r : modelRects) {
+            char[][] tmp = new char[10][9];
+            setBlankBoard(tmp);
+            fillBoard(results, r, tmp);
+            if (XiangqiUtils.validateChessBoard(tmp)) {
+                return r;
+            }
+        }
+        // 候选2：模型未识别出棋盘时，用棋子位置反推棋盘范围（兼容JJ象棋等深色棋盘）
+        List<java.awt.Rectangle> pieces = findBoardPositionByPieces(results, img);
+        if (pieces != null) {
+            for (java.awt.Rectangle r : pieces) {
+                char[][] tmp = new char[10][9];
+                setBlankBoard(tmp);
+                fillBoard(results, r, tmp);
+                if (XiangqiUtils.validateChessBoard(tmp)) {
+                    return r;
+                }
+            }
+            if (!pieces.isEmpty()) {
+                return pieces.get(0);
+            }
+        }
+        if (!modelRects.isEmpty()) {
+            return modelRects.get(0);
+        }
+        return null;
+    }
+
+    /**
+     * 模型检测到的所有棋盘框（类别0），按面积从大到小排序
+     */
+    private List<java.awt.Rectangle> findBoardsByModel(List<DetectResult> results) {
+        List<java.awt.Rectangle> list = new ArrayList<>();
         for (DetectResult obj : results) {
             char label = obj.label;
             Rectangle bound = obj.rect;
             if (label == '0') {
-                // 取最大的棋盘区域
                 int w = (int) (bound.getWidth()), h = (int) (bound.getHeight());
-                if (w > boardPos.width && h > boardPos.height) {
-                    boardPos.x = (int) (bound.getX() - w / 2d);
-                    boardPos.y = (int) (bound.getY() - h / 2d);
-                    boardPos.width = w;
-                    boardPos.height = h;
-                }
-                boardCount++;
+                list.add(new java.awt.Rectangle((int) (bound.getX() - w / 2d),
+                        (int) (bound.getY() - h / 2d), w, h));
             }
         }
-        if (boardCount == 0) {
+        list.sort((a, b) -> Long.compare((long) b.width * b.height, (long) a.width * a.height));
+        return list;
+    }
+
+    /**
+     * 通过棋子位置推算棋盘范围（兼容模型未识别棋盘的情况，例如JJ象棋深色棋盘）
+     */
+    private List<java.awt.Rectangle> findBoardPositionByPieces(List<DetectResult> results, BufferedImage img) {
+        if (results == null || results.size() < 8) {
             return null;
         }
-        return boardPos;
+        float tol = Math.max(6f, 0.015f * Math.max(img.getWidth(), img.getHeight()));
+        List<Float> xs = new ArrayList<>();
+        List<Float> ys = new ArrayList<>();
+        for (DetectResult obj : results) {
+            if (obj.label == '0') {
+                continue;
+            }
+            xs.add(obj.rect.x);
+            ys.add(obj.rect.y);
+        }
+        if (xs.size() < 8) {
+            return null;
+        }
+        List<Float> ws = new ArrayList<>();
+        List<Float> hs = new ArrayList<>();
+        for (DetectResult obj : results) {
+            if (obj.label == '0') {
+                continue;
+            }
+            ws.add(obj.rect.width);
+            hs.add(obj.rect.height);
+        }
+        GridFit fx = gridFit(xs, tol, median(ws), 8);
+        GridFit fy = gridFit(ys, tol, median(hs), 9);
+        if (fx == null || fy == null) {
+            return null;
+        }
+        List<java.awt.Rectangle> rects = new ArrayList<>();
+        int maxOx = 8 - fx.lastIndex;
+        int maxOy = 9 - fy.lastIndex;
+        for (int oy = 0; oy <= maxOy; oy++) {
+            for (int ox = 0; ox <= maxOx; ox++) {
+                int x = (int) (fx.base - (ox + 0.5f) * fx.unit);
+                int y = (int) (fy.base - (oy + 0.5f) * fy.unit);
+                int w = (int) (fx.unit * 9f);
+                int h = (int) (fy.unit * 10f);
+                if (w < 50 || h < 50 || w > img.getWidth() * 2 || h > img.getHeight() * 2) {
+                    continue;
+                }
+                rects.add(new java.awt.Rectangle(x, y, w, h));
+            }
+        }
+        return rects;
+    }
+
+    private GridFit gridFit(List<Float> vals, float tol, float pieceSize, int maxIndex) {
+        Collections.sort(vals);
+        List<Float> clusters = new ArrayList<>();
+        for (float v : vals) {
+            if (!clusters.isEmpty() && v - clusters.get(clusters.size() - 1) <= tol) {
+                clusters.set(clusters.size() - 1, (clusters.get(clusters.size() - 1) + v) / 2f);
+            } else {
+                clusters.add(v);
+            }
+        }
+        if (clusters.size() < 3) {
+            return null;
+        }
+        // 在所有两两距离的整数分位中寻找最优单位间距，
+        // 同时以棋子大小作为先验，避免隔行/隔列时把间距算成多倍
+        float bestUnit = 0f;
+        double bestScore = Double.MAX_VALUE;
+        int n = clusters.size();
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                float d = clusters.get(j) - clusters.get(i);
+                for (int k = 1; k <= 9; k++) {
+                    float u = d / k;
+                    if (u < 5f || u > 200f) {
+                        continue;
+                    }
+                    double score = 0;
+                    for (int p = 1; p < n; p++) {
+                        float diff = clusters.get(p) - clusters.get(p - 1);
+                        int kk = Math.max(1, Math.round(diff / u));
+                        score += Math.abs(diff - kk * u);
+                    }
+                    score += Math.abs(u - pieceSize);
+                    if (score < bestScore) {
+                        bestScore = score;
+                        bestUnit = u;
+                    }
+                }
+            }
+        }
+        if (bestUnit <= 0) {
+            return null;
+        }
+        float unit = bestUnit;
+        int[] idx = new int[clusters.size()];
+        idx[0] = 0;
+        for (int i = 1; i < clusters.size(); i++) {
+            float d = clusters.get(i) - clusters.get(i - 1);
+            idx[i] = idx[i - 1] + Math.max(1, Math.round(d / unit));
+        }
+        if (idx[clusters.size() - 1] > maxIndex) {
+            return null;
+        }
+        float base = 0f;
+        for (int i = 0; i < clusters.size(); i++) {
+            base += clusters.get(i) - idx[i] * unit;
+        }
+        base /= clusters.size();
+        return new GridFit(unit, base, idx[idx.length - 1]);
+    }
+
+    private float median(List<Float> vals) {
+        if (vals == null || vals.isEmpty()) {
+            return 60f;
+        }
+        Collections.sort(vals);
+        int mid = vals.size() / 2;
+        if (vals.size() % 2 == 1) {
+            return vals.get(mid);
+        }
+        return (vals.get(mid - 1) + vals.get(mid)) / 2f;
+    }
+
+    private static class GridFit {
+        float unit;
+        float base;
+        int lastIndex;
+        GridFit(float unit, float base, int lastIndex) {
+            this.unit = unit;
+            this.base = base;
+            this.lastIndex = lastIndex;
+        }
     }
 
     /**
@@ -106,28 +295,14 @@ public class Yolo5Model extends OnnxModel {
             if (img == null) {
                 return false;
             }
-            // 图像宽高的缩放比例
+            // 第一轮：原置信度识别
             List<DetectResult> results = this.predict(img);
-            setBlankBoard(board);
-            java.awt.Rectangle boardPos = findBoardPosition(results);
-            if (boardPos == null) {
-                return false;
+            if (fillChessBoard(results, img, board)) {
+                return true;
             }
-            int pieceWidth = boardPos.width / 8, pieceHeight = boardPos.height / 9;
-            // 再获取每个棋子及其位置
-            for (DetectResult obj : results) {
-                char label = obj.label;
-                Rectangle bound = obj.rect;
-                if (label != '0') {
-                    int j = (int) ((bound.x - (boardPos.x - pieceWidth / 2)) / pieceWidth);
-                    int i = (int) ((bound.y - (boardPos.y - pieceHeight / 2)) / pieceHeight);
-                    if (i < 0 || i > 9 || j < 0 || j > 8) {
-                        continue;
-                    }
-                    board[i][j] = label;
-                }
-            }
-            return true;
+            // 第二轮：降低棋子置信度重新识别（兼容JJ象棋等识别率较低的棋盘）
+            List<DetectResult> results2 = this.predict(img, getBoardConfidence(), getRetryPieceConfidence());
+            return fillChessBoard(results2, img, board);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -135,7 +310,126 @@ public class Yolo5Model extends OnnxModel {
         }
     }
 
+    private boolean fillChessBoard(List<DetectResult> results, BufferedImage img, char[][] board) {
+        // 候选1：同一局内棋盘位置不变，优先复用上一次识别成功的位置，避免中局偏移歧义
+        if (lastBoardPos != null && lastBoardPos.x >= 0 && lastBoardPos.y >= 0
+                && lastBoardPos.x + lastBoardPos.width <= img.getWidth()
+                && lastBoardPos.y + lastBoardPos.height <= img.getHeight()) {
+            setBlankBoard(board);
+            fillBoard(results, lastBoardPos, board);
+            if (XiangqiUtils.validateChessBoard(board)) {
+                return true;
+            }
+        }
+        // 候选2：模型检测到的棋盘框（从大到小逐一校验）
+        List<java.awt.Rectangle> modelRects = findBoardsByModel(results);
+        for (java.awt.Rectangle modelPos : modelRects) {
+            setBlankBoard(board);
+            fillBoard(results, modelPos, board);
+            if (XiangqiUtils.validateChessBoard(board)) {
+                lastBoardPos = modelPos;
+                return true;
+            }
+        }
+        // 候选3：棋子位置反推棋盘（含偏移搜索）
+        List<java.awt.Rectangle> piecePos = findBoardPositionByPieces(results, img);
+        if (piecePos != null) {
+            for (java.awt.Rectangle r : piecePos) {
+                setBlankBoard(board);
+                fillBoard(results, r, board);
+                if (XiangqiUtils.validateChessBoard(board)) {
+                    lastBoardPos = r;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 少子补棋：在已识别出的合法局面基础上，用更低置信度重新识别，
+     * 只把漏掉的棋子补进空格，补完后若仍合法且棋子数变多则接受。
+     * @return 是否成功补棋
+     */
+    public boolean completeChessBoard(BufferedImage img, char[][] board) {
+        try {
+            if (img == null || board == null) {
+                return false;
+            }
+            java.awt.Rectangle pos = lastBoardPos;
+            if (pos == null) {
+                return false;
+            }
+            List<DetectResult> results = this.predict(img, getBoardConfidence(), getRecoveryPieceConfidence());
+            char[][] merged = new char[10][9];
+            for (int i = 0; i < 10; i++) {
+                System.arraycopy(board[i], 0, merged[i], 0, 9);
+            }
+            fillBoard(results, pos, merged, true);
+            if (countPieces(merged) > countPieces(board) && XiangqiUtils.validateChessBoard(merged)) {
+                for (int i = 0; i < 10; i++) {
+                    System.arraycopy(merged[i], 0, board[i], 0, 9);
+                }
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private int countPieces(char[][] board) {
+        int n = 0;
+        for (int i = 0; i < 10; i++) {
+            for (int j = 0; j < 9; j++) {
+                if (board[i][j] != ' ') {
+                    n++;
+                }
+            }
+        }
+        return n;
+    }
+
+    private void fillBoard(List<DetectResult> results, java.awt.Rectangle boardPos, char[][] board) {
+        fillBoard(results, boardPos, board, false);
+    }
+
+    private void fillBoard(List<DetectResult> results, java.awt.Rectangle boardPos, char[][] board, boolean onlyEmpty) {
+        int pieceWidth = boardPos.width / 8, pieceHeight = boardPos.height / 9;
+        // 多棋盘场景：只填充中心点落在当前棋盘框内的棋子，避免把其它棋盘的棋子混入
+        java.awt.Rectangle inner = new java.awt.Rectangle(
+                boardPos.x - pieceWidth / 2,
+                boardPos.y - pieceHeight / 2,
+                boardPos.width + pieceWidth,
+                boardPos.height + pieceHeight);
+        // 再获取每个棋子及其位置
+        for (DetectResult obj : results) {
+            char label = obj.label;
+            Rectangle bound = obj.rect;
+            if (label != '0') {
+                if (bound.x < inner.x || bound.x > inner.x + inner.width
+                        || bound.y < inner.y || bound.y > inner.y + inner.height) {
+                    continue;
+                }
+                int j = (int) ((bound.x - (boardPos.x - pieceWidth / 2)) / pieceWidth);
+                int i = (int) ((bound.y - (boardPos.y - pieceHeight / 2)) / pieceHeight);
+                if (i < 0 || i > 9 || j < 0 || j > 8) {
+                    continue;
+                }
+                if (onlyEmpty && board[i][j] != ' ') {
+                    continue;
+                }
+                board[i][j] = label;
+            }
+        }
+    }
+
     private List<DetectResult> predict(BufferedImage image) throws OrtException {
+        return predict(image, getBoardConfidence(), getPieceConfidence());
+    }
+
+    private List<DetectResult> predict(BufferedImage image, float boardConf, float pieceConf) throws OrtException {
 
         List<DetectResult> list = null;
 
@@ -154,7 +448,7 @@ public class Yolo5Model extends OnnxModel {
                     OnnxTensor resultTensor = (OnnxTensor) resultValue;
                     float[] output = resultTensor.getFloatBuffer().array();
 
-                    list = processOutput(output, image, rate);
+                    list = processOutput(output, image, rate, boardConf, pieceConf);
                 }
             }
         }
@@ -262,6 +556,10 @@ public class Yolo5Model extends OnnxModel {
     }
 
     List<DetectResult> processOutput(float[] output, BufferedImage img, float rate) {
+        return processOutput(output, img, rate, getBoardConfidence(), getPieceConfidence());
+    }
+
+    List<DetectResult> processOutput(float[] output, BufferedImage img, float rate, float boardConf, float pieceConf) {
         List<DetectResult> list = new ArrayList<>();
 
         int sizeClasses = labels.length;
@@ -281,7 +579,7 @@ public class Yolo5Model extends OnnxModel {
             }
 
             float score = maxClass * output[indexBase + 4];
-            if (score > CONFIDENCE) {
+            if (score > (labels[maxIndex] == '0' ? boardConf : pieceConf)) {
                 float xPos = output[indexBase];
                 float yPos = output[indexBase + 1];
                 float w = output[indexBase + 2];

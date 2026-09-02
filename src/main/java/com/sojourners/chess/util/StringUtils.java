@@ -20,4 +20,18 @@ public class StringUtils {
     public static boolean isNonNegativeInt(String str) {
         return "0".equals(str) || isPositiveInt(str);
     }
+
+    /**
+     * 是否为正数（支持小数）
+     */
+    public static boolean isPositiveNumber(String str) {
+        if (str == null || str.length() == 0) {
+            return false;
+        }
+        try {
+            return Double.parseDouble(str) > 0;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
 }

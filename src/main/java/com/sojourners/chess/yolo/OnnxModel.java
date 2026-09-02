@@ -43,4 +43,11 @@ public abstract class OnnxModel {
 
     public abstract boolean findChessBoard(BufferedImage img, char[][] board);
 
+    /**
+     * 少子补棋：在已验证合法的局面基础上补回漏识别的棋子，默认不支持
+     */
+    public boolean completeChessBoard(BufferedImage img, char[][] board) {
+        return false;
+    }
+
 }
