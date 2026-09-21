@@ -1,0 +1,144 @@
+name: Build Windows EXE
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Determine app version
+        id: ver
+        shell: pwsh
+        run: |
+          if ("${{ github.ref }}" -match "^refs/tags/") {
+            $v = "${{ github.ref_name }}" -replace '^v',''
+          } else {
+            $v = "1.0.0"
+          }
+          Write-Host "app-version = $v"
+          echo "version=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Maven package
+        shell: pwsh
+        run: |
+          mvn -s .github/maven/settings.xml -B clean package "-DskipTests" "-Djavafx.platform=win"
+
+      - name: Copy runtime jars and resources
+        shell: pwsh
+        run: |
+          # 确保目标目录存在，避免后续 Copy-Item 因目录不存在失败
+          New-Item -ItemType Directory -Force -Path target\app-input | Out-Null
+
+          mvn -s .github/maven/settings.xml -B dependency:copy-dependencies `
+            "-DoutputDirectory=target/app-input" `
+            "-DincludeScope=runtime" `
+            "-Djavafx.platform=win"
+
+          Copy-Item "target\Xiangqi-1.0-SNAPSHOT.jar" "target\app-input\" -Force
+
+          # 程序通过 getJarPath() 读外部文件，必须和 jar 放一起
+          $res = "src\main\resources"
+          foreach ($dir in @("sound", "ui", "model", "image", "font")) {
+            $src = Join-Path $res $dir
+            if (Test-Path $src) {
+              Copy-Item $src "target\app-input\" -Recurse -Force
+              Write-Host "已复制资源: $dir"
+            }
+          }
+
+          Write-Host "app-input 内容："
+          Get-ChildItem target\app-input | Select-Object Name, Mode, Length
+
+      - name: Create EXE with jpackage
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+
+          jpackage `
+            --type app-image `
+            --name TChess `
+            --input "target\app-input" `
+            --main-jar "Xiangqi-1.0-SNAPSHOT.jar" `
+            --main-class "com.sojourners.chess.Main" `
+            --dest dist `
+            --app-version "${{ steps.ver.outputs.version }}" `
+            --vendor "TChess" `
+            --description "TChess Xiangqi GUI" `
+            --win-console `
+            --java-options "-Dfile.encoding=UTF-8" `
+            --java-options "--module-path=`$APPDIR" `
+            --java-options "--add-modules=javafx.controls,javafx.fxml,javafx.graphics,javafx.media,javafx.swing"
+
+          $bin = "dist\TChess\runtime\bin"
+          if (-not (Test-Path $bin)) {
+            throw "找不到 dist\TChess\runtime\bin，jpackage 可能失败"
+          }
+
+          # 若 jpackage 没带上 java.exe，从当前 JDK 补进去
+          if (-not (Test-Path "$bin\java.exe")) {
+            Write-Host "jpackage 未生成 java.exe，从 JAVA_HOME 复制..."
+            Write-Host "JAVA_HOME = $env:JAVA_HOME"
+            if (-not $env:JAVA_HOME) { throw "JAVA_HOME 为空，无法补 java.exe" }
+
+            Copy-Item "$env:JAVA_HOME\bin\java.exe"  "$bin\" -Force
+            Copy-Item "$env:JAVA_HOME\bin\javaw.exe" "$bin\" -Force -ErrorAction SilentlyContinue
+
+            # 有些依赖也需要
+            $extras = @("jimage.dll", "jli.dll", "java.dll")
+            foreach ($f in $extras) {
+              $src = Join-Path $env:JAVA_HOME "bin\$f"
+              if (Test-Path $src) {
+                Copy-Item $src "$bin\" -Force -ErrorAction SilentlyContinue
+              }
+            }
+          }
+
+          Write-Host "runtime\bin 中的 exe："
+          Get-ChildItem $bin -Filter *.exe | Select-Object Name, Length
+
+          if (-not (Test-Path "$bin\java.exe")) {
+            Get-ChildItem $bin | Format-Table Name, Length
+            throw "补完后仍缺少 java.exe"
+          }
+
+          if (-not (Test-Path "dist\TChess\TChess.exe")) {
+            throw "缺少 TChess.exe"
+          }
+
+      - name: Zip the app-image
+        shell: pwsh
+        run: |
+          # 打整个文件夹，避免漏文件
+          if (Test-Path dist\TChess-Windows.zip) { Remove-Item dist\TChess-Windows.zip -Force }
+          Compress-Archive -Path dist\TChess -DestinationPath dist\TChess-Windows.zip -Force
+          Get-Item dist\TChess-Windows.zip | Select-Object Name, Length
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TChess-Windows
+          path: dist/TChess-Windows.zip
+
+      - name: Create Release and Upload
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/TChess-Windows.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

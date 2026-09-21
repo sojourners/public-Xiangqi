@@ -76,16 +76,20 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
     private ListView<ThinkData> listView;
 
     @FXML
-    private ComboBox<String> engineComboBox;
+    private ComboBox<String> redEngineComboBox;
+    @FXML
+    private ComboBox<String> redThreadComboBox;
+    @FXML
+    private ComboBox<String> redHashComboBox;
+    @FXML
+    private ComboBox<String> blackEngineComboBox;
+    @FXML
+    private ComboBox<String> blackThreadComboBox;
+    @FXML
+    private ComboBox<String> blackHashComboBox;
 
     @FXML
     private ComboBox<String> linkComboBox;
-
-    @FXML
-    private ComboBox<String> hashComboBox;
-
-    @FXML
-    private ComboBox<String> threadComboBox;
 
     @FXML
     private RadioMenuItem menuOfLargeBoard;
@@ -121,7 +125,8 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
 
     private Properties prop;
 
-    private Engine engine;
+    private Engine redEngine;
+    private Engine blackEngine;
 
     private ChessBoard board;
 
@@ -277,7 +282,7 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
 
     @FXML
     public void analysisButtonClick(ActionEvent event) {
-        if (engine == null) {
+        if (redEngine == null) {
             DialogUtils.showWarningDialog("提示", "引擎未加载");
             return;
         }
@@ -301,16 +306,16 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
     }
 
     private void engineStop() {
-        if (engine != null) {
-            engine.stop();
-        }
+        if (redEngine != null) redEngine.stop();
+        if (blackEngine != null) blackEngine.stop();
     }
 
     @FXML
     public void immediateButtonClick(ActionEvent event) {
         if (redGo && robotRed.getValue() || !redGo && robotBlack.getValue()) {
-            if (engine != null) {
-                engine.moveNow();
+            Engine eng = redGo ? redEngine : blackEngine;
+            if (eng != null) {
+                eng.moveNow();
             }
         }
     }
@@ -330,20 +335,34 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
                     }
                 }
             }
-            engine.setThreadNum(prop.getThreadNum());
-            engine.setHashSize(prop.getHashSize());
-            engine.setAnalysisModel(robotAnalysis.getValue() ? Engine.AnalysisModel.INFINITE : prop.getAnalysisModel(), prop.getAnalysisValue());
-            engine.analysis(chessManualHandle.getFenCode(), chessManualHandle.getMoveList(), tacticList);
+
+            Engine eng = redGo ? redEngine : blackEngine;
+            if (robotAnalysis.getValue()) {
+                eng = redEngine;
+            }
+            if (eng == null) {
+                DialogUtils.showWarningDialog("提示", "引擎未加载");
+                return;
+            }
+
+            if (redGo || robotAnalysis.getValue()) {
+                eng.setThreadNum(prop.getRedThreadNum());
+                eng.setHashSize(prop.getRedHashSize());
+            } else {
+                eng.setThreadNum(prop.getBlackThreadNum());
+                eng.setHashSize(prop.getBlackHashSize());
+            }
+            eng.setAnalysisModel(robotAnalysis.getValue() ? Engine.AnalysisModel.INFINITE : prop.getAnalysisModel(), prop.getAnalysisValue());
+            eng.analysis(chessManualHandle.getFenCode(), chessManualHandle.getMoveList(), tacticList);
         }
     }
 
     @FXML
     public void blackButtonClick(ActionEvent event) {
-        if (engine == null) {
-            DialogUtils.showWarningDialog("提示", "引擎未加载");
+        if (blackEngine == null) {
+            DialogUtils.showWarningDialog("提示", "黑方引擎未加载");
             return;
         }
-
         robotBlack.setValue(!robotBlack.getValue());
         if (robotBlack.getValue() && !redGo) {
             engineGo();
@@ -351,7 +370,6 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
         if (!robotBlack.getValue() && !redGo) {
             engineStop();
         }
-
         if (linkMode.getValue() && !robotBlack.getValue()) {
             stopGraphLink();
         }
@@ -363,26 +381,29 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
         // 重新设置引擎列表
         refreshEngineComboBox();
         // 如果引擎被卸载，则关闭
-        if (StringUtils.isEmpty(prop.getEngineName())) {
+        if (StringUtils.isEmpty(prop.getRedEngineName()) && StringUtils.isEmpty(prop.getBlackEngineName())) {
             // 重置按钮
             robotRed.setValue(false);
             robotBlack.setValue(false);
             robotAnalysis.setValue(false);
             // 关闭引擎
-            if (engine != null) {
-                engine.close();
-                engine = null;
+            if (redEngine != null) {
+                redEngine.close();
+                redEngine = null;
+            }
+            if (blackEngine != null) {
+                blackEngine.close();
+                blackEngine = null;
             }
         }
     }
 
     @FXML
     public void redButtonClick(ActionEvent event) {
-        if (engine == null) {
-            DialogUtils.showWarningDialog("提示", "引擎未加载");
+        if (redEngine == null) {
+            DialogUtils.showWarningDialog("提示", "红方引擎未加载");
             return;
         }
-
         robotRed.setValue(!robotRed.getValue());
         if (robotRed.getValue() && redGo) {
             engineGo();
@@ -390,7 +411,6 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
         if (!robotRed.getValue() && redGo) {
             engineStop();
         }
-
         if (linkMode.getValue() && !robotRed.getValue()) {
             stopGraphLink();
         }
@@ -414,8 +434,9 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
     }
 
     private void engineGo() {
-        if (engine == null) {
-            DialogUtils.showWarningDialog("提示", "引擎未加载");
+        Engine eng = redGo ? redEngine : blackEngine;
+        if (eng == null) {
+            DialogUtils.showWarningDialog("提示", (redGo ? "红方" : "黑方") + "引擎未加载");
             return;
         }
 
@@ -425,13 +446,17 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
             this.isThinking = false;
         }
 
-        // 重置变招列表
         tacticList = null;
 
-        engine.setThreadNum(prop.getThreadNum());
-        engine.setHashSize(prop.getHashSize());
-        engine.setAnalysisModel(robotAnalysis.getValue() ? Engine.AnalysisModel.INFINITE : prop.getAnalysisModel(), prop.getAnalysisValue());
-        engine.analysis(chessManualHandle.getFenCode(), chessManualHandle.getMoveList(), this.board.getBoard(), redGo);
+        if (redGo) {
+            eng.setThreadNum(prop.getRedThreadNum());
+            eng.setHashSize(prop.getRedHashSize());
+        } else {
+            eng.setThreadNum(prop.getBlackThreadNum());
+            eng.setHashSize(prop.getBlackHashSize());
+        }
+        eng.setAnalysisModel(robotAnalysis.getValue() ? Engine.AnalysisModel.INFINITE : prop.getAnalysisModel(), prop.getAnalysisValue());
+        eng.analysis(chessManualHandle.getFenCode(), chessManualHandle.getMoveList(), this.board.getBoard(), redGo);
     }
 
     @FXML
@@ -618,7 +643,7 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
 
     @FXML
     private void linkButtonClick(ActionEvent e) {
-        if (engine == null) {
+        if (redEngine == null && blackEngine == null) {
             DialogUtils.showWarningDialog("提示", "引擎未加载");
             return;
         }
@@ -715,7 +740,10 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
         // 初始化棋局
         newChessBoard(null);
         // 加载引擎
-        loadEngine(prop.getEngineName());
+        String redName = prop.getRedEngineName() != null ? prop.getRedEngineName() : prop.getEngineName();
+        String blackName = prop.getBlackEngineName() != null ? prop.getBlackEngineName() : prop.getEngineName();
+        loadRedEngine(redName);
+        loadBlackEngine(blackName);
     }
 
     private void importFromBufferImage(BufferedImage img) {
@@ -932,7 +960,7 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
         engineStop();
         // 绘制棋盘
         board = new ChessBoard(this.canvas, prop.getBoardSize(), prop.getBoardStyle(), prop.isStepTip(), prop.isManualTip(),
-                engine != null && engine.getMultiPV() > 1, prop.isStepSound(), prop.isShowNumber(), fenCode);
+                (redEngine != null && redEngine.getMultiPV() > 1) || (blackEngine != null && blackEngine.getMultiPV() > 1), prop.isStepSound(), prop.isShowNumber(), fenCode);
         // 设置局面
         redGo = StringUtils.isEmpty(fenCode) ? true : fenCode.contains("w");
         fenCode = board.fenCode(redGo);
@@ -953,15 +981,28 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
     }
 
     private void initEngineView() {
-        // 引擎列表 线程数 哈希表大小
         refreshEngineComboBox();
+
         for (int i = 1; i <= Runtime.getRuntime().availableProcessors(); i++) {
-            threadComboBox.getItems().add(String.valueOf(i));
+            redThreadComboBox.getItems().add(String.valueOf(i));
+            blackThreadComboBox.getItems().add(String.valueOf(i));
         }
-        hashComboBox.getItems().addAll("16", "32", "64", "128", "256", "512", "1024", "2048", "4096");
-        // 加载设置
-        threadComboBox.setValue(String.valueOf(prop.getThreadNum()));
-        hashComboBox.setValue(String.valueOf(prop.getHashSize()));
+        redHashComboBox.getItems().addAll("16", "32", "64", "128", "256", "512", "1024", "2048", "4096");
+        blackHashComboBox.getItems().addAll("16", "32", "64", "128", "256", "512", "1024", "2048", "4096");
+
+        String redName = prop.getRedEngineName() != null ? prop.getRedEngineName() : prop.getEngineName();
+        String blackName = prop.getBlackEngineName() != null ? prop.getBlackEngineName() : prop.getEngineName();
+        int redThread = prop.getRedThreadNum() > 0 ? prop.getRedThreadNum() : prop.getThreadNum();
+        int blackThread = prop.getBlackThreadNum() > 0 ? prop.getBlackThreadNum() : prop.getThreadNum();
+        int redHash = prop.getRedHashSize() > 0 ? prop.getRedHashSize() : prop.getHashSize();
+        int blackHash = prop.getBlackHashSize() > 0 ? prop.getBlackHashSize() : prop.getHashSize();
+
+        redThreadComboBox.setValue(String.valueOf(redThread));
+        blackThreadComboBox.setValue(String.valueOf(blackThread));
+        redHashComboBox.setValue(String.valueOf(redHash));
+        blackHashComboBox.setValue(String.valueOf(blackHash));
+        redEngineComboBox.setValue(redName);
+        blackEngineComboBox.setValue(blackName);
     }
 
 
@@ -979,11 +1020,18 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
     }
 
     private void refreshEngineComboBox() {
-        engineComboBox.getItems().clear();
+        redEngineComboBox.getItems().clear();
+        blackEngineComboBox.getItems().clear();
         for (EngineConfig ec : prop.getEngineConfigList()) {
-            engineComboBox.getItems().add(ec.getName());
+            redEngineComboBox.getItems().add(ec.getName());
+            blackEngineComboBox.getItems().add(ec.getName());
         }
-        engineComboBox.setValue(prop.getEngineName());
+        if (prop.getRedEngineName() != null) {
+            redEngineComboBox.setValue(prop.getRedEngineName());
+        }
+        if (prop.getBlackEngineName() != null) {
+            blackEngineComboBox.setValue(prop.getBlackEngineName());
+        }
     }
 
     private void initButtonListener() {
@@ -994,51 +1042,63 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
         addListener(linkButton, linkMode);
         addListener(bookSwitchButton, useOpenBook);
 
-        threadComboBox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
-            @Override
-            public void changed(ObservableValue<? extends String> observableValue, String s, String t1) {
-                int num = Integer.parseInt(t1);
-                if (num != prop.getThreadNum()) {
-                    prop.setThreadNum(num);
+        redThreadComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                int num = Integer.parseInt(newVal);
+                if (num != prop.getRedThreadNum()) {
+                    prop.setRedThreadNum(num);
                 }
             }
         });
-        hashComboBox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
-            @Override
-            public void changed(ObservableValue<? extends String> observableValue, String s, String t1) {
-                int size = Integer.parseInt(t1);
-                if (size != prop.getHashSize()) {
-                    prop.setHashSize(size);
+        blackThreadComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                int num = Integer.parseInt(newVal);
+                if (num != prop.getBlackThreadNum()) {
+                    prop.setBlackThreadNum(num);
                 }
             }
         });
-        engineComboBox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
-            @Override
-            public void changed(ObservableValue<? extends String> observableValue, String s, String t1) {
-                if (StringUtils.isNotEmpty(t1) && !t1.equals(prop.getEngineName())) {
-                    // 保存引擎设置
-                    prop.setEngineName(t1);
-                    // 重置三个按钮
-                    robotRed.setValue(false);
-                    redButton.setDisable(false);
-                    robotBlack.setValue(false);
-                    blackButton.setDisable(false);
-                    robotAnalysis.setValue(false);
-                    immediateButton.setDisable(false);
-                    // 停止连线
-                    if (linkMode.getValue()) {
-                        stopGraphLink();
-                    }
-                    // 加载新引擎
-                    loadEngine(t1);
+        redHashComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                int size = Integer.parseInt(newVal);
+                if (size != prop.getRedHashSize()) {
+                    prop.setRedHashSize(size);
                 }
             }
         });
-        linkComboBox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
-            @Override
-            public void changed(ObservableValue<? extends String> observableValue, String s, String t1) {
-                setLinkMode(t1);
+        blackHashComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                int size = Integer.parseInt(newVal);
+                if (size != prop.getBlackHashSize()) {
+                    prop.setBlackHashSize(size);
+                }
             }
+        });
+        redEngineComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (StringUtils.isNotEmpty(newVal) && !newVal.equals(prop.getRedEngineName())) {
+                prop.setRedEngineName(newVal);
+                robotRed.setValue(false);
+                redButton.setDisable(false);
+                if (linkMode.getValue()) {
+                    stopGraphLink();
+                }
+                loadRedEngine(newVal);
+            }
+        });
+        blackEngineComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (StringUtils.isNotEmpty(newVal) && !newVal.equals(prop.getBlackEngineName())) {
+                prop.setBlackEngineName(newVal);
+                robotBlack.setValue(false);
+                blackButton.setDisable(false);
+                if (linkMode.getValue()) {
+                    stopGraphLink();
+                }
+                loadBlackEngine(newVal);
+            }
+        });
+
+        linkComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            setLinkMode(newVal);
         });
     }
 
@@ -1114,16 +1174,30 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
         }
     }
 
-    private void loadEngine(String name) {
+    private void loadRedEngine(String name) {
         try {
             if (StringUtils.isNotEmpty(name)) {
                 for (EngineConfig ec : prop.getEngineConfigList()) {
                     if (name.equals(ec.getName())) {
-                        if (engine != null) {
-                            engine.close();
-                        }
-                        engine = new Engine(ec, this);
-                        board.showMultiPV(engine.getMultiPV() > 1);
+                        if (redEngine != null) redEngine.close();
+                        redEngine = new Engine(ec, this);
+                        board.showMultiPV(redEngine.getMultiPV() > 1);
+                        return;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadBlackEngine(String name) {
+        try {
+            if (StringUtils.isNotEmpty(name)) {
+                for (EngineConfig ec : prop.getEngineConfigList()) {
+                    if (name.equals(ec.getName())) {
+                        if (blackEngine != null) blackEngine.close();
+                        blackEngine = new Engine(ec, this);
                         return;
                     }
                 }
@@ -1249,9 +1323,8 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
 
     @FXML
     public void exit() {
-        if (engine != null) {
-            engine.close();
-        }
+        if (redEngine != null) redEngine.close();
+        if (blackEngine != null) blackEngine.close();
 
         OpenBookManager.getInstance().close();
 //        ExecutorsUtils.getInstance().close();
@@ -1405,7 +1478,7 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
     }
     @FXML
     void scoreButtonClick(ActionEvent event) {
-        if (engine == null) {
+        if (redEngine == null && blackEngine == null) {
             DialogUtils.showWarningDialog("提示", "引擎未加载");
             return;
         }

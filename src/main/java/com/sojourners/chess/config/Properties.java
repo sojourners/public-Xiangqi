@@ -40,6 +40,13 @@ public class Properties implements Serializable {
 
     private String engineName;
 
+    private String redEngineName;
+    private String blackEngineName;
+    private int redThreadNum = 1;
+    private int blackThreadNum = 1;
+    private int redHashSize = 16;
+    private int blackHashSize = 16;
+
     private List<EngineConfig> engineConfigList = new ArrayList<>();
 
     private Engine.AnalysisModel analysisModel;
@@ -443,6 +450,24 @@ public class Properties implements Serializable {
     public void setHashSize(int hashSize) {
         this.hashSize = hashSize;
     }
+
+    public String getRedEngineName() { return redEngineName; }
+    public void setRedEngineName(String redEngineName) { this.redEngineName = redEngineName; }
+
+    public String getBlackEngineName() { return blackEngineName; }
+    public void setBlackEngineName(String blackEngineName) { this.blackEngineName = blackEngineName; }
+
+    public int getRedThreadNum() { return redThreadNum; }
+    public void setRedThreadNum(int redThreadNum) { this.redThreadNum = redThreadNum; }
+
+    public int getBlackThreadNum() { return blackThreadNum; }
+    public void setBlackThreadNum(int blackThreadNum) { this.blackThreadNum = blackThreadNum; }
+
+    public int getRedHashSize() { return redHashSize; }
+    public void setRedHashSize(int redHashSize) { this.redHashSize = redHashSize; }
+
+    public int getBlackHashSize() { return blackHashSize; }
+    public void setBlackHashSize(int blackHashSize) { this.blackHashSize = blackHashSize; }
 
     public List<EngineConfig> getEngineConfigList() {
         return engineConfigList;

@@ -26,7 +26,9 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
 <BorderPane fx:id="borderPane" minHeight="0.0" minWidth="0.0" prefHeight="712.0" prefWidth="1169.0" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.sojourners.chess.controller.Controller">
@@ -166,12 +168,12 @@
                             </opaqueInsets>
                         </Button>
                         <Separator orientation="VERTICAL" prefHeight="200.0" />
-                        <Button fx:id="blackButton" contentDisplay="GRAPHIC_ONLY" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#blackButtonClick" style="-fx-background-image: url('/image/robotblack.png');" stylesheets="@../style/app.css" text="Button">
+                        <Button fx:id="redButton" contentDisplay="GRAPHIC_ONLY" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#redButtonClick" style="-fx-background-image: url('/image/robotred.png');" stylesheets="@../style/app.css" text="Button">
                             <opaqueInsets>
                                 <Insets />
                             </opaqueInsets>
                         </Button>
-                        <Button fx:id="redButton" contentDisplay="GRAPHIC_ONLY" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#redButtonClick" style="-fx-background-image: url('/image/robotred.png');" stylesheets="@../style/app.css" text="Button">
+                        <Button fx:id="blackButton" contentDisplay="GRAPHIC_ONLY" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#blackButtonClick" style="-fx-background-image: url('/image/robotblack.png');" stylesheets="@../style/app.css" text="Button">
                             <opaqueInsets>
                                 <Insets />
                             </opaqueInsets>
@@ -235,13 +237,24 @@
                                                         <ListView fx:id="listView" minHeight="-Infinity" minWidth="-Infinity" prefHeight="0.0" prefWidth="0.0" stylesheets="@../style/app.css" BorderPane.alignment="CENTER" />
                                                     </center>
                                                     <top>
-                                                        <ToolBar minHeight="-Infinity" minWidth="-Infinity" prefHeight="30.0" BorderPane.alignment="CENTER">
+                                                        <ToolBar minHeight="-Infinity" minWidth="-Infinity" prefHeight="52.0" BorderPane.alignment="CENTER">
                                                             <items>
-                                                                <Label text="引擎" />
-                                                                <ComboBox fx:id="engineComboBox" editable="true" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="22.0" prefWidth="95.0" stylesheets="@../style/combobox.css" />
-                                                                <ComboBox fx:id="threadComboBox" editable="true" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="22.0" prefWidth="60.0" stylesheets="@../style/combobox.css" />
-                                                                <ComboBox fx:id="hashComboBox" editable="true" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="22.0" prefWidth="65.0" stylesheets="@../style/combobox.css" />
-                                                                <Label text="MB" />
+                                                                <VBox spacing="2.0">
+                                                                    <HBox alignment="CENTER_LEFT" spacing="4.0">
+                                                                        <Label text="红方引擎" prefWidth="55.0"/>
+                                                                        <ComboBox fx:id="redEngineComboBox" editable="true" prefHeight="22.0" prefWidth="95.0" stylesheets="@../style/combobox.css"/>
+                                                                        <ComboBox fx:id="redThreadComboBox" editable="true" prefHeight="22.0" prefWidth="50.0" stylesheets="@../style/combobox.css"/>
+                                                                        <ComboBox fx:id="redHashComboBox" editable="true" prefHeight="22.0" prefWidth="55.0" stylesheets="@../style/combobox.css"/>
+                                                                        <Label text="MB"/>
+                                                                    </HBox>
+                                                                    <HBox alignment="CENTER_LEFT" spacing="4.0">
+                                                                        <Label text="黑方引擎" prefWidth="55.0"/>
+                                                                        <ComboBox fx:id="blackEngineComboBox" editable="true" prefHeight="22.0" prefWidth="95.0" stylesheets="@../style/combobox.css"/>
+                                                                        <ComboBox fx:id="blackThreadComboBox" editable="true" prefHeight="22.0" prefWidth="50.0" stylesheets="@../style/combobox.css"/>
+                                                                        <ComboBox fx:id="blackHashComboBox" editable="true" prefHeight="22.0" prefWidth="55.0" stylesheets="@../style/combobox.css"/>
+                                                                        <Label text="MB"/>
+                                                                    </HBox>
+                                                                </VBox>
                                                             </items>
                                                         </ToolBar>
                                                     </top>
