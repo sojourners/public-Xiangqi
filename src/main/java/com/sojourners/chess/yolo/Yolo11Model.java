@@ -10,6 +10,16 @@ public class Yolo11Model extends Yolo5Model {
     float CONFIDENCE = 0.5f;
 
     @Override
+    protected float getBoardConfidence() {
+        return CONFIDENCE;
+    }
+
+    @Override
+    protected float getPieceConfidence() {
+        return PIECE_CONFIDENCE;
+    }
+
+    @Override
     public String getModelPath() {
         return "model/yolov11.onnx";
     }
@@ -53,6 +63,10 @@ public class Yolo11Model extends Yolo5Model {
     }
 
     List<DetectResult> processOutput(float[] output, BufferedImage img, float rate) {
+        return processOutput(output, img, rate, getBoardConfidence(), getPieceConfidence());
+    }
+
+    List<DetectResult> processOutput(float[] output, BufferedImage img, float rate, float boardConf, float pieceConf) {
         List<DetectResult> list = new ArrayList<>();
 
         float xPadding = (SIZE - img.getWidth() * rate) / 2;
@@ -75,7 +89,7 @@ public class Yolo11Model extends Yolo5Model {
             }
 
             float score = maxClass;
-            if (score > CONFIDENCE) {
+            if (score > (labels[maxIndex] == '0' ? boardConf : pieceConf)) {
                 float xPos = output[reshape(indexBase, stride, size)];
                 float yPos = output[reshape(indexBase + 1, stride, size)];
                 float w = output[reshape(indexBase + 2, stride, size)];

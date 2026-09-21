@@ -4,6 +4,7 @@ import com.sojourners.chess.board.ChessBoard;
 import com.sojourners.chess.config.Properties;
 import com.sojourners.chess.util.XiangqiUtils;
 import com.sojourners.chess.yolo.OnnxModel;
+import com.sojourners.chess.yolo.VinYolo5Model;
 import com.sojourners.chess.yolo.Yolo11Model;
 
 import java.awt.*;
@@ -32,11 +33,27 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
 
     private OnnxModel aiModel;
 
+    private OnnxModel vinModel;
+
     private LinkerCallBack callBack;
 
     private Robot robot;
 
     private int count;
+
+    private int failCount;
+
+    /**
+     * 待确认的新局面（连续两次识别相同才接受，过滤动画/残影等不稳定帧）
+     */
+    private char[][] stableBoard;
+
+    /**
+     * 是否已完成开局初始化（初始化阶段引擎局面未同步，不启用少子数量检查）
+     */
+    private boolean linkedInited = false;
+
+    private int stableCount;
 
     private volatile boolean pause;
 
@@ -47,6 +64,7 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
         robot = new Robot();
         this.count = 0;
         this.aiModel = new Yolo11Model();
+        this.vinModel = new VinYolo5Model();
         this.prop = Properties.getInstance();
         this.pause = false;
     }
@@ -78,6 +96,19 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
         return true;
     }
 
+    private boolean isStable(char[][] board) {
+        if (isSame(board, stableBoard)) {
+            stableCount++;
+        } else {
+            stableBoard = new char[10][9];
+            for (int i = 0; i < 10; i++) {
+                System.arraycopy(board[i], 0, stableBoard[i], 0, 9);
+            }
+            stableCount = 1;
+        }
+        return stableCount >= 2;
+    }
+
     public void pause() {
         this.pause = true;
     }
@@ -107,8 +138,16 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
                 if (!callBack.isThinking() && !pause) {
 
                     if (!findChessBoard(board2)) {
+                        failCount++;
+                        if (failCount > 10) {
+                            // 连续识别失败，重新在整屏上定位棋盘并初始化局面
+                            boardPos = null;
+                            failCount = 0;
+                            break;
+                        }
                         continue;
                     }
+                    failCount = 0;
 
                     boolean isReverse;
                     try {
@@ -119,10 +158,50 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
                     }
 
                     if (isSame(board2, callBack.getEngineBoard())) {
+                        stableCount = 0;
+                        stableBoard = null;
                         continue;
                     }
 
                     Action action = compareBoard(board2, callBack.getEngineBoard(), isReverse, callBack.isWatchMode());
+
+                    // 少子补棋：识别局面拼不成一步合法棋、且棋子数比引擎局面少时，
+                    // 很可能是中局/残局漏识别（漏子与"被吃一子"数量相同，无法靠数量区分），
+                    // 先用低置信度把漏掉的棋子补回来再判断
+                    if (action == null && linkedInited
+                            && countPieces(board2) < countPieces(callBack.getEngineBoard())) {
+                        BufferedImage img2 = screenshot(false);
+                        char[][] before = new char[10][9];
+                        for (int i = 0; i < 10; i++) {
+                            System.arraycopy(board2[i], 0, before[i], 0, 9);
+                        }
+                        boolean recovered = this.vinModel.completeChessBoard(img2, board2)
+                                || this.aiModel.completeChessBoard(img2, board2)
+                                || completeWithEngine(board2);
+                        if (!recovered || !validateLinkBoard(board2)) {
+                            for (int i = 0; i < 10; i++) {
+                                System.arraycopy(before[i], 0, board2[i], 0, 9);
+                            }
+                        } else {
+                            try {
+                                isReverse = reverse(board2);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                            action = compareBoard(board2, callBack.getEngineBoard(), isReverse, callBack.isWatchMode());
+                        }
+                    }
+
+                    // 能明确配对成一步合法棋（对方走子/己方走子）时立即接受，保证响应速度；
+                    // 变化不明确（动画帧/残影/漏子等）时，需要连续两次识别相同才接受
+                    if (action == null || action.flag == 3 || action.flag == 4) {
+                        if (!isStable(board2)) {
+                            continue;
+                        }
+                        stableCount = 0;
+                        stableBoard = null;
+                    }
+
                     if (prop.isLinkAnimation() && needConfirm(board2, callBack.getEngineBoard(), action)) {
                         boolean f = false;
                         do {
@@ -480,6 +559,10 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
     boolean findBoardPosition() {
         BufferedImage img = screenshot(true);
         this.boardPos = this.aiModel.findBoardPosition(img);
+        if (this.boardPos == null) {
+            // 主模型识别不到棋盘时（如JJ象棋深色棋盘），尝试VinXiangQi模型
+            this.boardPos = this.vinModel.findBoardPosition(img);
+        }
         return this.boardPos != null;
     }
 
@@ -490,7 +573,18 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
      */
     BufferedImage screenshot(boolean fullScreen) {
         if (prop.isLinkBackMode()) {
-            BufferedImage img = screenshotByBack(fullScreen ? null : boardPos);
+            // 后台模式：统一截全窗口，再用 boardPos 裁剪（与 findBoardPosition 一致），
+            // 避免 capture 内部 DPI 缩放导致裁剪区域错位/黑图
+            BufferedImage img = screenshotByBack(null);
+            if (!fullScreen && img != null && boardPos != null) {
+                int x = Math.max(0, boardPos.x);
+                int y = Math.max(0, boardPos.y);
+                int w = Math.min(boardPos.width, img.getWidth() - x);
+                int h = Math.min(boardPos.height, img.getHeight() - y);
+                if (w > 0 && h > 0) {
+                    img = img.getSubimage(x, y, w, h);
+                }
+            }
             return img;
 
         } else {
@@ -509,19 +603,146 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
         // 截图
         BufferedImage img = screenshot(false);
         // ai识别棋盘棋子
-        if (!this.aiModel.findChessBoard(img, board)) {
-            return false;
+        if (this.aiModel.findChessBoard(img, board) && validateLinkBoard(board) && pieceCountOK(board)) {
+            return true;
         }
-        boolean f = XiangqiUtils.validateChessBoard(board);
-        if (!f) {
-            for (int i = 0; i < 10; i++) {
-                for (int j = 0; j < 9; j++) {
-                    System.out.print(board[i][j]);
-                }
-                System.out.println();
+        // 主模型识别失败时，尝试VinXiangQi模型（支持JJ象棋等深色棋盘）
+        if (this.vinModel.findChessBoard(img, board) && validateLinkBoard(board) && pieceCountOK(board)) {
+            return true;
+        }
+        // 少子补棋：识别出合法局面但棋子数明显偏少时（相对引擎局面少2子以上），
+        // 用更低置信度把漏掉的棋子补进空格，避免"少子局面"被当作正确局面接受
+        if (validateLinkBoard(board)) {
+            BufferedImage img2 = screenshot(false);
+            if (this.vinModel.completeChessBoard(img2, board) && validateLinkBoard(board) && pieceCountOK(board)) {
+                return true;
+            }
+            if (this.aiModel.completeChessBoard(img2, board) && validateLinkBoard(board) && pieceCountOK(board)) {
+                return true;
+            }
+            // 引擎局面补棋：模型补不上时，直接用引擎局面补缺失棋子（残局漏识别主方案）
+            if (completeWithEngine(board) && validateLinkBoard(board) && pieceCountOK(board)) {
+                return true;
             }
         }
-        return f;
+        return false;
+    }
+
+    /**
+     * 棋子数量连续性检查：一轮走棋最多只会少一子（被吃），
+     * 识别结果比引擎局面少2子以上说明存在漏识别（少子）。
+     */
+    private boolean pieceCountOK(char[][] board) {
+        if (!linkedInited) {
+            return true;
+        }
+        char[][] engineBoard = callBack.getEngineBoard();
+        if (engineBoard == null) {
+            return true;
+        }
+        int cur = countPieces(board);
+        int eng = countPieces(engineBoard);
+        // 深色棋盘中局/残局偶发漏识别 1-2 子，放宽到 eng-2 容错；
+        // 少 2 子以上的情况会在少子补棋流程用引擎局面补回
+        return cur >= eng - 2;
+    }
+
+    /**
+     * 引擎局面补棋：识别结果比引擎局面少子时，把引擎局面中有而识别结果
+     * 缺失的棋子补回空格（前提：补回后局面合法且棋子数增加）。
+     * 引擎局面由连线过程维护，中局/残局时它是当前最可信的局面参照。
+     */
+    private boolean completeWithEngine(char[][] board) {
+        try {
+            char[][] engineBoard = callBack.getEngineBoard();
+            if (engineBoard == null) {
+                return false;
+            }
+            char[][] merged = new char[10][9];
+            for (int i = 0; i < 10; i++) {
+                System.arraycopy(board[i], 0, merged[i], 0, 9);
+            }
+            int added = 0;
+            for (int i = 0; i < 10; i++) {
+                for (int j = 0; j < 9; j++) {
+                    if (engineBoard[i][j] != ' ' && merged[i][j] == ' ') {
+                        merged[i][j] = engineBoard[i][j];
+                        added++;
+                    }
+                }
+            }
+            if (added > 0 && countPieces(merged) > countPieces(board)
+                    && XiangqiUtils.validateChessBoard(merged)) {
+                for (int i = 0; i < 10; i++) {
+                    System.arraycopy(merged[i], 0, board[i], 0, 9);
+                }
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private int countPieces(char[][] board) {
+        int n = 0;
+        for (int i = 0; i < 10; i++) {
+            for (int j = 0; j < 9; j++) {
+                if (board[i][j] != ' ') {
+                    n++;
+                }
+            }
+        }
+        return n;
+    }
+
+    /**
+     * 连线专用的局面校验：在基础校验之外，按红黑分侧检查象/兵是否越过河界，
+     * 过滤 JJ象棋 等平台的"飞子残影"被误识别为真实棋子的情况
+     */
+    private boolean validateLinkBoard(char[][] board) {
+        if (!XiangqiUtils.validateChessBoard(board)) {
+            return false;
+        }
+        int redKingRow = -1, blackKingRow = -1;
+        for (int i = 0; i < 10; i++) {
+            for (int j = 3; j < 6; j++) {
+                if (board[i][j] == 'K') {
+                    redKingRow = i;
+                } else if (board[i][j] == 'k') {
+                    blackKingRow = i;
+                }
+            }
+        }
+        if (redKingRow == -1 || blackKingRow == -1) {
+            return false;
+        }
+        boolean redTop = redKingRow <= 4;
+        for (int i = 0; i < 10; i++) {
+            for (int j = 0; j < 9; j++) {
+                char c = board[i][j];
+                if (c == 'B' || c == 'b') {
+                    boolean redSide = c == 'B';
+                    boolean onTopHalf = i <= 4;
+                    boolean ok = redSide ? (redTop ? onTopHalf : !onTopHalf) : (redTop ? !onTopHalf : onTopHalf);
+                    if (!ok) {
+                        return false;
+                    }
+                } else if (c == 'P') {
+                    boolean ok = redTop ? i >= 3 : i <= 6;
+                    if (!ok) {
+                        return false;
+                    }
+                } else if (c == 'p') {
+                    boolean ok = redTop ? i <= 6 : i >= 3;
+                    if (!ok) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
     }
     private boolean reverse(char[][] board) throws Exception {
         // 是否翻转
@@ -556,8 +777,21 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
      * @return
      */
     private boolean initChessBoard() {
-        if (!findChessBoard(board2)) {
+        linkedInited = false;
+        // 连续两次识别到相同且合法的开局局面，避免单帧错误进入引擎
+        char[][] first = new char[10][9];
+        if (!findChessBoard(first)) {
             return false;
+        }
+        char[][] second = new char[10][9];
+        if (!findChessBoard(second)) {
+            return false;
+        }
+        if (!isSame(first, second)) {
+            return false;
+        }
+        for (int i = 0; i < 10; i++) {
+            System.arraycopy(second[i], 0, board2[i], 0, 9);
         }
 
         boolean isReverse = false;
@@ -567,16 +801,39 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
             e.printStackTrace();
             return false;
         }
-        // 是否红走
+        // 是否红走：开局局面（双方将帅在位、棋子数充足）一律红先，
+        // 不再依赖 FEN 精确匹配标准开局（深色棋盘识别偶发漏子/误识别会破坏 FEN）
+        boolean redGo = isOpeningBoard(board2) ? true : !isReverse;
         String fenCode = ChessBoard.fenCode(board2, null);
-        boolean redGo = !isReverse || "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR".equals(fenCode);
         fenCode = ChessBoard.fenCode(board2, redGo);
         // 回调，初始化棋盘
         if (Thread.currentThread().isInterrupted()) {
             return false;
         }
         callBack.linkerInitChessBoard(fenCode, isReverse);
+        linkedInited = true;
         return true;
+    }
+
+    /**
+     * 判断是否为开局局面：双方将帅各一，且总棋子数 >= 26（容错漏识别）
+     */
+    private boolean isOpeningBoard(char[][] board) {
+        int redKing = 0, blackKing = 0, pieces = 0;
+        for (int i = 0; i < 10; i++) {
+            for (int j = 0; j < 9; j++) {
+                char c = board[i][j];
+                if (c == 'K') {
+                    redKing++;
+                } else if (c == 'k') {
+                    blackKing++;
+                }
+                if (c != ' ') {
+                    pieces++;
+                }
+            }
+        }
+        return redKing == 1 && blackKing == 1 && pieces >= 26;
     }
 
     /**
@@ -631,8 +888,10 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
         char[][] tmp = new char[10][9];
         if (this.aiModel.findChessBoard(img, tmp)) {
             return tmp;
-        } else {
-            return null;
         }
+        if (this.vinModel.findChessBoard(img, tmp)) {
+            return tmp;
+        }
+        return null;
     }
 }

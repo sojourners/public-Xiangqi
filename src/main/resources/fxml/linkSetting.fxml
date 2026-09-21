@@ -2,14 +2,16 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 
-<AnchorPane prefHeight="270.0" prefWidth="465.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.sojourners.chess.controller.LinkSettingController">
+<AnchorPane prefHeight="548.0" prefWidth="520.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.sojourners.chess.controller.LinkSettingController">
    <children>
-      <HBox alignment="TOP_RIGHT" layoutX="42.0" layoutY="184.0" minHeight="-Infinity" minWidth="-Infinity" prefHeight="60.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
+      <HBox alignment="TOP_RIGHT" layoutX="42.0" layoutY="486.0" minHeight="-Infinity" minWidth="-Infinity" prefHeight="60.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
          <children>
             <Button contentDisplay="CENTER" mnemonicParsing="false" onAction="#okButtonClick" prefHeight="27.0" prefWidth="72.0" text="确定" textAlignment="CENTER">
                <HBox.margin>
@@ -18,22 +20,60 @@
             </Button>
             <Button contentDisplay="CENTER" mnemonicParsing="false" onAction="#cancelButtonClick" prefHeight="27.0" prefWidth="72.0" text="取消" textAlignment="CENTER">
                <HBox.margin>
-                  <Insets right="50.0" />
+                  <Insets right="60.0" />
                </HBox.margin>
             </Button>
          </children>
       </HBox>
-      <Label layoutX="44.0" layoutY="143.0" text="识别线程数量" />
-      <TextField fx:id="linkThreadNum" layoutX="125.0" layoutY="138.0" prefHeight="27.0" prefWidth="60.0" />
-      <Label layoutX="189.0" layoutY="143.0" text="个（重启生效）" />
-      <Label layoutX="44.0" layoutY="97.0" text="识别扫描间隔" />
-      <TextField fx:id="linkScanTime" layoutX="125.0" layoutY="92.0" prefHeight="27.0" prefWidth="60.0" />
-      <Label layoutX="188.0" layoutY="99.0" text="毫秒" />
-      <Label layoutX="44.0" layoutY="50.0" text="鼠标点击间隔" />
-      <TextField fx:id="mouseClickDelay" layoutX="124.0" layoutY="45.0" prefHeight="27.0" prefWidth="60.0" />
-      <Label layoutX="187.0" layoutY="50.0" text="毫秒" />
-      <Label layoutX="254.0" layoutY="50.0" text="鼠标走子间隔" />
-      <TextField fx:id="mouseMoveDelay" layoutX="334.0" layoutY="45.0" prefHeight="27.0" prefWidth="60.0" />
-      <Label layoutX="397.0" layoutY="50.0" text="毫秒" />
+
+      <Label layoutX="40.0" layoutY="18.0" style="-fx-font-weight: bold;" text="连线方案（借鉴 VinXiangQi 窗口句柄适配）" />
+
+      <Label layoutX="40.0" layoutY="50.0" text="选择方案" />
+      <ComboBox fx:id="schemeComboBox" layoutX="116.0" layoutY="45.0" prefHeight="27.0" prefWidth="220.0" />
+      <Button fx:id="newSchemeButton" layoutX="350.0" layoutY="45.0" mnemonicParsing="false" onAction="#newSchemeButtonClick" prefHeight="27.0" prefWidth="60.0" text="新建" />
+      <Button fx:id="deleteSchemeButton" layoutX="418.0" layoutY="45.0" mnemonicParsing="false" onAction="#deleteSchemeButtonClick" prefHeight="27.0" prefWidth="60.0" text="删除" />
+
+      <Label layoutX="40.0" layoutY="88.0" text="方案名称" />
+      <TextField fx:id="schemeName" layoutX="116.0" layoutY="83.0" prefHeight="27.0" prefWidth="220.0" />
+
+      <Label layoutX="40.0" layoutY="126.0" text="截图标题" />
+      <TextField fx:id="schemeWindowTitle" layoutX="116.0" layoutY="121.0" prefHeight="27.0" prefWidth="220.0" />
+      <Label layoutX="342.0" layoutY="126.0" text="（空=不限，按包含匹配）" />
+
+      <Label layoutX="40.0" layoutY="164.0" text="截图类名" />
+      <TextField fx:id="schemeWindowClass" layoutX="116.0" layoutY="159.0" prefHeight="27.0" prefWidth="220.0" />
+      <Label layoutX="342.0" layoutY="164.0" text="（空=不限，按精确匹配）" />
+
+      <Label layoutX="40.0" layoutY="202.0" text="点击标题" />
+      <TextField fx:id="schemeClickTitle" layoutX="116.0" layoutY="197.0" prefHeight="27.0" prefWidth="220.0" />
+      <Label layoutX="342.0" layoutY="202.0" text="（子窗口，可留空）" />
+
+      <Label layoutX="40.0" layoutY="240.0" text="点击类名" />
+      <TextField fx:id="schemeClickClass" layoutX="116.0" layoutY="235.0" prefHeight="27.0" prefWidth="220.0" />
+      <Label layoutX="342.0" layoutY="240.0" text="（子窗口，可留空）" />
+
+      <Label layoutX="40.0" layoutY="278.0" text="点击缩放比" />
+      <TextField fx:id="schemeScaleFactor" layoutX="116.0" layoutY="273.0" prefHeight="27.0" prefWidth="80.0" text="1.0" />
+      <Label layoutX="202.0" layoutY="278.0" text="（后台连线微调，默认1.0）" />
+
+      <Button fx:id="pickWindowButton" layoutX="116.0" layoutY="310.0" mnemonicParsing="false" onAction="#pickWindowButtonClick" prefHeight="27.0" prefWidth="130.0" text="拾取窗口信息" />
+      <Label fx:id="pickHintLabel" layoutX="254.0" layoutY="315.0" text="点击后去点一下目标游戏窗口" />
+
+      <Separator layoutX="40.0" layoutY="352.0" prefWidth="440.0" />
+
+      <Label layoutX="40.0" layoutY="372.0" text="鼠标点击间隔" />
+      <TextField fx:id="mouseClickDelay" layoutX="124.0" layoutY="367.0" prefHeight="27.0" prefWidth="60.0" />
+      <Label layoutX="187.0" layoutY="372.0" text="毫秒" />
+      <Label layoutX="254.0" layoutY="372.0" text="鼠标走子间隔" />
+      <TextField fx:id="mouseMoveDelay" layoutX="334.0" layoutY="367.0" prefHeight="27.0" prefWidth="60.0" />
+      <Label layoutX="397.0" layoutY="372.0" text="毫秒" />
+
+      <Label layoutX="40.0" layoutY="415.0" text="识别扫描间隔" />
+      <TextField fx:id="linkScanTime" layoutX="125.0" layoutY="410.0" prefHeight="27.0" prefWidth="60.0" />
+      <Label layoutX="188.0" layoutY="415.0" text="毫秒" />
+
+      <Label layoutX="40.0" layoutY="455.0" text="识别线程数量" />
+      <TextField fx:id="linkThreadNum" layoutX="125.0" layoutY="450.0" prefHeight="27.0" prefWidth="60.0" />
+      <Label layoutX="189.0" layoutY="455.0" text="个（重启生效）" />
    </children>
 </AnchorPane>

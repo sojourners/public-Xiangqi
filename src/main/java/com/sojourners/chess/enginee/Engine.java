@@ -70,7 +70,8 @@ public class Engine {
             multiPV = 1;
         }
 
-        process = Runtime.getRuntime().exec(ec.getPath(), null, PathUtils.getParentDir(ec.getPath()));
+        String enginePath = resolveEnginePath(ec.getPath());
+        process = Runtime.getRuntime().exec(enginePath, null, PathUtils.getParentDir(enginePath));
         reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
         writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
 
@@ -99,6 +100,47 @@ public class Engine {
                 cmd("setoption " + entry.getKey() + " " + entry.getValue());
             }
         }
+    }
+
+    /**
+     * 引擎路径回退：配置的绝对路径失效时（例如软件移动到其它目录），
+     * 自动从程序所在目录的 Windows/ 或根目录查找皮卡鱼引擎。
+     */
+    private static String resolveEnginePath(String configured) {
+        if (configured != null && !configured.isEmpty()) {
+            File f = new File(configured);
+            if (f.exists()) {
+                return configured;
+            }
+        }
+        String jarDir = PathUtils.getJarPath();
+        if (jarDir == null) {
+            return configured;
+        }
+        // 候选1：Windows/ 子目录下的引擎
+        File winDir = new File(jarDir, "Windows");
+        if (winDir.isDirectory()) {
+            String[] names = {"pikafish-avx512.exe", "pikafish-bmi2.exe", "pikafish-avx2.exe",
+                    "pikafish-sse41-popcnt.exe", "pikafish-avxvnni.exe", "pikafish-vnni512.exe",
+                    "pikafish-avx512icl.exe"};
+            for (String n : names) {
+                File f = new File(winDir, n);
+                if (f.exists()) {
+                    return f.getAbsolutePath();
+                }
+            }
+        }
+        // 候选2：程序根目录下的引擎
+        String[] rootNames = {"pikafish-avx512.exe", "pikafish-bmi2.exe", "pikafish-avx2.exe",
+                "pikafish-sse41-popcnt.exe", "pikafish-avxvnni.exe", "pikafish-vnni512.exe",
+                "pikafish-avx512icl.exe"};
+        for (String n : rootNames) {
+            File f = new File(jarDir, n);
+            if (f.exists()) {
+                return f.getAbsolutePath();
+            }
+        }
+        return configured;
     }
 
     public int getMultiPV() {
