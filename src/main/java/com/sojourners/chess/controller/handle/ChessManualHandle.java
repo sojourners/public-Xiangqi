@@ -7,10 +7,12 @@ import com.sojourners.chess.model.ManualRecord;
 import com.sojourners.chess.util.ClipboardUtils;
 import com.sojourners.chess.util.DialogUtils;
 import com.sojourners.chess.util.PathUtils;
+import com.sojourners.chess.util.ScoreScale;
 import com.sojourners.chess.util.StringUtils;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.event.ActionEvent;
 import javafx.scene.chart.XYChart;
@@ -23,11 +25,13 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.text.Font;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
@@ -77,7 +81,7 @@ public class ChessManualHandle {
 
     private Timeline manualPlayTimeline;
 
-    private static Map<String, ChessManualService> manualServices;
+    public static Map<String, ChessManualService> manualServices;
 
     static {
         manualServices = new HashMap<>();
@@ -140,6 +144,15 @@ public class ChessManualHandle {
         }
     }
 
+    private void updateManualTree(File savedFile) {
+        if (!savedFile.isFile()) return;
+        if (notationTree.getRoot() instanceof ManualDirectoryTreeItem root) {
+            root.savedFile(savedFile);
+        } else {
+            refreshManualTree();
+        }
+    }
+
     private void initButton() {
         manualDownButton.setTooltip(new Tooltip("下变"));
         manualFrontButton.setTooltip(new Tooltip("开局"));
@@ -167,6 +180,7 @@ public class ChessManualHandle {
     }
 
     private void initRemarkText() {
+        applyCommentFontSize();
         remarkText.textProperty().addListener((obs, oldV, newV) -> {
             if (!remarkText.isFocused()) return;
 
@@ -175,6 +189,10 @@ public class ChessManualHandle {
                 refreshRecordView(recordTable.getItems().get(p), null);
             }
         });
+    }
+
+    public void applyCommentFontSize() {
+        remarkText.setFont(Font.font(remarkText.getFont().getFamily(), prop.getChessManualCommentFontSize()));
     }
 
     private void initRecordTable() {
@@ -345,6 +363,15 @@ public class ChessManualHandle {
         subRecordTable.getItems().addAll(mr.getList());
     }
 
+    public void locateRecord(ManualRecord record) {
+        int index = recordTable.getItems().indexOf(record);
+        if (index < 0) {
+            return;
+        }
+        recordTable.getSelectionModel().select(index);
+        manualButtonClick(5);
+    }
+
     public void manualButtonClick(int action) {
         if (action != 9 && manualPlayTimeline != null) {
             manualPlayTimeline.stop();
@@ -477,15 +504,22 @@ public class ChessManualHandle {
     }
 
     public void scoreButtonClick(ActionEvent actionEvent) {
-        TextInputDialog d = new TextInputDialog("300");
+        TextInputDialog d = new TextInputDialog(Integer.toString(prop.getChessManualScoreMillis()));
         d.setTitle("棋谱打分");
         d.setHeaderText("请设置每步打分时间(毫秒)，建议不低于300");
         d.setContentText("");
         d.initOwner(App.getMainStage());
         d.showAndWait().ifPresent(s -> {
-            if (s.trim().isEmpty()) return;
-            long delay = Long.parseLong(s.trim());
-            if (delay <= 0) return;
+            long delay;
+            try {
+                delay = Long.parseLong(s.trim());
+            } catch (NumberFormatException e) {
+                delay = 0;
+            }
+            if (delay <= 0) {
+                DialogUtils.showWarningDialog("提示", "每步打分时间须为正整数（毫秒）");
+                return;
+            }
 
             if (manualPlayTimeline != null && manualPlayTimeline.getStatus() == Animation.Status.RUNNING) {
                 manualPlayTimeline.stop();
@@ -520,7 +554,7 @@ public class ChessManualHandle {
             manualPlayTimeline.stop();
             return;
         }
-        manualPlayTimeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
+        manualPlayTimeline = new Timeline(new KeyFrame(Duration.millis(prop.getChessManualPlaybackMillis()), e -> {
             int size = recordTable.getItems().size();
             if (p < size - 1) {
                 manualButtonClick(9);
@@ -544,13 +578,13 @@ public class ChessManualHandle {
         refreshRecordView(currentRecord, null);
     }
 
-    public List<XYChart.Data> getScoreList() {
-        List<XYChart.Data> res = new ArrayList<>();
+    public List<XYChart.Data<Number, Number>> getScoreList() {
+        List<XYChart.Data<Number, Number>> res = new ArrayList<>();
         for (int i = 0; i < recordTable.getItems().size(); i++) {
             ManualRecord mr = recordTable.getItems().get(i);
             if (mr.getScore() != null) {
                 int score = mr.getScore();
-                res.add(new XYChart.Data(mr.getId(), score > 1000 ? 1000 : (score < -1000 ? -1000 : score)));
+                res.add(new XYChart.Data<>(mr.getId(), ScoreScale.toAxisValue(score), mr));
             }
         }
         return res;
@@ -656,18 +690,23 @@ public class ChessManualHandle {
         fileChooser.setInitialFileName("未命名");
         FileChooser.ExtensionFilter txq = new FileChooser.ExtensionFilter("txq(*.txq)", "*.txq");
         FileChooser.ExtensionFilter pgn = new FileChooser.ExtensionFilter("pgn(*.pgn)", "*.pgn");
-        fileChooser.getExtensionFilters().addAll(txq, pgn);
+        FileChooser.ExtensionFilter xqf = new FileChooser.ExtensionFilter("xqf(*.xqf)", "*.xqf");
+        FileChooser.ExtensionFilter cbr = new FileChooser.ExtensionFilter("cbr(*.cbr)", "*.cbr");
+        fileChooser.getExtensionFilters().addAll(txq, pgn, xqf, cbr);
+        fileChooser.setSelectedExtensionFilter(txq);
         File file = fileChooser.showSaveDialog(App.getMainStage());
         if (file != null) {
             if (StringUtils.isEmpty(PathUtils.getDotExtension(file))) {
-                String ext = fileChooser.getSelectedExtensionFilter() == txq ? ".txq" : ".pgn";
+                FileChooser.ExtensionFilter selectedFilter = fileChooser.getSelectedExtensionFilter();
+                String ext = (selectedFilter == null ? txq : selectedFilter)
+                        .getExtensions().get(0).substring(1);
                 file = new File(file.getParent(), file.getName() + ext);
             }
             saveToFile(file);
 
             manualTitleLabel.setText(file.getName());
             this.manualFile = file;
-            refreshManualTree();
+            updateManualTree(file);
         }
     }
 
@@ -679,7 +718,7 @@ public class ChessManualHandle {
         }
     }
 
-    private void saveToFile(File file) {
+    private ChessManual currentChessManual() {
         ChessManual cm = new ChessManual();
         cm.setFenCode(this.fenCode);
         cm.setHead(this.manualHead);
@@ -688,9 +727,32 @@ public class ChessManualHandle {
         cm.setDate(competitionDateText.getText());
         cm.setRed(competitionRedText.getText());
         cm.setBlack(competitionBlackText.getText());
+        return cm;
+    }
 
+    private void saveToFile(File file) {
+        ChessManual cm = currentChessManual();
         String ext = PathUtils.getDotExtension(file).toLowerCase();
         manualServices.get(ext).saveChessManual(cm, file);
+    }
+
+    /** 在替换棋盘及清空当前棋谱之前尝试保存，失败时仍继续新建局面。 */
+    public void autoSaveIfNeeded() {
+        String format = prop.getAutoSaveChessManualFormat();
+        if (manualHead == null || manualFile != null || StringUtils.isEmpty(format)) {
+            return;
+        }
+
+        ChessManual cm = currentChessManual();
+        String autoSaveDirectory = prop.getChessManualAutoSaveDirectory();
+        Thread.startVirtualThread(() -> {
+            try {
+                File savedFile = ChessManualAutoSaver.save(cm, autoSaveDirectory, format);
+                Platform.runLater(() -> updateManualTree(savedFile));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     public void openChessNotationFolder(ActionEvent event) {
@@ -714,7 +776,35 @@ public class ChessManualHandle {
 
     private void reLocationTable() {
         recordTable.getSelectionModel().select(p);
-        recordTable.scrollTo(p);
+        // 新增棋步或刷新表格后，先完成布局，再读取当前页的实际可见范围。
+        recordTable.applyCss();
+        recordTable.layout();
+        if (!(recordTable.lookup(".virtual-flow") instanceof VirtualFlow<?> flow)) {
+            recordTable.scrollTo(p);
+            return;
+        }
+        IndexedCell<?> first = flow.getFirstVisibleCell();
+        IndexedCell<?> last = flow.getLastVisibleCell();
+        if (first == null || last == null) {
+            recordTable.scrollTo(p);
+            return;
+        }
+
+        int firstIndex = first.getIndex();
+        int lastIndex = last.getIndex();
+        // 边缘被截断的行归入相邻页，保证选中的棋步完整显示。
+        if (first.getLayoutY() < 0) {
+            firstIndex++;
+        }
+        if (last.getLayoutY() + last.getHeight() > flow.getViewportLength()) {
+            lastIndex--;
+        }
+        if (p < firstIndex) {
+            int pageSize = Math.max(1, lastIndex - firstIndex + 1);
+            recordTable.scrollTo(Math.max(0, p - pageSize + 1));
+        } else if (p > lastIndex) {
+            recordTable.scrollTo(p);
+        }
     }
 
     public void openChessNotationFolder(String path) {
@@ -723,10 +813,10 @@ public class ChessManualHandle {
             notationTree.setRoot(null);
             return;
         }
-        TreeItem<File> root = buildTree(rootDir);
-        root.setExpanded(true);
+        TreeItem<File> root = new ManualDirectoryTreeItem(rootDir, manualServices.keySet());
         notationTree.setShowRoot(false);
         notationTree.setRoot(root);
+        root.setExpanded(true);
     }
 
     private void initTreeView() {
@@ -752,15 +842,13 @@ public class ChessManualHandle {
                         File target = new File(f.getParentFile(), s);
                         try {
                             Files.move(f.toPath(), target.toPath(), StandardCopyOption.ATOMIC_MOVE);
-                            getTreeItem().setValue(target);
-                            if (getTreeItem().isLeaf()) {
-                                updateItem(target, false);
-                            }
+                            renameManualTreeItem(notationTree, getTreeItem(), target);
+                            updateItem(target, false);
                         } catch (Exception ex) {
                             try {
                                 boolean ok = f.renameTo(target);
                                 if (ok) {
-                                    getTreeItem().setValue(target);
+                                    renameManualTreeItem(notationTree, getTreeItem(), target);
                                     updateItem(target, false);
                                 }
                             } catch (Exception ignore) {
@@ -811,33 +899,12 @@ public class ChessManualHandle {
         });
     }
 
-    private TreeItem<File> buildTree(File dir) {
-        TreeItem<File> root = dir.isDirectory() ? new DirTreeItem(dir) : new TreeItem<>(dir);
-        File[] children = dir.listFiles();
-        if (children == null) return root;
-        Arrays.sort(children, (a, b) -> {
-            if (a.isDirectory() && !b.isDirectory()) return -1;
-            if (!a.isDirectory() && b.isDirectory()) return 1;
-            return a.getName().compareToIgnoreCase(b.getName());
-        });
-        for (File f : children) {
-            if (f.isDirectory()) {
-                root.getChildren().add(buildTree(f));
-            } else if (isManualFile(f)) {
-                root.getChildren().add(new TreeItem<>(f));
-            }
-        }
-        return root;
-    }
-
-    private static class DirTreeItem extends TreeItem<File> {
-        DirTreeItem(File dir) {
-            super(dir);
-        }
-        @Override
-        public boolean isLeaf() {
-            File f = getValue();
-            return f != null && f.isFile();
+    static void renameManualTreeItem(TreeView<File> tree, TreeItem<File> item, File target) {
+        TreeItem<File> selected = tree.getSelectionModel().getSelectedItem();
+        item.setValue(target);
+        // 子项排序会触发列表替换事件，恢复仍在树内的原选中节点。
+        if (selected != null && tree.getRow(selected) >= 0) {
+            tree.getSelectionModel().select(selected);
         }
     }
 

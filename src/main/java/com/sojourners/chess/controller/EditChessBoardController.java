@@ -104,7 +104,13 @@ public class EditChessBoardController {
     void cleanChessBoard(MouseEvent event) {
         for (int i = 0; i < board.length; i++) {
             for (int j = 0; j < board[0].length; j++) {
-                board[i][j] = ' ';
+                if (i == 0 && j == 4) {
+                    board[i][j] = 'k';
+                } else if (i == 9 && j == 4) {
+                    board[i][j] = 'K';
+                } else {
+                    board[i][j] = ' ';
+                }
             }
         }
         paint();
@@ -192,8 +198,11 @@ public class EditChessBoardController {
     }
 
     public void initialize() {
-        this.boardRender = Properties.getInstance().getBoardStyle() == ChessBoard.BoardStyle.CUSTOM ? new CustomBoardRender(canvas) : new DefaultBoardRender(canvas);
-        this.demoBoardRender = Properties.getInstance().getBoardStyle() == ChessBoard.BoardStyle.CUSTOM ? new CustomBoardRender(demoCanvas) : new DefaultBoardRender(demoCanvas);
+        Properties prop = Properties.getInstance();
+        boolean useCustomSkin = prop.getBoardStyle() == ChessBoard.BoardStyle.CUSTOM
+                && CustomBoardRender.isSkinAvailable(prop.getCustomSkin());
+        this.boardRender = useCustomSkin ? new CustomBoardRender(canvas, prop.getCustomSkin()) : new DefaultBoardRender(canvas);
+        this.demoBoardRender = useCustomSkin ? new CustomBoardRender(demoCanvas, prop.getCustomSkin()) : new DefaultBoardRender(demoCanvas);
         this.boardSize = ChessBoard.BoardSize.MIDDLE_BOARD;
 
         ToggleGroup group = new ToggleGroup();

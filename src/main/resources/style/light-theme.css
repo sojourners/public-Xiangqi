@@ -1,10 +1,32 @@
 .light-theme {
+    -tchess-list-background: #ffffff;
+    -tchess-manual-background: #f4f4f4;
     -tchess-tree-even: #f5f7fa;
     -tchess-tree-odd: #ffffff;
 }
 
+.light-theme.eye-green-theme,
+.light-theme.warm-yellow-theme {
+    -tchess-list-background: -fx-control-inner-background;
+    -tchess-manual-background: -fx-background;
+    -tchess-tree-even: -fx-control-inner-background-alt;
+    -tchess-tree-odd: -fx-control-inner-background;
+}
+
+.light-theme.eye-green-theme {
+    -fx-base: #e3ecdf;
+    -fx-background: #eef3eb;
+    -fx-control-inner-background: #f4f7f1;
+}
+
+.light-theme.warm-yellow-theme {
+    -fx-base: #f0e7d3;
+    -fx-background: #f7f1e4;
+    -fx-control-inner-background: #fcf7ed;
+}
+
 .light-theme .manual-info-pane {
-    -fx-background-color: #f4f4f4;
+    -fx-background-color: -tchess-manual-background;
 }
 
 .light-theme .positive-score {

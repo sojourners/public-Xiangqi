@@ -21,6 +21,9 @@ public class BookSettingController {
     private CheckBox useCloudBook;
 
     @FXML
+    private TextField cloudBookUrl;
+
+    @FXML
     private TextField cloudBookTimeout;
 
     @FXML
@@ -62,6 +65,7 @@ public class BookSettingController {
         }
 
         prop.setUseCloudBook(useCloudBook.isSelected());
+        prop.setCloudBookUrl(cloudBookUrl.getText());
         prop.setCloudBookTimeout(Integer.parseInt(timeOut));
         prop.setOnlyCloudFinalPhase(onlyCloudFinalPhase.isSelected());
         prop.setLocalBookFirst(localBookFirst.isSelected());
@@ -97,6 +101,7 @@ public class BookSettingController {
         prop = Properties.getInstance();
 
         useCloudBook.setSelected(prop.getUseCloudBook());
+        cloudBookUrl.setText(prop.getCloudBookUrl());
         cloudBookTimeout.setText(String.valueOf(prop.getCloudBookTimeout()));
         onlyCloudFinalPhase.setSelected(prop.getOnlyCloudFinalPhase());
         localBookFirst.setSelected(prop.getLocalBookFirst());

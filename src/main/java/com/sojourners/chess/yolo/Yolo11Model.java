@@ -14,11 +14,32 @@ public class Yolo11Model extends Yolo5Model {
         return "model/yolov11.onnx";
     }
 
+    public java.awt.Rectangle findInitBoard(BufferedImage img, char[][] board) {
+        try {
+            if (img == null) {
+                return null;
+            }
+            // 图像宽高的缩放比例
+            List<DetectResult> results = this.predict(img);
+            setBlankBoard(board);
+            java.awt.Rectangle boardPos = findBoardPosition(results);
+            if (boardPos == null) {
+                return null;
+            }
+            setBoard(board, boardPos, results);
+            return boardPos;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     float[][][] processInput(BufferedImage image, float rate) {
 
         int destW = Math.round(image.getWidth() * rate);
         int destH = Math.round(image.getHeight() * rate);
-        BufferedImage resizedImage = new BufferedImage(destW, destH, image.getType());
+        BufferedImage resizedImage = new BufferedImage(destW, destH, BufferedImage.TYPE_INT_RGB);
         Graphics2D g2d = resizedImage.createGraphics();
         // 改进的绘制参数设置
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR); // 或者 VALUE_INTERPOLATION_BICUBIC

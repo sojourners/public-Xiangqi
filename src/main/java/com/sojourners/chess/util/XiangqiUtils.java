@@ -850,11 +850,6 @@ public class XiangqiUtils {
         return new ChessBoard.Step(new ChessBoard.Point(fromJ, fromI), new ChessBoard.Point(toJ, toI));
     }
 
-    public static void main(String[] args) {
-        char a = '１', b = '２', c = '３';
-        System.out.println((int)a);System.out.println((int)b);System.out.println((int)c);
-    }
-
     public static ChessBoard.Step translate(char[][] board, StringBuilder sb, String move, boolean hasGo) {
         if (StringUtils.isEmpty(move) || move.length() < 4) {
             sb.append(move);

@@ -11,8 +11,6 @@ import java.util.List;
 
 public class CloudOpenBook implements OpenBook {
 
-    private final static String URL = "http://www.chessdb.cn/chessdb.php";
-
     @Override
     public List<BookData> get(char[][] board, boolean redGo)  {
         return null;
@@ -22,8 +20,9 @@ public class CloudOpenBook implements OpenBook {
     public List<BookData> get(String fenCode, boolean onlyFinalPhase) {
         List<BookData> list = new ArrayList<>();
         try {
+            Properties prop = Properties.getInstance();
             String content = "action=queryall&board=" + URLEncoder.encode(fenCode, "UTF-8");
-            String result = HttpUtils.sendByGet(URL, content, Properties.getInstance().getCloudBookTimeout());
+            String result = HttpUtils.sendByGet(prop.getCloudBookUrl(), content, prop.getCloudBookTimeout());
             System.out.println(result);
 
             if (StringUtils.isNotEmpty(result) && result.contains("move")) {
@@ -52,7 +51,7 @@ public class CloudOpenBook implements OpenBook {
                             }
                         }
                     }
-                    if (!(onlyFinalPhase || Properties.getInstance().getOnlyCloudFinalPhase()) || finalPhase) {
+                    if (!(onlyFinalPhase || prop.getOnlyCloudFinalPhase()) || finalPhase) {
                         list.add(bd);
                     }
                 }

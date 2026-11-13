@@ -228,17 +228,21 @@ public class App extends Application {
 
     public static void applyTheme(Scene scene) {
         scene.getStylesheets().removeAll(LIGHT_THEME, DARK_THEME);
-        scene.getRoot().getStyleClass().removeAll("light-theme", "dark-theme");
-        String theme;
-        if (Properties.getInstance().getColorTheme() == Properties.ColorTheme.DARK) {
-            theme = DARK_THEME;
-            scene.getRoot().getStyleClass().add("dark-theme");
-        } else {
-            theme = LIGHT_THEME;
-            scene.getRoot().getStyleClass().add("light-theme");
+        Parent root = scene.getRoot();
+        root.getStyleClass().removeAll("light-theme", "dark-theme", "eye-green-theme", "warm-yellow-theme");
+
+        Properties.ColorTheme colorTheme = Properties.getInstance().getColorTheme();
+        boolean dark = colorTheme == Properties.ColorTheme.DARK;
+        String stylesheet = dark ? DARK_THEME : LIGHT_THEME;
+        root.getStyleClass().add(dark ? "dark-theme" : "light-theme");
+        switch (colorTheme) {
+            case EYE_GREEN -> root.getStyleClass().add("eye-green-theme");
+            case WARM_YELLOW -> root.getStyleClass().add("warm-yellow-theme");
+            default -> {
+            }
         }
-        scene.getStylesheets().add(theme);
-        applyThemeToLocalStylesheets(scene.getRoot(), theme);
+        scene.getStylesheets().add(stylesheet);
+        applyThemeToLocalStylesheets(root, stylesheet);
     }
 
     private static void applyThemeToLocalStylesheets(Parent parent, String theme) {

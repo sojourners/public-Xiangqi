@@ -1,4 +1,4 @@
-package com.sojourners.chess.linker;
+package com.sojourners.chess.jna;
 
 import com.sun.jna.Library;
 import com.sun.jna.Native;
@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 /** X11/XWayland window capture and foreground/background mouse input. */
-final class X11WindowControl {
+public final class X11WindowControl {
 
     private static final Set<Pointer> OWNED_DISPLAYS = ConcurrentHashMap.newKeySet();
     private static X11.XErrorHandler previousHandler;
@@ -66,7 +66,7 @@ final class X11WindowControl {
     private X11WindowControl() {
     }
 
-    static synchronized void initialize() {
+    public static synchronized void initialize() {
         if (!handlerInstalled) {
             previousHandler = Xlib.INSTANCE.XSetErrorHandler(ERROR_HANDLER);
             handlerInstalled = true;
@@ -74,7 +74,7 @@ final class X11WindowControl {
     }
 
     /** Keeps off-screen storage alive throughout a link session, including on desktops without a compositor. */
-    static synchronized BackgroundCapture prepareBackgroundCapture(String windowId) {
+    public static synchronized BackgroundCapture prepareBackgroundCapture(String windowId) {
         X11.Window window = new X11.Window(Long.parseLong(windowId.trim()));
         X11.Display display = openDisplay();
         try {
@@ -96,7 +96,7 @@ final class X11WindowControl {
         }
     }
 
-    static final class BackgroundCapture implements AutoCloseable {
+    public static final class BackgroundCapture implements AutoCloseable {
         private X11.Display display;
 
         private BackgroundCapture(X11.Display display) {
@@ -114,7 +114,7 @@ final class X11WindowControl {
         }
     }
 
-    static BufferedImage capture(String windowId, Rectangle screenBounds) {
+    public static BufferedImage capture(String windowId, Rectangle screenBounds) {
         if (windowId == null || screenBounds == null || screenBounds.isEmpty()) {
             return null;
         }
@@ -125,7 +125,7 @@ final class X11WindowControl {
     /** Reads the compositor's backing pixmap, including pixels obscured by other windows.
      * Bounds are window-local; null requests the whole window. Unmapped windows have no live image.
      */
-    static BufferedImage captureByBack(String windowId, Rectangle bounds) {
+    public static BufferedImage captureByBack(String windowId, Rectangle bounds) {
         if (windowId == null || windowId.isBlank() || bounds != null && bounds.isEmpty()) {
             return null;
         }
@@ -284,7 +284,7 @@ final class X11WindowControl {
      * Client behaviour still matters: it may ignore synthetic events or activate its own window.
      * A successful XSendEvent is not an acknowledgement from the application.
      */
-    static void clickByBack(String windowId, Point from, Point to, int clickDelay, int moveDelay) {
+    public static void clickByBack(String windowId, Point from, Point to, int clickDelay, int moveDelay) {
         if (windowId == null || windowId.isBlank() || Thread.currentThread().isInterrupted()) {
             return;
         }
@@ -474,7 +474,7 @@ final class X11WindowControl {
         Xlib.INSTANCE.XSync(display, false);
     }
 
-    static void clickByFront(String windowId, Point from, Point to, int clickDelay, int moveDelay) {
+    public static void clickByFront(String windowId, Point from, Point to, int clickDelay, int moveDelay) {
         if (windowId == null || windowId.isBlank() || Thread.currentThread().isInterrupted()) {
             return;
         }

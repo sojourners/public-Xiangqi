@@ -9,8 +9,6 @@ import java.awt.image.BufferedImage;
 
 public abstract class OnnxModel {
 
-    public static final double PADDING = 0.8d;
-
     public final float CONFIDENCE = 0.75f;
 
     public final int SIZE = 640;

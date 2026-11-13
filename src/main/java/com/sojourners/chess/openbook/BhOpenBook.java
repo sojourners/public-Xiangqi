@@ -1,22 +1,29 @@
 package com.sojourners.chess.openbook;
 
 import com.sojourners.chess.model.BookData;
+import com.sojourners.chess.openbook.reader.ObkEntry;
+import com.sojourners.chess.openbook.reader.ObkReader;
 import com.sojourners.chess.util.ZobristUtils;
 
 import java.io.File;
-import java.sql.*;
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class BhOpenBook implements OpenBook {
 
-    private Connection connection;
+    private final ObkReader reader;
 
-    private String name;
+    private final String name;
 
-    public BhOpenBook(String bookPath) throws ClassNotFoundException, SQLException {
-        Class.forName("org.sqlite.JDBC");
-        this.connection = DriverManager.getConnection("jdbc:sqlite:" + bookPath);
+    public BhOpenBook(String bookPath) throws SQLException {
+        try {
+            this.reader = ObkReader.open(Paths.get(bookPath));
+        } catch (IOException e) {
+            throw new SQLException("Cannot open OBK book: " + bookPath, e);
+        }
         this.name = new File(bookPath).getName();
     }
 
@@ -35,33 +42,27 @@ public class BhOpenBook implements OpenBook {
     private List<BookData> get(long zobrist, boolean leftRightSwap) {
         List<BookData> results = new ArrayList<>();
 
-        String sql;
-        if (zobrist < 0) {
-            double zobristDouble = Double.longBitsToDouble(zobrist);
-            sql = "SELECT * FROM bhobk WHERE cast(vkey as double) = " + zobristDouble + " and vvalid = 1;";
-        } else {
-            sql = "SELECT * FROM bhobk WHERE cast(vkey as integer) = " + zobrist + " and vvalid = 1;";
-        }
-
-        try (Statement stmt = this.connection.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
-
-            while (rs.next()) {
+        try {
+            for (ObkEntry entry : reader.find(zobrist)) {
+                if (entry.getValid() != 1) {
+                    continue;
+                }
                 BookData bd = new BookData();
-                bd.setScore(rs.getInt("vscore"));
-                bd.setWinNum(rs.getInt("vwin"));
-                bd.setDrawNum(rs.getInt("vdraw"));
-                bd.setLoseNum(rs.getInt("vlost"));
-                int winRate = (int) (10000 * (bd.getWinNum() + bd.getDrawNum() / 2.0d) / (bd.getWinNum() + bd.getDrawNum() + bd.getLoseNum()));
+                bd.setScore(entry.getScore());
+                bd.setWinNum(entry.getWin());
+                bd.setDrawNum(entry.getDraw());
+                bd.setLoseNum(entry.getLost());
+                long total = (long) bd.getWinNum() + bd.getDrawNum() + bd.getLoseNum();
+                int winRate = total == 0 ? 0 : (int) (10000 * (bd.getWinNum() + bd.getDrawNum() / 2.0d) / total);
                 bd.setWinRate(winRate / 100d);
-                bd.setNote(rs.getString("vmemo"));
-                int vmove = rs.getInt("vmove");
-                bd.setMove(ZobristUtils.getMoveFromVmove(vmove, leftRightSwap));
+                bd.setNote(entry.getMemoText());
+                bd.setMove(ZobristUtils.getMoveFromVmove(entry.getMove(), leftRightSwap));
 
                 bd.setSource(this.name);
                 results.add(bd);
             }
 
-        } catch (SQLException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -76,7 +77,7 @@ public class BhOpenBook implements OpenBook {
     @Override
     public void close() {
         try {
-            this.connection.close();
+            this.reader.close();
 
         } catch (Exception e) {
             e.printStackTrace();

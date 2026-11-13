@@ -4,18 +4,26 @@ import com.sojourners.chess.model.ManualRecord;
 import com.sojourners.chess.util.StringUtils;
 
 import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.CodingErrorAction;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
- * XQF (象棋演播室) 棋谱文件解析实现类
- * 参考 XQF 1.0 格式规范实现
+ * XQF (象棋演播室) 棋谱读写实现类
  */
 public class XqfChessManualImpl implements ChessManualService {
 
     // 32个棋子的FEN表示顺序: 红方车马相士帅士相马车炮炮兵兵兵兵兵 + 黑方车马象士将士象马车炮炮卒卒卒卒卒
     private static final String FEN_PIECES = "RNBAKABNRCCPPPPPrnbakabnrccppppp";
+
+    private static final String DEFAULT_FEN = "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w - - 0 1";
+
+    private static final int HEADER_SIZE = 1024;
+    private static final int COMMENT_LENGTH_KEY = 767;
 
     // GBK编码用于解析中文文本
     private static final Charset GBK_CHARSET = Charset.forName("GBK");
@@ -312,11 +320,9 @@ public class XqfChessManualImpl implements ChessManualService {
         List<ManualRecord> changeNodeStack = new ArrayList<>();
         ManualRecord parent = head;
         int pos = 0;
-        int moveId = 0;
-
         while (pos < decode.length) {
-            // 确保至少有8个字节
-            if (pos + 8 > decode.length) {
+            // 新版无注释的节点只有4字节，旧版始终包含4字节注释长度。
+            if (decode.length - pos < (header.version > 10 ? 4 : 8)) {
                 break;
             }
 
@@ -333,6 +339,9 @@ public class XqfChessManualImpl implements ChessManualService {
 
                 // 检查是否有注释
                 if ((decode[pos + 2] & 0x20) != 0) {
+                    if (decode.length - pos < 8) {
+                        break;
+                    }
                     commentLen = readInt32(decode, pos + 4) - key.rmk;
                     if (commentLen < 0) commentLen = 0;
                     nextOffset = commentLen + 8;
@@ -369,8 +378,7 @@ public class XqfChessManualImpl implements ChessManualService {
             String move = convertToIccs(pf, pt);
 
             // 创建新节点
-            moveId++;
-            ManualRecord step = new ManualRecord(moveId, move, "");
+            ManualRecord step = new ManualRecord(parent.getId() + 1, move, "");
             if (StringUtils.isNotEmpty(comment)) {
                 step.setRemark(comment);
             }
@@ -439,220 +447,136 @@ public class XqfChessManualImpl implements ChessManualService {
 
     @Override
     public void saveChessManual(ChessManual chessManual, File file) {
-//        try (FileOutputStream fos = new FileOutputStream(file);
-//             BufferedOutputStream bos = new BufferedOutputStream(fos)) {
-//
-//            byte[] buffer = createXqfFile(chessManual);
-//            bos.write(buffer);
-//
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
+        // 先完整编码，避免局面或着法无效时截断已有棋谱。
+        byte[] buffer = createXqfFile(chessManual);
+        try (OutputStream output = new BufferedOutputStream(new FileOutputStream(file))) {
+            output.write(buffer);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to save XQF file: " + file, e);
+        }
     }
 
-    /**
-     * 创建XQF文件内容
-     */
     private byte[] createXqfFile(ChessManual cm) {
-        // 计算文件大小 (头部1024字节 + 棋谱数据)
-        int moveCount = countMoves(cm.getHead());
-        int fileSize = 1024 + 8 + (moveCount * 8);  // 基础大小估算
+        byte[] header = new byte[HEADER_SIZE];
+        header[0] = 'X';
+        header[1] = 'Q';
+        header[2] = 18;
 
-        byte[] buffer = new byte[fileSize];
+        writeString(header, 80, cm.getName(), 128);
+        writeString(header, 272, cm.getDate(), 16);
+        writeString(header, 288, cm.getCity(), 16);
+        writeString(header, 304, cm.getRed(), 16);
+        writeString(header, 320, cm.getBlack(), 16);
 
-        // 文件标记 'XQ'
-        buffer[0] = 'X';
-        buffer[1] = 'Q';
-
-        // 版本号 (使用1.0格式 = 10)
-        buffer[2] = 10;
-
-        // 填充棋局信息
-        writeString(buffer, 80, cm.getName(), 128);
-        writeString(buffer, 208, "", 64);  // 比赛名称
-        writeString(buffer, 272, cm.getDate(), 16);
-        writeString(buffer, 288, cm.getCity(), 16);
-        writeString(buffer, 304, cm.getRed(), 16);
-        writeString(buffer, 320, cm.getBlack(), 16);
-        writeString(buffer, 336, "", 64);  // 用时规则
-        writeString(buffer, 400, "", 16);  // 红方用时
-        writeString(buffer, 416, "", 16);  // 黑方用时
-        writeString(buffer, 464, "", 16);  // 评论员
-        writeString(buffer, 480, "", 16);  // 作者
-
-        // 设置结果
-        buffer[51] = 0;  // 未知
-
-        // 设置轮次
         String fen = cm.getFenCode();
-        if (fen != null && fen.contains(" b ")) {
-            buffer[50] = 1;  // 黑方走
+        if (fen == null || fen.isBlank()) {
+            fen = DEFAULT_FEN;
+        }
+        String[] fields = fen.trim().split("\\s+");
+        fillInitialPosition(header, fields[0]);
+        header[50] = (byte) (fields.length > 1 && "b".equals(fields[1]) ? 1 : 0);
+
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        output.writeBytes(header);
+        ManualRecord head = cm.getHead();
+        if (head == null) {
+            head = new ManualRecord(0, "开始局面", 0);
+        }
+        writeNode(output, head, true, false);
+        return output.toByteArray();
+    }
+
+    /** 固定字段包含一个长度字节，GBK编码溢出时不截断双字节字符。 */
+    private void writeString(byte[] buffer, int offset, String text, int fieldSize) {
+        if (text == null || text.isEmpty()) {
+            return;
+        }
+        ByteBuffer bytes = ByteBuffer.wrap(buffer, offset + 1, fieldSize - 1);
+        GBK_CHARSET.newEncoder()
+                .onMalformedInput(CodingErrorAction.REPLACE)
+                .onUnmappableCharacter(CodingErrorAction.REPLACE)
+                .encode(CharBuffer.wrap(text), bytes, true);
+        buffer[offset] = (byte) (bytes.position() - offset - 1);
+    }
+
+    /** 直接展开FEN，保留原始棋盘方向及缺子信息。 */
+    private void fillInitialPosition(byte[] header, String placement) {
+        String[] rows = placement.split("/", -1);
+        if (rows.length != 10) {
+            throw new IllegalArgumentException("Invalid XQF starting position: " + placement);
+        }
+        char[] pieces = FEN_PIECES.toCharArray();
+        int[] positions = new int[32];
+        Arrays.fill(positions, 90);
+        for (int row = 0; row < rows.length; row++) {
+            int col = 0;
+            for (char piece : rows[row].toCharArray()) {
+                if (piece >= '1' && piece <= '9') {
+                    col += piece - '0';
+                } else {
+                    piece = switch (piece) {
+                        case 'H' -> 'N';
+                        case 'h' -> 'n';
+                        case 'E' -> 'B';
+                        case 'e' -> 'b';
+                        default -> piece;
+                    };
+                    int slot = -1;
+                    for (int i = 0; i < pieces.length; i++) {
+                        if (pieces[i] == piece) {
+                            slot = i;
+                            break;
+                        }
+                    }
+                    if (slot < 0 || col >= 9) {
+                        throw new IllegalArgumentException("Invalid XQF starting position: " + placement);
+                    }
+                    positions[slot] = col * 10 + 9 - row;
+                    pieces[slot] = '\0';
+                    col++;
+                }
+            }
+            if (col != 9) {
+                throw new IllegalArgumentException("Invalid XQF starting position: " + placement);
+            }
+        }
+        // 新版的布局槽位相对于棋子顺序偏移 XYp+1，此处 XYp=0。
+        for (int i = 0; i < positions.length; i++) {
+            header[16 + i] = (byte) positions[(i + 1) & 31];
+        }
+    }
+
+    /** 按深度优先顺序保存所有变着，标记后续着法、同级变着和注释。 */
+    private void writeNode(ByteArrayOutputStream output, ManualRecord record, boolean root, boolean hasSibling) {
+        if (root) {
+            output.write('X');
+            output.write('Q');
         } else {
-            buffer[50] = 0;  // 红方走
-        }
-
-        // 填充初始局面 (32个棋子位置)
-        fillInitialPosition(buffer, fen);
-
-        // 填充棋谱记录
-        int pos = 1024;
-
-        // 第0步 (空着法)
-        buffer[pos++] = 0x18;
-        buffer[pos++] = 0x20;
-        buffer[pos++] = (byte) 0xF0;
-        buffer[pos++] = (byte) 0xFF;
-        buffer[pos++] = 0;
-        buffer[pos++] = 0;
-        buffer[pos++] = 0;
-        buffer[pos++] = 0;
-
-        // 写入着法
-        pos = writeMoves(buffer, pos, cm.getHead());
-
-        // 调整最后一步的标志
-        if (pos > 1032) {
-            buffer[pos - 8 + 2] = 0;  // 最后一步的第3字节设为0
-        }
-
-        // 截断到实际大小
-        byte[] result = new byte[pos];
-        System.arraycopy(buffer, 0, result, 0, pos);
-        return result;
-    }
-
-    /**
-     * 填充初始局面
-     */
-    private void fillInitialPosition(byte[] buffer, String fen) {
-        // 标准初始局面位置 (如果FEN是初始局面)
-        byte[] standardPos = new byte[]{
-                (byte) 0x50, (byte) 0x46, (byte) 0x3C, (byte) 0x32, (byte) 0x28, (byte) 0x1E, (byte) 0x14, (byte) 0x0A,
-                (byte) 0x00, (byte) 0x48, (byte) 0x0C, (byte) 0x53, (byte) 0x3F, (byte) 0x2B, (byte) 0x17, (byte) 0x03,
-                (byte) 0x09, (byte) 0x13, (byte) 0x1D, (byte) 0x27, (byte) 0x31, (byte) 0x3B, (byte) 0x45, (byte) 0x4F,
-                (byte) 0x59, (byte) 0x11, (byte) 0x4D, (byte) 0x06, (byte) 0x1A, (byte) 0x2E, (byte) 0x42, (byte) 0x56
-        };
-
-        System.arraycopy(standardPos, 0, buffer, 16, 32);
-    }
-
-    /**
-     * 写入着法记录
-     */
-    private int writeMoves(byte[] buffer, int startPos, ManualRecord head) {
-        int pos = startPos;
-
-        for (ManualRecord record : head.getList()) {
             String move = record.getMove();
-            if (StringUtils.isEmpty(move) || move.length() < 4) {
-                continue;
+            if (move == null || !move.matches("[a-i][0-9][a-i][0-9]")) {
+                throw new IllegalArgumentException("Invalid ICCS move: " + move);
             }
+            output.write((move.charAt(0) - 'a') * 10 + move.charAt(1) - '0' + 24);
+            output.write((move.charAt(2) - 'a') * 10 + move.charAt(3) - '0' + 32);
+        }
 
-            // 解析ICCS格式 (如 a0a1)
-            int fromX = move.charAt(0) - 'a';
-            int fromY = move.charAt(1) - '0';
-            int toX = move.charAt(2) - 'a';
-            int toY = move.charAt(3) - '0';
-
-            // 转换为XQF坐标格式
-            buffer[pos++] = (byte) (fromX * 10 + fromY + 24);
-            buffer[pos++] = (byte) (toX * 10 + toY + 32);
-
-            // 标志字节 (有后续着法)
-            boolean hasNext = !record.getList().isEmpty();
-            buffer[pos++] = hasNext ? (byte) 0xF0 : 0;
-            buffer[pos++] = 0;
-
-            // 注释长度 (暂不支持)
-            buffer[pos++] = 0;
-            buffer[pos++] = 0;
-            buffer[pos++] = 0;
-            buffer[pos++] = 0;
-
-            // 递归处理变着
-            if (hasNext) {
-                pos = writeMovesRecursive(buffer, pos, record);
+        List<ManualRecord> children = record.getList();
+        String remark = record.getRemark();
+        byte[] comment = remark == null ? new byte[0] : remark.getBytes(GBK_CHARSET);
+        int flags = (children.isEmpty() ? 0 : 0x80) | (hasSibling ? 0x40 : 0)
+                | (comment.length > 0 ? 0x20 : 0);
+        output.write(flags);
+        output.write(0);
+        if (comment.length > 0) {
+            int length = comment.length + COMMENT_LENGTH_KEY;
+            for (int i = 0; i < 4; i++) {
+                output.write(length >>> (i * 8));
             }
+            output.writeBytes(comment);
         }
-
-        return pos;
+        for (int i = 0; i < children.size(); i++) {
+            writeNode(output, children.get(i), false, i < children.size() - 1);
+        }
     }
 
-    /**
-     * 递归写入着法记录
-     */
-    private int writeMovesRecursive(byte[] buffer, int pos, ManualRecord parent) {
-        for (int i = 0; i < parent.getList().size(); i++) {
-            ManualRecord record = parent.getList().get(i);
-            String move = record.getMove();
-            if (StringUtils.isEmpty(move) || move.length() < 4) {
-                continue;
-            }
-
-            // 解析ICCS格式
-            int fromX = move.charAt(0) - 'a';
-            int fromY = move.charAt(1) - '0';
-            int toX = move.charAt(2) - 'a';
-            int toY = move.charAt(3) - '0';
-
-            // 转换为XQF坐标格式
-            buffer[pos++] = (byte) (fromX * 10 + fromY + 24);
-            buffer[pos++] = (byte) (toX * 10 + toY + 32);
-
-            // 标志字节
-            boolean hasNext = !record.getList().isEmpty();
-            boolean hasSibling = i < parent.getList().size() - 1;
-
-            int flag = 0;
-            if (hasNext) flag |= 0xF0;
-            if (hasSibling) flag |= 0x0F;
-            buffer[pos++] = (byte) flag;
-            buffer[pos++] = 0;
-
-            // 注释长度
-            buffer[pos++] = 0;
-            buffer[pos++] = 0;
-            buffer[pos++] = 0;
-            buffer[pos++] = 0;
-
-            if (hasNext) {
-                pos = writeMovesRecursive(buffer, pos, record);
-            }
-        }
-        return pos;
-    }
-
-    /**
-     * 写入字符串到缓冲区
-     */
-    private void writeString(byte[] buffer, int offset, String text, int maxLength) {
-        if (text == null) {
-            text = "";
-        }
-
-        byte[] bytes = text.getBytes(GBK_CHARSET);
-        int length = Math.min(bytes.length, maxLength - 1);
-
-        buffer[offset] = (byte) length;
-        System.arraycopy(bytes, 0, buffer, offset + 1, length);
-    }
-
-    /**
-     * 统计着法数量
-     */
-    private int countMoves(ManualRecord head) {
-        int count = 0;
-        for (ManualRecord record : head.getList()) {
-            count += countMovesRecursive(record);
-        }
-        return count;
-    }
-
-    private int countMovesRecursive(ManualRecord record) {
-        int count = 1;
-        for (ManualRecord child : record.getList()) {
-            count += countMovesRecursive(child);
-        }
-        return count;
-    }
 }

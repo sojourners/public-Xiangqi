@@ -6,7 +6,6 @@ import com.sojourners.chess.util.DialogUtils;
 import com.sojourners.chess.util.StringUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
 
 
@@ -14,6 +13,8 @@ public class LinkSettingController {
 
     @FXML
     private TextField linkScanTime;
+    @FXML
+    private TextField animationConfirmDelay;
     @FXML
     private TextField linkThreadNum;
 
@@ -39,6 +40,17 @@ public class LinkSettingController {
             return;
         }
         prop.setLinkScanTime(Long.parseLong(txt));
+        txt = animationConfirmDelay.getText();
+        if (!StringUtils.isNonNegativeInt(txt)) {
+            DialogUtils.showErrorDialog("失败", "输入动画确认间隔错误");
+            return;
+        }
+        try {
+            prop.setAnimationConfirmDelay(Long.parseLong(txt));
+        } catch (NumberFormatException ex) {
+            DialogUtils.showErrorDialog("失败", "输入动画确认间隔错误");
+            return;
+        }
         txt = linkThreadNum.getText();
         if (!StringUtils.isPositiveInt(txt)) {
             DialogUtils.showErrorDialog("失败", "输入扫描扫描线程数量错误");
@@ -67,6 +79,7 @@ public class LinkSettingController {
         prop = Properties.getInstance();
 
         linkScanTime.setText(String.valueOf(prop.getLinkScanTime()));
+        animationConfirmDelay.setText(String.valueOf(prop.getAnimationConfirmDelay()));
         linkThreadNum.setText(String.valueOf(prop.getLinkThreadNum()));
 
         mouseClickDelay.setText(String.valueOf(prop.getMouseClickDelay()));

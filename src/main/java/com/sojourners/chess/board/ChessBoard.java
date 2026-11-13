@@ -141,10 +141,11 @@ public class ChessBoard {
         CUSTOM;
     }
 
-    public ChessBoard(Canvas canvas, BoardSize bs, BoardStyle style, boolean stepTip, boolean manualTip,
+    public ChessBoard(Canvas canvas, BoardSize bs, BoardStyle style, String customSkin, boolean stepTip, boolean manualTip,
                       boolean showMultiPV, boolean stepSound, boolean showNumber, String fenCode) {
         if (this.boardRender == null) {
-            this.boardRender = style == BoardStyle.CUSTOM ? new CustomBoardRender(canvas) : new DefaultBoardRender(canvas);
+            this.boardRender = style == BoardStyle.CUSTOM && CustomBoardRender.isSkinAvailable(customSkin)
+                    ? new CustomBoardRender(canvas, customSkin) : new DefaultBoardRender(canvas);
         }
 
         this.stepTip = stepTip;
@@ -212,8 +213,9 @@ public class ChessBoard {
         }
     }
 
-    public void setBoardStyle(BoardStyle style, Canvas canvas) {
-        this.boardRender = style == BoardStyle.CUSTOM ? new CustomBoardRender(canvas) : new DefaultBoardRender(canvas);
+    public void setBoardStyle(BoardStyle style, String customSkin, Canvas canvas) {
+        this.boardRender = style == BoardStyle.CUSTOM && CustomBoardRender.isSkinAvailable(customSkin)
+                ? new CustomBoardRender(canvas, customSkin) : new DefaultBoardRender(canvas);
         this.paint();
     }
 

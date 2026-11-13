@@ -2,9 +2,9 @@ package com.sojourners.chess.linker;
 
 import com.sojourners.chess.board.ChessBoard;
 import com.sojourners.chess.config.Properties;
+import com.sojourners.chess.recognition.ChessRecognizer;
+import com.sojourners.chess.recognition.RecognizeMode;
 import com.sojourners.chess.util.XiangqiUtils;
-import com.sojourners.chess.yolo.OnnxModel;
-import com.sojourners.chess.yolo.Yolo11Model;
 
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -30,13 +30,15 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
 
     private char[][] board1 = new char[10][9];
 
-    private OnnxModel aiModel;
+    private ChessRecognizer recognizer;
 
     private LinkerCallBack callBack;
 
     private Robot robot;
 
-    private int count;
+    private volatile long timestamp;
+    private Timer timer_2, timer_3, timer_5;
+    private long roundNo;
 
     private volatile boolean pause;
 
@@ -45,10 +47,12 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
     public AbstractGraphLinker(LinkerCallBack callBack) throws AWTException {
         this.callBack = callBack;
         robot = new Robot();
-        this.count = 0;
-        this.aiModel = new Yolo11Model();
+        this.recognizer = new ChessRecognizer();
         this.prop = Properties.getInstance();
         this.pause = false;
+        timer_2 = new Timer(2000);
+        timer_3 = new Timer(3000);
+        timer_5 = new Timer(5000);
     }
 
     /**
@@ -60,6 +64,7 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
     }
 
     void scan() {
+        roundNo++;
         this.thread = Thread.ofVirtual().unstarted(this);
         this.thread.start();
     }
@@ -101,6 +106,7 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
             }
             while (!Thread.currentThread().isInterrupted()) {
                 sleep(prop.getLinkScanTime());
+                roundNo++;
                 if (Thread.currentThread().isInterrupted()) {
                     return;
                 }
@@ -126,6 +132,9 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
                     if (prop.isLinkAnimation() && needConfirm(board2, callBack.getEngineBoard(), action)) {
                         boolean f = false;
                         do {
+                            if (prop.getRecognizeMode() == RecognizeMode.MIXED && prop.getAnimationConfirmDelay() > 0) {
+                                sleep(prop.getAnimationConfirmDelay());
+                            }
                             if (Thread.currentThread().isInterrupted()) {
                                 return;
                             }
@@ -156,32 +165,30 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
                         return;
                     }
                     if (action != null) {
-                        System.out.println("action " + action);
+                        System.out.println(action);
                         if (action.flag == 1) {
                             callBack.linkerMove(action.x1, action.y1, action.x2, action.y2);
 
                         } else if (action.flag == 2) {
-                            if (isReverse) {
-                                action.y1 = 9 - action.y1;
-                                action.y2 = 9 - action.y2;
-                                action.x1 = 8 - action.x1;
-                                action.x2 = 8 - action.x2;
+                            if (System.currentTimeMillis() - timestamp > 1000) {
+                                if (isReverse) {
+                                    action.y1 = 9 - action.y1;
+                                    action.y2 = 9 - action.y2;
+                                    action.x1 = 8 - action.x1;
+                                    action.x2 = 8 - action.x2;
+                                }
+                                autoClick(action.x1, action.y1, action.x2, action.y2);
                             }
-                            autoClick(action.x1, action.y1, action.x2, action.y2);
 
                         } else if (action.flag == 3) {
                             break;
                         }
                         if (action.flag == 4) {
-                            count++;
-                            if (count > 9) {
+                            if (timer_5.trigger(roundNo)) {
                                 break;
                             }
-                        } else {
-                            count = 0;
                         }
                     }
-
                 }
             }
         }
@@ -315,6 +322,7 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
     private Action compareBoard(char[][] linkBoard, char[][] engineBoard, boolean robotBlack, boolean analysisMode) {
         int diff1 = 0, diff2 = 0, diff3 = 0;
 
+        int r3 = 0;
         List<Point> diffList = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
             for (int j = 0; j < 9; j++) {
@@ -326,12 +334,15 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
                         diff2++;
                     } else {
                         diff3++;
+                        if (XiangqiUtils.isRed(engineBoard[i][j]) == !robotBlack) {
+                            r3++;
+                        }
                     }
                 }
             }
         }
 
-        if (diff1 > 2 || diff2 >= 2 && diff3 > 2) {
+        if (diff1 >= 2 || diff2 >= 2 && diff3 >= 2) {
             return new Action(3);
         }
 
@@ -407,11 +418,10 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
             return action;
         }
 
-//        if (diff1 + diff2 + diff3 == 1) {
-//            return new Action(3);
-//        }
+        if ((diff1 == 1 && r3 == 0 || diff1 == 0 && r3 == 1) && timer_2.trigger(roundNo)) {
+            this.recognizer.setFlag(prop.isLinkAnimation() ? 2 : 1);
 
-        if (diff1 + diff2 + diff3 > 2) {
+        } else if (diff1 + diff2 + diff3 > 2) {
             return new Action(4);
         }
 
@@ -433,7 +443,7 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
      * @return
      */
     public BufferedImage screenshotByFront(Rectangle windowPos) {
-        if (windowPos.width == 0 || windowPos.height == 0) {
+        if (windowPos == null || windowPos.isEmpty()) {
             return null;
         }
         return robot.createScreenCapture(windowPos);
@@ -447,6 +457,9 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
      */
     @Override
     public void mouseClickByFront(Rectangle windowPos, Point p1, Point p2) {
+        if (windowPos == null || windowPos.isEmpty()) {
+            return;
+        }
 
         Point mouse = MouseInfo.getPointerInfo().getLocation();
 
@@ -479,7 +492,7 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
      */
     boolean findBoardPosition() {
         BufferedImage img = screenshot(true);
-        this.boardPos = this.aiModel.findBoardPosition(img);
+        this.boardPos = this.recognizer.findBoardPosition(img);
         return this.boardPos != null;
     }
 
@@ -489,12 +502,18 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
      * @return
      */
     BufferedImage screenshot(boolean fullScreen) {
+        if (!fullScreen && (boardPos == null || boardPos.isEmpty())) {
+            return null;
+        }
         if (prop.isLinkBackMode()) {
             BufferedImage img = screenshotByBack(fullScreen ? null : boardPos);
             return img;
 
         } else {
             Rectangle pos = getTargetWindowPosition();
+            if (pos == null || pos.isEmpty()) {
+                return null;
+            }
             if (!fullScreen) {
                 pos.setLocation(pos.x + boardPos.x, pos.y + boardPos.y);
                 pos.setSize(boardPos.width, boardPos.height);
@@ -504,12 +523,21 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
         }
     }
 
+    private boolean findInitBoard(char[][] board) {
+        // 截图
+        BufferedImage img = screenshot(false);
+
+        if (!this.recognizer.findChessBoardByYOLO(img, board)) {
+            return false;
+        }
+        return XiangqiUtils.validateChessBoard(board);
+    }
 
     private boolean findChessBoard(char[][] board) {
         // 截图
         BufferedImage img = screenshot(false);
-        // ai识别棋盘棋子
-        if (!this.aiModel.findChessBoard(img, board)) {
+
+        if (!this.recognizer.findChessBoard(img, board)) {
             return false;
         }
         boolean f = XiangqiUtils.validateChessBoard(board);
@@ -519,6 +547,9 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
                     System.out.print(board[i][j]);
                 }
                 System.out.println();
+            }
+            if (timer_3.trigger(roundNo)) {
+                this.recognizer.setFlag(prop.isLinkAnimation() ? 2 : 1);
             }
         }
         return f;
@@ -556,25 +587,42 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
      * @return
      */
     private boolean initChessBoard() {
-        if (!findChessBoard(board2)) {
+        if (!findInitBoard(board1)) {
             return false;
         }
 
-        boolean isReverse = false;
+        if (!findInitBoard(board2)) {
+            return false;
+        }
+
+        if (!isSame(board1, board2)) {
+            return false;
+        }
+
+        boolean isReverse;
         try {
             isReverse = reverse(board2);
         } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
+
+        if (!this.recognizer.initTemplateMathRecognizer(screenshot(false))) {
+            return false;
+        }
+
         // 是否红走
         String fenCode = ChessBoard.fenCode(board2, null);
         boolean redGo = !isReverse || "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR".equals(fenCode);
+        if (redGo && XiangqiUtils.isJiang(board2, false) || !redGo && XiangqiUtils.isJiang(board2, true)) {
+            redGo = !redGo;
+        }
         fenCode = ChessBoard.fenCode(board2, redGo);
-        // 回调，初始化棋盘
+
         if (Thread.currentThread().isInterrupted()) {
             return false;
         }
+        // 回调，初始化棋盘
         callBack.linkerInitChessBoard(fenCode, isReverse);
         return true;
     }
@@ -587,6 +635,9 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
      * @param y2
      */
     public void autoClick(int x1, int y1, int x2, int y2) {
+        if (boardPos == null || boardPos.isEmpty()) {
+            return;
+        }
 
         Point p1 = getPosition(x1, y1);
         Point p2 = getPosition(x2, y2);
@@ -594,24 +645,28 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
             mouseClickByBack(p1, p2);
         } else {
             Rectangle windowPos = getTargetWindowPosition();
+            if (windowPos == null || windowPos.isEmpty()) {
+                return;
+            }
             mouseClickByFront(windowPos, p1, p2);
         }
+        timestamp = System.currentTimeMillis();
     }
     private Point getPosition(int x, int y) {
-        double pieceWith = boardPos.width / (8 + OnnxModel.PADDING * 2);
-        double pieceHeight = boardPos.height / (9 + OnnxModel.PADDING * 2);
-        Point p = new Point((int) (boardPos.x + pieceWith * OnnxModel.PADDING + (x * pieceWith)),
-                (int) (boardPos.y + pieceHeight * OnnxModel.PADDING + (y * pieceHeight)));
-        if (x == 0) {
-            p.x += 0.2 * pieceWith;
-        } else if (x == 8) {
-            p.x -= 0.2 * pieceWith;
-        }
-        if (y == 0) {
-            p.y += 0.2 * pieceHeight;
-        } else if (y == 9) {
-            p.y -= 0.2 * pieceHeight;
-        }
+        double pieceWith = boardPos.width / (8 + ChessRecognizer.PADDING * 2);
+        double pieceHeight = boardPos.height / (9 + ChessRecognizer.PADDING * 2);
+        Point p = new Point((int) (boardPos.x + pieceWith * ChessRecognizer.PADDING + (x * pieceWith)),
+                (int) (boardPos.y + pieceHeight * ChessRecognizer.PADDING + (y * pieceHeight)));
+//        if (x == 0) {
+//            p.x += 0.2 * pieceWith;
+//        } else if (x == 8) {
+//            p.x -= 0.2 * pieceWith;
+//        }
+//        if (y == 0) {
+//            p.y += 0.2 * pieceHeight;
+//        } else if (y == 9) {
+//            p.y -= 0.2 * pieceHeight;
+//        }
         return p;
     }
 
@@ -629,10 +684,36 @@ public abstract class AbstractGraphLinker implements GraphLinker, Runnable {
     // find chess board from image
     public char[][] findChessBoard(BufferedImage img) {
         char[][] tmp = new char[10][9];
-        if (this.aiModel.findChessBoard(img, tmp)) {
+        if (this.recognizer.findChessBoardByYOLO(img, tmp)) {
             return tmp;
         } else {
             return null;
+        }
+    }
+
+    class Timer {
+        private long version;
+        private long timestamp;
+        private final long millis;
+
+        public Timer(long millis) {
+            this.version = 0;
+            this.millis = millis;
+        }
+
+        public boolean trigger(long v) {
+            if (v > this.version + 1) {
+                this.version = v;
+                this.timestamp = System.currentTimeMillis();
+
+            } else if (v == this.version + 1) {
+                if (System.currentTimeMillis() - timestamp > millis) {
+                    return true;
+                } else {
+                    this.version = v;
+                }
+            }
+            return false;
         }
     }
 }

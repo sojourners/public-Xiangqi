@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.sojourners.chess.controller.AnalysisBoardController">
+    <center>
+        <Canvas fx:id="canvas" width="596.0" height="660.0" onMouseClicked="#canvasClick" />
+    </center>
+    <right>
+        <VBox spacing="10.0" prefWidth="280.0">
+            <padding>
+                <Insets top="12.0" right="12.0" bottom="12.0" left="12.0" />
+            </padding>
+            <Label text="棋谱" />
+            <ListView fx:id="recordList" VBox.vgrow="ALWAYS" />
+            <HBox alignment="CENTER" spacing="6.0">
+                <Button fx:id="firstButton" text="开局" onAction="#first" prefWidth="58.0" mnemonicParsing="false" />
+                <Button fx:id="previousButton" text="后退" onAction="#previous" prefWidth="58.0" mnemonicParsing="false" />
+                <Button fx:id="nextButton" text="前进" onAction="#next" prefWidth="58.0" mnemonicParsing="false" />
+                <Button fx:id="lastButton" text="终局" onAction="#last" prefWidth="58.0" mnemonicParsing="false" />
+            </HBox>
+            <Label fx:id="statusLabel" />
+        </VBox>
+    </right>
+</BorderPane>

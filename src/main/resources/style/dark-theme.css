@@ -24,6 +24,7 @@
     -fx-mark-color: #dce4df;
     -fx-mark-highlight-color: #eaf0ec;
     -fx-background-color: #292e2b;
+    -tchess-list-background: #303632;
     -tchess-tree-even: #303632;
     -tchess-tree-odd: #353b37;
 }
@@ -277,4 +278,17 @@
 
 .dark-theme .axis {
     -fx-tick-label-fill: #c6cec8;
+}
+
+.dark-theme .piece-shadow-length .track {
+    -fx-background-color: #65756b;
+}
+
+.dark-theme .piece-shadow-length .thumb {
+    -fx-background-color: #92c3ac;
+}
+
+.dark-theme .piece-shadow-length .axis-tick-mark,
+.dark-theme .piece-shadow-length .axis-minor-tick-mark {
+    -fx-stroke: #879a8d;
 }

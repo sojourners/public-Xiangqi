@@ -32,6 +32,7 @@ public class Engine {
     private volatile boolean hashSizeChange;
     private int hashSize;
 
+    private volatile boolean ecChange;
     /**
      * 停止标志位
      */
@@ -48,7 +49,7 @@ public class Engine {
 
     private Random random;
 
-    private int multiPV;
+    private EngineConfig ec;
 
     public enum AnalysisModel {
         FIXED_TIME,
@@ -64,11 +65,7 @@ public class Engine {
 
         this.time = Integer.MAX_VALUE;
 
-        if (ec.getOptions().get("MultiPV") != null) {
-            multiPV = Integer.parseInt(ec.getOptions().get("MultiPV"));
-        } else {
-            multiPV = 1;
-        }
+        this.ec = ec;
 
         process = Runtime.getRuntime().exec(ec.getPath(), null, PathUtils.getParentDir(ec.getPath()));
         reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -92,6 +89,10 @@ public class Engine {
 
         cmd(protocol);
 
+        setoptions();
+    }
+
+    private void setoptions() {
         for (Map.Entry<String, String> entry : ec.getOptions().entrySet()) {
             if ("uci".equals(this.protocol)) {
                 cmd("setoption name " + entry.getKey() + " value " + entry.getValue());
@@ -102,7 +103,11 @@ public class Engine {
     }
 
     public int getMultiPV() {
-        return multiPV;
+        return Integer.parseInt(ec.getOptions().getOrDefault("MultiPV", "1"));
+    }
+
+    public EngineConfig getEngineConfig() {
+        return this.ec;
     }
 
     private void sleep(long t) {
@@ -205,6 +210,7 @@ public class Engine {
 
         String[] str = msg.split(" ");
         if (str.length < 2 || !validateMove(str[1])) {
+            cb.stopThinking();
             return;
         }
         if (Properties.getInstance().getEngineDelayEnd() > 0 && Properties.getInstance().getEngineDelayEnd() >= Properties.getInstance().getEngineDelayStart()) {
@@ -310,6 +316,11 @@ public class Engine {
     public void analysis(String fenCode, List<String> moves, List<String> tacticList) {
         stop();
 
+        if (ecChange) {
+            setoptions();
+            this.ecChange = false;
+        }
+
         if (threadNumChange) {
             cmd(("uci".equals(this.protocol) ? "setoption name Threads value " : "setoption Threads ") + threadNum);
             this.threadNumChange = false;
@@ -382,6 +393,12 @@ public class Engine {
         }
     }
 
+    public void resetEngineConfig() {
+        this.ecChange = true;
+        this.threadNumChange = true;
+        this.hashSizeChange = true;
+    }
+
     public void setAnalysisModel(AnalysisModel model, long v) {
         this.analysisModel = model;
         this.analysisValue = v;
@@ -389,7 +406,7 @@ public class Engine {
 
     public void close() {
         try {
-            if (process.isAlive()) {
+            if (process != null && process.isAlive()) {
                 cmd("quit");
             }
 
@@ -397,7 +414,7 @@ public class Engine {
                 thread.interrupt();
             }
 
-            if (process.isAlive()) {
+            if (process != null && process.isAlive()) {
                 process.destroy();
             }
 

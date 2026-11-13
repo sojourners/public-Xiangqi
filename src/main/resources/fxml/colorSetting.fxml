@@ -1,24 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ColorPicker?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.RadioButton?>
 <?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Slider?>
 <?import javafx.scene.control.Spinner?>
 <?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane prefHeight="350.0" prefWidth="650.0" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.sojourners.chess.controller.ColorSettingController">
+<BorderPane prefWidth="650.0" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.sojourners.chess.controller.ColorSettingController">
     <center>
-        <VBox maxHeight="-Infinity" minHeight="-Infinity" prefHeight="282.0" prefWidth="650.0" spacing="14.0" BorderPane.alignment="CENTER">
+        <VBox prefWidth="650.0" spacing="14.0" BorderPane.alignment="CENTER">
             <padding>
                 <Insets bottom="12.0" left="18.0" right="18.0" top="16.0" />
             </padding>
@@ -44,7 +49,7 @@
                 <ColorPicker fx:id="firstStepColor" prefWidth="120.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
                 <Spinner fx:id="firstStepOpacity" editable="true" prefWidth="90.0" GridPane.columnIndex="2" GridPane.rowIndex="1" />
                 <ColorPicker fx:id="firstStepNumberColor" prefWidth="120.0" GridPane.columnIndex="3" GridPane.rowIndex="1" />
-                <Button mnemonicParsing="false" onAction="#resetFirstStep" text="恢复默认" GridPane.columnIndex="4" GridPane.rowIndex="1" />
+                <Button fx:id="firstStepResetButton" mnemonicParsing="false" onAction="#resetFirstStep" text="恢复默认" GridPane.columnIndex="4" GridPane.rowIndex="1" />
 
                 <Label text="棋步提示2" GridPane.columnIndex="0" GridPane.rowIndex="2" />
                 <ColorPicker fx:id="secondStepColor" prefWidth="120.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
@@ -78,17 +83,61 @@
                     <ColumnConstraints halignment="CENTER" minWidth="125.0" />
                     <ColumnConstraints halignment="CENTER" minWidth="90.0" />
                 </columnConstraints>
-                <RadioButton fx:id="lightTheme" mnemonicParsing="false" text="浅色" GridPane.columnIndex="1">
-                    <toggleGroup>
-                        <ToggleGroup fx:id="themeGroup" />
-                    </toggleGroup>
-                </RadioButton>
-                <RadioButton fx:id="darkTheme" mnemonicParsing="false" text="深色" toggleGroup="$themeGroup" GridPane.columnIndex="2" />
+                <HBox alignment="CENTER_LEFT" spacing="24.0" GridPane.columnSpan="4">
+                    <RadioButton fx:id="lightTheme" mnemonicParsing="false" text="浅色">
+                        <toggleGroup>
+                            <ToggleGroup fx:id="themeGroup" />
+                        </toggleGroup>
+                    </RadioButton>
+                    <RadioButton fx:id="darkTheme" mnemonicParsing="false" text="深色" toggleGroup="$themeGroup" />
+                    <RadioButton fx:id="eyeGreenTheme" mnemonicParsing="false" text="淡绿色" toggleGroup="$themeGroup" />
+                    <RadioButton fx:id="warmYellowTheme" mnemonicParsing="false" text="暖黄色" toggleGroup="$themeGroup" />
+                </HBox>
                 <Button mnemonicParsing="false" onAction="#resetTheme" text="恢复默认" GridPane.columnIndex="4" />
                 <rowConstraints>
                     <RowConstraints />
                 </rowConstraints>
             </GridPane>
+            <Separator />
+            <HBox alignment="CENTER_LEFT" maxWidth="${firstStepResetButton.boundsInParent.maxX}" spacing="18.0">
+                <Label text="棋子阴影">
+                    <font>
+                        <Font size="15.0" />
+                    </font>
+                </Label>
+                <CheckBox fx:id="pieceShadowEnabled" mnemonicParsing="false" text="绘制棋子阴影" />
+                <Pane HBox.hgrow="ALWAYS" />
+                <Button mnemonicParsing="false" onAction="#resetPieceShadow" text="恢复默认" />
+            </HBox>
+            <HBox fx:id="pieceShadowControls" alignment="CENTER_LEFT" maxWidth="${firstStepResetButton.boundsInParent.maxX}" spacing="24.0">
+                <Canvas fx:id="pieceShadowDirection" height="144.0" width="144.0" />
+                <VBox spacing="10.0" HBox.hgrow="ALWAYS">
+                    <Label text="拖动圆盘选择阴影方向" />
+                    <HBox alignment="CENTER_LEFT" spacing="8.0">
+                        <Label text="方向" />
+                        <Spinner fx:id="pieceShadowAngle" accessibleText="阴影方向角度" editable="true" prefWidth="85.0">
+                            <tooltip>
+                                <Tooltip text="0° 向右，90° 向下，180° 向左，270° 向上" />
+                            </tooltip>
+                        </Spinner>
+                        <Label text="°（0° 向右，90° 向下）" />
+                    </HBox>
+                    <HBox alignment="CENTER_LEFT" spacing="8.0">
+                        <Label text="长度（棋子直径 %）" />
+                        <Label fx:id="pieceShadowLengthValue" minWidth="40.0" />
+                    </HBox>
+                    <Slider fx:id="pieceShadowLength" styleClass="piece-shadow-length" accessibleText="阴影长度占棋子直径的百分比" blockIncrement="1.0" majorTickUnit="10.0" max="50.0" min="0.0" minorTickCount="9" showTickLabels="true" showTickMarks="true" snapToTicks="true" />
+                    <HBox alignment="CENTER_LEFT" spacing="8.0">
+                        <Label text="大小（棋子直径 %）" />
+                        <Label fx:id="pieceShadowSizeValue" minWidth="40.0" />
+                    </HBox>
+                    <Slider fx:id="pieceShadowSize" styleClass="piece-shadow-length" accessibleText="阴影圆直径占棋子直径的百分比" blockIncrement="1.0" majorTickUnit="20.0" max="100.0" min="0.0" minorTickCount="19" showTickLabels="true" showTickMarks="true" snapToTicks="true">
+                        <tooltip>
+                            <Tooltip text="缩小阴影圆可减少边缘溢出；0% 不显示阴影" />
+                        </tooltip>
+                    </Slider>
+                </VBox>
+            </HBox>
         </VBox>
     </center>
     <bottom>

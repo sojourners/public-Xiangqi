@@ -1,6 +1,5 @@
 package com.sojourners.chess.yolo;
 
-
 import ai.onnxruntime.OnnxTensor;
 import ai.onnxruntime.OnnxValue;
 import ai.onnxruntime.OrtException;
@@ -29,32 +28,8 @@ public class Yolo5Model extends OnnxModel {
             if (img == null) {
                 return null;
             }
-            // 图像宽高的缩放比例
             List<DetectResult> results = this.predict(img);
-            // 寻找棋盘
-            java.awt.Rectangle pos = findBoardPosition(results);
-            if (pos == null) {
-                return null;
-            }
-            // 棋盘范围
-            double pieceWidth = pos.width / 8d, pieceHeight = pos.height / 9d;
-            pos.x -= pieceWidth * PADDING;
-            if (pos.x < 0) {
-                pos.x = 0;
-            }
-            pos.y -= pieceHeight * PADDING;
-            if (pos.y < 0) {
-                pos.y = 0;
-            }
-            pos.width += pieceWidth * PADDING * 2;
-            if (pos.x + pos.width > img.getWidth()) {
-                pos.width = img.getWidth() - pos.x;
-            }
-            pos.height += pieceHeight * PADDING * 2;
-            if (pos.y + pos.height > img.getHeight()) {
-                pos.height = img.getHeight() - pos.y;
-            }
-            return pos;
+            return findBoardPosition(results);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -62,7 +37,7 @@ public class Yolo5Model extends OnnxModel {
         }
     }
 
-    private void setBlankBoard(char[][] board) {
+    void setBlankBoard(char[][] board) {
         for (int i = 0; i < 10; i++) {
             for (int j = 0; j < 9; j++) {
                 board[i][j] = ' ';
@@ -70,9 +45,9 @@ public class Yolo5Model extends OnnxModel {
         }
     }
 
-    private java.awt.Rectangle findBoardPosition(List<DetectResult> results) {
+    java.awt.Rectangle findBoardPosition(List<DetectResult> results) {
         int boardCount = 0;
-        java.awt.Rectangle boardPos = new java.awt.Rectangle();
+        Rectangle boardPos = null;
         // 先找到棋盘
         for (DetectResult obj : results) {
             char label = obj.label;
@@ -80,11 +55,8 @@ public class Yolo5Model extends OnnxModel {
             if (label == '0') {
                 // 取最大的棋盘区域
                 int w = (int) (bound.getWidth()), h = (int) (bound.getHeight());
-                if (w > boardPos.width && h > boardPos.height) {
-                    boardPos.x = (int) (bound.getX() - w / 2d);
-                    boardPos.y = (int) (bound.getY() - h / 2d);
-                    boardPos.width = w;
-                    boardPos.height = h;
+                if (boardPos == null || w > boardPos.width && h > boardPos.height) {
+                    boardPos = bound;
                 }
                 boardCount++;
             }
@@ -92,7 +64,82 @@ public class Yolo5Model extends OnnxModel {
         if (boardCount == 0) {
             return null;
         }
-        return boardPos;
+
+        List<PieceBound> list = new ArrayList<>();
+        double pieceWidth = boardPos.width / 8, pieceHeight = boardPos.height / 9;
+        // 估算棋盘大小
+        double iSum0 = 0, iSum9 = 0, jSum0 = 0, jSum8 = 0;
+        int iCount0 = 0, iCount9 = 0, jCount0 = 0, jCount8 = 0;
+        for (DetectResult obj : results) {
+            char label = obj.label;
+            Rectangle bound = obj.rect;
+            if (label != '0') {
+                int j = (int) ((bound.x - (boardPos.x - boardPos.width / 2 - pieceWidth / 2)) / pieceWidth);
+                int i = (int) ((bound.y - (boardPos.y - boardPos.height / 2 - pieceHeight / 2)) / pieceHeight);
+                if (i < 0 || i > 9 || j < 0 || j > 8) {
+                    continue;
+                }
+                if (i == 0) {
+                    iSum0 += bound.y;
+                    iCount0++;
+                } else if (i == 9) {
+                    iSum9 += bound.y;
+                    iCount9++;
+                }
+                if (j == 0) {
+                    jSum0 += bound.x;
+                    jCount0++;
+                } else if (j == 8) {
+                    jSum8 += bound.x;
+                    jCount8++;
+                }
+                list.add(new PieceBound(i, j, bound));
+            }
+        }
+        if (iCount0 > 0 && iCount9 > 0) {
+            boardPos.y = (float) ((iSum9 / iCount9 + iSum0 / iCount0) / 2);
+        }
+        if (jCount0 > 0 && jCount8 > 0) {
+            boardPos.x = (float) ((jSum8 / jCount8 + jSum0 / jCount0) / 2);
+        }
+        double wSum = 0, hSum = 0;
+        int wCount = 0, hCount = 0;
+        for (int i = 0; i < list.size(); i++) {
+            for (int j = i + 1; j < list.size(); j++) {
+                PieceBound pb1 = list.get(i);
+                PieceBound pb2 = list.get(j);
+                if (pb1.i != pb2.i) {
+                    hSum += Math.abs(pb1.bound.y - pb2.bound.y);
+                    hCount += Math.abs(pb1.i - pb2.i);
+                }
+                if (pb1.j != pb2.j) {
+                    wSum += Math.abs(pb1.bound.x - pb2.bound.x);
+                    wCount += Math.abs(pb1.j - pb2.j);
+                }
+            }
+        }
+        if (wCount > 0) {
+            pieceWidth = wSum / wCount;
+        }
+        if (hCount > 0) {
+            pieceHeight = hSum / hCount;
+        }
+        return new java.awt.Rectangle(
+                (int) (boardPos.x - pieceWidth * 8 / 2),
+                (int) (boardPos.y - pieceHeight * 9 / 2),
+                (int) (pieceWidth * 8),
+                (int) (pieceHeight * 9));
+    }
+
+    class PieceBound {
+        int i;
+        int j;
+        Rectangle bound;
+        public PieceBound(int i, int j, Rectangle bound) {
+            this.i = i;
+            this.j = j;
+            this.bound = bound;
+        }
     }
 
     /**
@@ -109,24 +156,30 @@ public class Yolo5Model extends OnnxModel {
             // 图像宽高的缩放比例
             List<DetectResult> results = this.predict(img);
             setBlankBoard(board);
-            java.awt.Rectangle boardPos = findBoardPosition(results);
-            if (boardPos == null) {
-                return false;
-            }
-            int pieceWidth = boardPos.width / 8, pieceHeight = boardPos.height / 9;
-            // 再获取每个棋子及其位置
+
+            int boardCount = 0;
+            java.awt.Rectangle boardPos = new java.awt.Rectangle();
+            // 先找到棋盘
             for (DetectResult obj : results) {
                 char label = obj.label;
                 Rectangle bound = obj.rect;
-                if (label != '0') {
-                    int j = (int) ((bound.x - (boardPos.x - pieceWidth / 2)) / pieceWidth);
-                    int i = (int) ((bound.y - (boardPos.y - pieceHeight / 2)) / pieceHeight);
-                    if (i < 0 || i > 9 || j < 0 || j > 8) {
-                        continue;
+                if (label == '0') {
+                    // 取最大的棋盘区域
+                    int w = (int) (bound.getWidth()), h = (int) (bound.getHeight());
+                    if (w > boardPos.width && h > boardPos.height) {
+                        boardPos.x = (int) (bound.getX() - w / 2d);
+                        boardPos.y = (int) (bound.getY() - h / 2d);
+                        boardPos.width = w;
+                        boardPos.height = h;
                     }
-                    board[i][j] = label;
+                    boardCount++;
                 }
             }
+            if (boardCount == 0) {
+                return false;
+            }
+
+            setBoard(board, boardPos, results);
             return true;
 
         } catch (Exception e) {
@@ -135,7 +188,24 @@ public class Yolo5Model extends OnnxModel {
         }
     }
 
-    private List<DetectResult> predict(BufferedImage image) throws OrtException {
+    void setBoard(char[][] board, java.awt.Rectangle boardPos, List<DetectResult> results) {
+        int pieceWidth = boardPos.width / 8, pieceHeight = boardPos.height / 9;
+        // 再获取每个棋子及其位置
+        for (DetectResult obj : results) {
+            char label = obj.label;
+            Rectangle bound = obj.rect;
+            if (label != '0') {
+                int j = (int) ((bound.x - (boardPos.x - pieceWidth / 2)) / pieceWidth);
+                int i = (int) ((bound.y - (boardPos.y - pieceHeight / 2)) / pieceHeight);
+                if (i < 0 || i > 9 || j < 0 || j > 8) {
+                    continue;
+                }
+                board[i][j] = label;
+            }
+        }
+    }
+
+    List<DetectResult> predict(BufferedImage image) throws OrtException {
 
         List<DetectResult> list = null;
 
@@ -160,7 +230,6 @@ public class Yolo5Model extends OnnxModel {
         }
 
 //        System.gc();
-        System.out.println(System.currentTimeMillis() - s);
         return list;
     }
 

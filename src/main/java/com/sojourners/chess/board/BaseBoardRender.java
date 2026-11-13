@@ -109,6 +109,25 @@ public abstract class BaseBoardRender implements BoardRender {
 
     }
 
+    /** Paint a separate shadow pass so a shadow can never cover another piece. */
+    protected void drawPieceShadows(int pos, int piece, char[][] board, boolean isReverse, double radius) {
+        Properties prop = Properties.getInstance();
+        if (!prop.isPieceShadowEnabled()) {
+            return;
+        }
+        double angle = prop.getPieceShadowAngle();
+        double length = prop.getPieceShadowLength();
+        double size = prop.getPieceShadowSize();
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board[i].length; j++) {
+                if (XiangqiUtils.map.containsKey(board[i][j])) {
+                    PieceShadow.draw(gc, pos + piece * getReverseX(j, isReverse),
+                            pos + piece * getReverseY(i, isReverse), radius, angle, length, size);
+                }
+            }
+        }
+    }
+
     @Override
     public void drawCenterText(int pos, int piece, ChessBoard.BoardSize style) {
         // 绘制楚河汉界

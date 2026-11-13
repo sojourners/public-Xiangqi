@@ -38,6 +38,7 @@ public class DefaultBoardRender extends BaseBoardRender {
         }
         // 绘制棋子
         int r = (piece - piece / 10) / 2;
+        drawPieceShadows(pos, piece, board, isReverse, r + getPieceBw(style) / 2);
         for (int i = 0; i < board.length; i++) {
             for (int j = 0; j < board[0].length; j++) {
                 String word = XiangqiUtils.map.get(board[i][j]);

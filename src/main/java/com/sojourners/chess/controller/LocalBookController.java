@@ -27,6 +27,7 @@ public class LocalBookController {
     void addButtonClick(ActionEvent e) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setInitialDirectory(new File(PathUtils.getJarPath()));
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("全部(*.*)", "*.xqb", "*.obk", "*.pfBook"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("xqb(*.xqb)", "*.xqb"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("obk(*.obk)", "*.obk"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("pfBook(*.pfBook)", "*.pfBook"));

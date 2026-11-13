@@ -40,6 +40,8 @@ public class EngineAddController {
 
     public static EngineConfig ec;
 
+    public static boolean ok;
+
     private LinkedHashMap<String, String> options;
 
     @FXML
@@ -92,6 +94,7 @@ public class EngineAddController {
             ec.setProtocol(protocolText.getText());
             ec.setOptions(options);
         }
+        ok = true;
         App.closeEngineAdd();
     }
 
@@ -108,6 +111,8 @@ public class EngineAddController {
             this.options = (LinkedHashMap<String, String>) ec.getOptions().clone();
             showOptions();
         }
+
+        ok = false;
     }
 
     private void initListView() {

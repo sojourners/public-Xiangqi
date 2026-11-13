@@ -26,6 +26,7 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.text.Font?>
 
@@ -58,6 +59,20 @@
                         <MenuItem mnemonicParsing="false" onAction="#saveAsChessManualFile" text="另存为棋谱" />
                         <CheckMenuItem fx:id="menuOfChessNotation" mnemonicParsing="false" text="棋谱管理" />
                         <CheckMenuItem fx:id="menuOfShowTactic" mnemonicParsing="false" onAction="#menuOfShowTacticClick" text="显示分支棋步" />
+                        <Menu mnemonicParsing="false" text="自动保存棋谱">
+                            <items>
+                                <RadioMenuItem mnemonicParsing="false" onAction="#autoSaveChessManualSelected" selected="true" text="关闭" userData="">
+                                    <toggleGroup>
+                                        <ToggleGroup fx:id="autoSaveChessManualFormat" />
+                                    </toggleGroup>
+                                </RadioMenuItem>
+                                <RadioMenuItem mnemonicParsing="false" onAction="#autoSaveChessManualSelected" text="txq" toggleGroup="$autoSaveChessManualFormat" userData="txq" />
+                                <RadioMenuItem mnemonicParsing="false" onAction="#autoSaveChessManualSelected" text="pgn" toggleGroup="$autoSaveChessManualFormat" userData="pgn" />
+                                <RadioMenuItem mnemonicParsing="false" onAction="#autoSaveChessManualSelected" text="xqf" toggleGroup="$autoSaveChessManualFormat" userData="xqf" />
+                                <RadioMenuItem mnemonicParsing="false" onAction="#autoSaveChessManualSelected" text="cbr" toggleGroup="$autoSaveChessManualFormat" userData="cbr" />
+                            </items>
+                        </Menu>
+                        <MenuItem mnemonicParsing="false" onAction="#chessManualSettingsClick" text="棋谱设置" />
                     </items>
                 </Menu>
                 <Menu mnemonicParsing="false" text="开局库">
@@ -77,6 +92,16 @@
                         <MenuItem mnemonicParsing="false" onAction="#linkSettingClick" text="连线参数" />
                         <CheckMenuItem fx:id="menuOfLinkBackMode" mnemonicParsing="false" onAction="#linkBackModeChecked" text="后台连线" />
                         <CheckMenuItem fx:id="menuOfLinkAnimation" mnemonicParsing="false" onAction="#linkAnimationChecked" text="开启动画确认" />
+                        <Menu mnemonicParsing="false" text="识别模式">
+                            <items>
+                                <RadioMenuItem fx:id="menuOfYoloRecognize" mnemonicParsing="false" onAction="#recognizeModeSelected" text="纯 YOLO 识别">
+                                    <toggleGroup>
+                                        <ToggleGroup fx:id="recognizeMode" />
+                                    </toggleGroup>
+                                </RadioMenuItem>
+                                <RadioMenuItem fx:id="menuOfMixedRecognize" mnemonicParsing="false" onAction="#recognizeModeSelected" text="YOLO + 模板匹配" toggleGroup="$recognizeMode" />
+                            </items>
+                        </Menu>
                     </items>
                 </Menu>
                 <Menu mnemonicParsing="false" text="设置">
@@ -86,14 +111,13 @@
                         <CheckMenuItem fx:id="menuOfShowNumber" mnemonicParsing="false" onAction="#showNumberClick" text="显示线路" />
                         <CheckMenuItem fx:id="menuOfTopWindow" mnemonicParsing="false" onAction="#topWindowClick" text="窗口置顶" />
                         <CheckMenuItem fx:id="menuOfShowStatus" mnemonicParsing="false" onAction="#showStatusBarClick" text="显示状态栏" />
-                        <Menu mnemonicParsing="false" text="棋盘样式">
+                        <Menu fx:id="menuOfBoardStyle" mnemonicParsing="false" text="棋盘样式">
                             <items>
                                 <RadioMenuItem fx:id="menuOfDefaultBoard" mnemonicParsing="false" onAction="#boardStyleSelected" text="默认">
                                     <toggleGroup>
                                         <ToggleGroup fx:id="boardStyle1" />
                                     </toggleGroup>
                                 </RadioMenuItem>
-                                <RadioMenuItem fx:id="menuOfCustomBoard" mnemonicParsing="false" onAction="#boardStyleSelected" text="红黑" toggleGroup="$boardStyle1" />
                             </items>
                         </Menu>
                         <Menu mnemonicParsing="false" text="棋盘大小">
@@ -107,6 +131,16 @@
                                 <RadioMenuItem fx:id="menuOfBigBoard" mnemonicParsing="false" onAction="#boardSizeSelected" text="大棋盘" toggleGroup="$boardStyle" />
                                 <RadioMenuItem fx:id="menuOfLargeBoard" mnemonicParsing="false" onAction="#boardSizeSelected" text="超大棋盘" toggleGroup="$boardStyle" />
                                 <RadioMenuItem fx:id="menuOfAutoFitBoard" mnemonicParsing="false" onAction="#boardSizeSelected" text="自适应" toggleGroup="$boardStyle" />
+                            </items>
+                        </Menu>
+                        <Menu mnemonicParsing="false" text="视图设置">
+                            <items>
+                                <RadioMenuItem fx:id="menuOfDefaultView" mnemonicParsing="false" onAction="#viewModeSelected" selected="true" text="默认">
+                                    <toggleGroup>
+                                        <ToggleGroup fx:id="viewMode" />
+                                    </toggleGroup>
+                                </RadioMenuItem>
+                                <RadioMenuItem fx:id="menuOfTiledView" mnemonicParsing="false" onAction="#viewModeSelected" text="平铺" toggleGroup="$viewMode" />
                             </items>
                         </Menu>
                         <MenuItem mnemonicParsing="false" onAction="#colorSettingClick" text="主题配置" />
@@ -207,7 +241,7 @@
                 </ToolBar>
             </top>
             <center>
-                <SplitPane fx:id="splitPane" dividerPositions="0.6416122004357299" stylesheets="@../style/split-pane.css" BorderPane.alignment="CENTER">
+                <SplitPane fx:id="splitPane" dividerPositions="0.6204245973645681" stylesheets="@../style/split-pane.css" BorderPane.alignment="CENTER">
                     <items>
                         <AnchorPane fx:id="canvasPane" minHeight="-Infinity" minWidth="-Infinity" prefHeight="0.0" prefWidth="0.0">
                             <children>
@@ -218,8 +252,8 @@
                                 </BorderPane>
                                 <ToolBar fx:id="statusToolBar" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="27.0" prefWidth="200.0" style="-fx-pref-height: 27px;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
                                     <items>
-                                        <Label fx:id="infoShowLabel" wrapText="true" />
-                                        <Label fx:id="timeShowLabel" alignment="CENTER_RIGHT" contentDisplay="RIGHT" textAlignment="RIGHT" wrapText="true" />
+                                        <Label fx:id="infoShowLabel" maxWidth="Infinity" minWidth="0.0" prefWidth="0.0" wrapText="true" HBox.hgrow="ALWAYS" />
+                                        <Label fx:id="timeShowLabel" alignment="CENTER_RIGHT" contentDisplay="RIGHT" minWidth="-Infinity" textAlignment="RIGHT" />
                                     </items>
                                 </ToolBar>
                             </children>
@@ -228,32 +262,37 @@
                             <children>
                                 <SplitPane fx:id="splitPane2" dividerPositions="0.6461538461538462" layoutX="32.0" layoutY="111.0" orientation="VERTICAL" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                     <items>
-                                        <AnchorPane minHeight="-Infinity" minWidth="-Infinity" prefHeight="0.0" prefWidth="0.0">
+                                        <AnchorPane fx:id="engineContainer" minHeight="-Infinity" minWidth="-Infinity" prefHeight="0.0" prefWidth="0.0">
                                             <children>
-                                                <BorderPane fx:id="listViewPane" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                                <BorderPane fx:id="listViewPane" minWidth="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                                     <center>
                                                         <ListView fx:id="listView" minHeight="-Infinity" minWidth="-Infinity" prefHeight="0.0" prefWidth="0.0" stylesheets="@../style/app.css" BorderPane.alignment="CENTER" />
                                                     </center>
                                                     <top>
-                                                        <ToolBar minHeight="-Infinity" minWidth="-Infinity" prefHeight="30.0" BorderPane.alignment="CENTER">
+                                                        <ToolBar minHeight="-Infinity" minWidth="0.0" prefHeight="30.0" BorderPane.alignment="CENTER">
                                                             <items>
                                                                 <Label text="引擎" />
                                                                 <ComboBox fx:id="engineComboBox" editable="true" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="22.0" prefWidth="95.0" stylesheets="@../style/combobox.css" />
                                                                 <ComboBox fx:id="threadComboBox" editable="true" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="22.0" prefWidth="60.0" stylesheets="@../style/combobox.css" />
                                                                 <ComboBox fx:id="hashComboBox" editable="true" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="22.0" prefWidth="65.0" stylesheets="@../style/combobox.css" />
                                                                 <Label text="MB" />
+                                                <Button contentDisplay="GRAPHIC_ONLY" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#engineSettingButtonClick" style="-fx-background-image: url('/image/setting.png');" stylesheets="@../style/app.css" text="Button">
+                                                   <opaqueInsets>
+                                                      <Insets />
+                                                   </opaqueInsets>
+                                                </Button>
                                                             </items>
                                                         </ToolBar>
                                                     </top>
                                                 </BorderPane>
                                             </children></AnchorPane>
-                                        <AnchorPane minHeight="-Infinity" minWidth="-Infinity" prefHeight="0.0" prefWidth="0.0">
+                                        <AnchorPane fx:id="detailsContainer" minHeight="-Infinity" minWidth="-Infinity" prefHeight="0.0" prefWidth="0.0">
                                             <children>
-                                                <TabPane side="BOTTOM" tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                                <TabPane fx:id="detailsTabPane" side="BOTTOM" tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                                     <tabs>
-                                                        <Tab text="棋谱">
+                                                        <Tab fx:id="manualTab" text="棋谱">
                                                             <content>
-                                                                <BorderPane prefHeight="200.0" prefWidth="200.0">
+                                                                <BorderPane fx:id="recordPane" minWidth="0.0" prefHeight="200.0" prefWidth="200.0">
                                                                     <bottom>
                                                                         <ToolBar minHeight="-Infinity" minWidth="80.0" nodeOrientation="RIGHT_TO_LEFT" prefHeight="28.0" prefWidth="100.0" style="-fx-background-insets: 28px;" BorderPane.alignment="CENTER">
                                                                             <items>
@@ -319,14 +358,14 @@
                                                                 </BorderPane>
                                                             </content>
                                                         </Tab>
-                                                        <Tab text="局势图">
+                                                        <Tab fx:id="chartTab" text="局势图">
                                                             <content>
-                                                                <BorderPane fx:id="charPane" prefHeight="200.0" prefWidth="200.0" />
+                                                                <BorderPane fx:id="charPane" minWidth="0.0" prefHeight="200.0" prefWidth="200.0" />
                                                             </content>
                                                         </Tab>
-                                                        <Tab text="库招">
+                                                        <Tab fx:id="bookTab" text="库招">
                                                             <content>
-                                                                <BorderPane prefHeight="200.0" prefWidth="200.0">
+                                                                <BorderPane fx:id="bookPane" minWidth="0.0" prefHeight="200.0" prefWidth="200.0">
                                                                     <center>
                                                                         <TableView fx:id="bookTable" onMouseClicked="#bookTableClick" prefHeight="200.0" prefWidth="200.0" style="-fx-background-insets: 100%;" stylesheets="@../style/table.css" BorderPane.alignment="CENTER">
                                                                             <columns>

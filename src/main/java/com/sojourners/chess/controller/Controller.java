@@ -14,7 +14,10 @@ import com.sojourners.chess.model.EngineConfig;
 import com.sojourners.chess.model.ManualRecord;
 import com.sojourners.chess.model.ThinkData;
 import com.sojourners.chess.openbook.OpenBookManager;
+import com.sojourners.chess.recognition.RecognizeMode;
 import com.sojourners.chess.util.*;
+import javafx.animation.Animation;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -22,15 +25,17 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.geometry.Point2D;
 import javafx.geometry.Side;
+import javafx.scene.Cursor;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.*;
 import javafx.scene.control.TextArea;
@@ -40,10 +45,14 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.util.Callback;
+import javafx.util.Duration;
+import javafx.util.StringConverter;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -51,6 +60,8 @@ import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -71,6 +82,33 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
     private SplitPane splitPane;
     @FXML
     private SplitPane splitPane2;
+
+    @FXML
+    private AnchorPane engineContainer;
+    @FXML
+    private AnchorPane detailsContainer;
+    @FXML
+    private BorderPane listViewPane;
+    @FXML
+    private BorderPane recordPane;
+    @FXML
+    private BorderPane bookPane;
+    @FXML
+    private TabPane detailsTabPane;
+    @FXML
+    private Tab manualTab;
+    @FXML
+    private Tab chartTab;
+    @FXML
+    private Tab bookTab;
+    @FXML
+    private RadioMenuItem menuOfDefaultView;
+    @FXML
+    private RadioMenuItem menuOfTiledView;
+
+    private SplitPane engineBookPane;
+    private SplitPane manualChartPane;
+    private boolean tiledView;
 
     @FXML
     private ListView<ThinkData> listView;
@@ -101,7 +139,7 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
     @FXML
     private RadioMenuItem menuOfDefaultBoard;
     @FXML
-    private RadioMenuItem menuOfCustomBoard;
+    private Menu menuOfBoardStyle;
 
     @FXML
     private CheckMenuItem menuOfStepTip;
@@ -111,6 +149,10 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
     private CheckMenuItem menuOfLinkBackMode;
     @FXML
     private CheckMenuItem menuOfLinkAnimation;
+    @FXML
+    private RadioMenuItem menuOfYoloRecognize;
+    @FXML
+    private RadioMenuItem menuOfMixedRecognize;
     @FXML
     private CheckMenuItem menuOfShowStatus;
     @FXML
@@ -146,7 +188,11 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
 
     @FXML
     private BorderPane charPane;
-    private XYChart.Series lineChartSeries;
+    private XYChart.Series<Number, Number> lineChartSeries;
+    private XYChart.Data<Number, Number> hoveredScorePoint;
+    private Tooltip scorePointTooltip;
+    private PauseTransition scorePointTooltipDelay;
+    private Point2D scorePointTooltipPosition;
 
     @FXML
     private Button immediateButton;
@@ -196,13 +242,72 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
 
     @FXML
     void boardStyleSelected(ActionEvent event) {
-        RadioMenuItem item = (RadioMenuItem) event.getTarget();
+        RadioMenuItem item = (RadioMenuItem) event.getSource();
         if (item.equals(menuOfDefaultBoard)) {
             prop.setBoardStyle(ChessBoard.BoardStyle.DEFAULT);
         } else {
             prop.setBoardStyle(ChessBoard.BoardStyle.CUSTOM);
+            prop.setCustomSkin(item.getText());
         }
-        board.setBoardStyle(prop.getBoardStyle(), this.canvas);
+        board.setBoardStyle(prop.getBoardStyle(), prop.getCustomSkin(), this.canvas);
+        prop.save();
+    }
+
+    @FXML
+    void viewModeSelected(ActionEvent event) {
+        prop.setViewMode(event.getSource() == menuOfTiledView ? Properties.ViewMode.TILED : Properties.ViewMode.DEFAULT);
+        applyViewMode();
+    }
+
+    private void applyViewMode() {
+        boolean tiled = prop.getViewMode() == Properties.ViewMode.TILED;
+        menuOfDefaultView.setSelected(!tiled);
+        menuOfTiledView.setSelected(tiled);
+        if (tiled == tiledView) {
+            return;
+        }
+
+        // 迁移原面板，保留棋谱、引擎分析、库招和图表的当前状态。
+        engineContainer.getChildren().clear();
+        detailsContainer.getChildren().clear();
+        if (tiled) {
+            manualTab.setContent(null);
+            chartTab.setContent(null);
+            bookTab.setContent(null);
+            engineBookPane = createTiledPane(listViewPane, bookPane, prop.getEngineBookDivider());
+            manualChartPane = createTiledPane(recordPane, charPane, prop.getManualChartDivider());
+            engineContainer.getChildren().add(engineBookPane);
+            detailsContainer.getChildren().add(manualChartPane);
+        } else {
+            saveTiledDividerPositions();
+            engineBookPane.getItems().clear();
+            manualChartPane.getItems().clear();
+            manualTab.setContent(recordPane);
+            chartTab.setContent(charPane);
+            bookTab.setContent(bookPane);
+            engineContainer.getChildren().add(listViewPane);
+            detailsContainer.getChildren().add(detailsTabPane);
+        }
+        tiledView = tiled;
+    }
+
+    private void saveTiledDividerPositions() {
+        if (tiledView) {
+            prop.setEngineBookDivider(engineBookPane.getDividerPositions()[0]);
+            prop.setManualChartDivider(manualChartPane.getDividerPositions()[0]);
+        }
+    }
+
+    private SplitPane createTiledPane(BorderPane left, BorderPane right, double dividerPosition) {
+        SplitPane pane = new SplitPane(left, right);
+        pane.setMinSize(0, 0);
+        pane.setDividerPositions(dividerPosition);
+        pane.getStylesheets().add(getClass().getResource("/style/split-pane.css").toExternalForm());
+        AnchorPane.setTopAnchor(pane, 0d);
+        AnchorPane.setBottomAnchor(pane, 0d);
+        AnchorPane.setLeftAnchor(pane, 0d);
+        AnchorPane.setRightAnchor(pane, 0d);
+        return pane;
     }
 
     @FXML
@@ -258,6 +363,11 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
     void linkAnimationChecked(ActionEvent event) {
         CheckMenuItem item = (CheckMenuItem) event.getTarget();
         prop.setLinkAnimation(item.isSelected());
+    }
+
+    @FXML
+    void recognizeModeSelected(ActionEvent event) {
+        prop.setRecognizeMode(event.getSource() == menuOfMixedRecognize ? RecognizeMode.MIXED : RecognizeMode.YOLO);
     }
 
     @FXML
@@ -471,13 +581,15 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
 
     @Override
     public void refreshLineChart() {
-        List<XYChart.Data> oldList = lineChartSeries.getData();
-        List<XYChart.Data> newList = chessManualHandle.getScoreList();
+        List<XYChart.Data<Number, Number>> oldList = lineChartSeries.getData();
+        List<XYChart.Data<Number, Number>> newList = chessManualHandle.getScoreList();
         int i = 0;
         while (i < oldList.size() && i < newList.size()) {
-            XYChart.Data o = oldList.get(i);
-            XYChart.Data n = newList.get(i);
-            if (!o.getXValue().equals(n.getXValue()) || !o.getYValue().equals(n.getYValue())) {
+            XYChart.Data<Number, Number> o = oldList.get(i);
+            XYChart.Data<Number, Number> n = newList.get(i);
+            // 变着可能有相同的序号和分数，仍需重新绑定对应的棋谱记录。
+            if (!o.getXValue().equals(n.getXValue()) || !o.getYValue().equals(n.getYValue())
+                    || o.getExtraValue() != n.getExtraValue()) {
                 for (int j = oldList.size() - 1; j >= i; j--) {
                     oldList.remove(j);
                 }
@@ -490,7 +602,61 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
                 oldList.remove(j);
             }
         } else if (i < newList.size()) {
+            for (XYChart.Data<Number, Number> data : newList.subList(i, newList.size())) {
+                StackPane node = new StackPane();
+                node.setOpacity(0);
+                node.setMouseTransparent(true);
+                data.setNode(node);
+            }
             oldList.addAll(newList.subList(i, newList.size()));
+        }
+        if (hoveredScorePoint != null && !oldList.contains(hoveredScorePoint)) {
+            setHoveredScorePoint(null);
+        }
+    }
+
+    private XYChart.Data<Number, Number> findScorePoint(MouseEvent event) {
+        XYChart<Number, Number> chart = lineChartSeries.getChart();
+        Point2D xPosition = chart.getXAxis().sceneToLocal(event.getSceneX(), event.getSceneY());
+        Point2D yPosition = chart.getYAxis().sceneToLocal(event.getSceneX(), event.getSceneY());
+        if (xPosition.getX() < 0 || xPosition.getX() > chart.getXAxis().getWidth()
+                || yPosition.getY() < 0 || yPosition.getY() > chart.getYAxis().getHeight()) {
+            return null;
+        }
+        XYChart.Data<Number, Number> nearest = null;
+        double nearestDistance = Double.MAX_VALUE;
+        // 只按横坐标选点，使对应的整条竖直区域都能响应。
+        for (XYChart.Data<Number, Number> data : lineChartSeries.getData()) {
+            double distance = Math.abs(chart.getXAxis().getDisplayPosition(data.getXValue()) - xPosition.getX());
+            if (distance < nearestDistance) {
+                nearest = data;
+                nearestDistance = distance;
+            }
+        }
+        return nearest;
+    }
+
+    private void setHoveredScorePoint(XYChart.Data<Number, Number> data) {
+        if (data != null) {
+            ManualRecord record = (ManualRecord) data.getExtraValue();
+            scorePointTooltip.setText(record.getCnMove() + "\n分数: " + record.getScore());
+        }
+        if (hoveredScorePoint == data) {
+            return;
+        }
+        XYChart<Number, Number> chart = lineChartSeries.getChart();
+        if (hoveredScorePoint != null) {
+            hoveredScorePoint.getNode().setOpacity(0);
+        }
+        hoveredScorePoint = data;
+        if (data == null) {
+            chart.setCursor(Cursor.DEFAULT);
+            scorePointTooltipDelay.stop();
+            scorePointTooltipPosition = null;
+            scorePointTooltip.hide();
+        } else {
+            data.getNode().setOpacity(1);
+            chart.setCursor(Cursor.HAND);
         }
     }
 
@@ -617,6 +783,21 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
     }
 
     @FXML
+    private void engineSettingButtonClick(ActionEvent e) {
+        if (engine != null && engine.getEngineConfig() != null) {
+            EngineAddController.ec = engine.getEngineConfig();
+            App.openEngineAdd();
+            if (EngineAddController.ok) {
+                engine.resetEngineConfig();
+                board.showMultiPV(engine.getMultiPV() > 1);
+                if (redGo && robotRed.getValue() || !redGo && robotBlack.getValue() || robotAnalysis.getValue()) {
+                    engineGo();
+                }
+            }
+        }
+    }
+
+    @FXML
     private void linkButtonClick(ActionEvent e) {
         if (engine == null) {
             DialogUtils.showWarningDialog("提示", "引擎未加载");
@@ -633,7 +814,18 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
 
     private void initLineChart() {
         final NumberAxis xAxis = new NumberAxis();
-        final NumberAxis yAxis = new NumberAxis(-1000, 1000, 500);
+        final NumberAxis yAxis = new NumberAxis(-3, 3, 1);
+        yAxis.setTickLabelFormatter(new StringConverter<>() {
+            @Override
+            public String toString(Number value) {
+                return Long.toString(Math.round(ScoreScale.toScore(value.doubleValue())));
+            }
+
+            @Override
+            public Number fromString(String value) {
+                return ScoreScale.toAxisValue(Double.parseDouble(value));
+            }
+        });
         xAxis.setTickLabelsVisible(false);
         xAxis.setTickMarkVisible(false);
         xAxis.setMinorTickVisible(false);
@@ -641,20 +833,58 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
         yAxis.setMinorTickVisible(false);
 
         LineChart<Number,Number> lineChart = new LineChart<>(xAxis, yAxis);
+        lineChart.setMinWidth(0);
         lineChart.setMinHeight(100);
         lineChart.setLegendVisible(false);
-        lineChart.setCreateSymbols(false);
+        lineChart.setCreateSymbols(true);
+        lineChart.setAnimated(false);
         lineChart.setVerticalGridLinesVisible(false);
         lineChart.getStylesheets().add(this.getClass().getResource("/style/table.css").toString());
 
-        lineChartSeries = new XYChart.Series();
+        lineChartSeries = new XYChart.Series<>();
         lineChart.getData().add(lineChartSeries);
+        scorePointTooltip = new Tooltip();
+        scorePointTooltipDelay = new PauseTransition(Duration.millis(120));
+        scorePointTooltipDelay.setOnFinished(event -> {
+            if (hoveredScorePoint != null && scorePointTooltipPosition != null
+                    && lineChart.getScene() != null && lineChart.getScene().getWindow() != null
+                    && lineChart.getScene().getWindow().isShowing()) {
+                scorePointTooltip.show(lineChart, scorePointTooltipPosition.getX(), scorePointTooltipPosition.getY());
+            }
+        });
+        lineChart.setOnMouseMoved(event -> {
+            scorePointTooltipPosition = new Point2D(event.getScreenX() + 12, event.getScreenY() + 18);
+            setHoveredScorePoint(findScorePoint(event));
+            if (hoveredScorePoint != null) {
+                if (scorePointTooltip.isShowing()) {
+                    scorePointTooltip.setAnchorX(scorePointTooltipPosition.getX());
+                    scorePointTooltip.setAnchorY(scorePointTooltipPosition.getY());
+                } else if (scorePointTooltipDelay.getStatus() != Animation.Status.RUNNING) {
+                    scorePointTooltipDelay.playFromStart();
+                }
+            }
+        });
+        lineChart.setOnMouseExited(event -> setHoveredScorePoint(null));
+        lineChart.setOnMouseClicked(event -> {
+            if (event.getButton() == MouseButton.PRIMARY) {
+                XYChart.Data<Number, Number> data = findScorePoint(event);
+                setHoveredScorePoint(data);
+                if (data != null) {
+                    checkLinkMode();
+                    chessManualHandle.locateRecord((ManualRecord) data.getExtraValue());
+                    event.consume();
+                }
+            }
+        });
 
         charPane.setCenter(lineChart);
     }
     public void initialize() {
         // 读取配置
         prop = Properties.getInstance();
+        for (Toggle toggle : autoSaveChessManualFormat.getToggles()) {
+            toggle.setSelected(prop.getAutoSaveChessManualFormat().equals(toggle.getUserData()));
+        }
         // 思考细节listView
         listView.setCellFactory(new Callback() {
             @Override
@@ -710,6 +940,8 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
                 manualForwardButton, manualFrontButton, manualPlayButton, manualUpButton,
                 openManualButton, saveManualButton, manualScoreButton, competitionNameText, competitionCityText, competitionDateText,
                 competitionRedText, competitionBlackText, this);
+
+        applyViewMode();
 
         useOpenBook.setValue(prop.getBookSwitch());
         // 初始化棋局
@@ -819,6 +1051,9 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
         menuOfLinkBackMode.setSelected(prop.isLinkBackMode());
         // 连线动画确认
         menuOfLinkAnimation.setSelected(prop.isLinkAnimation());
+        // 连线识别模式
+        menuOfYoloRecognize.setSelected(prop.getRecognizeMode() == RecognizeMode.YOLO);
+        menuOfMixedRecognize.setSelected(prop.getRecognizeMode() == RecognizeMode.MIXED);
         // show number
         menuOfShowNumber.setSelected(prop.isShowNumber());
         // 显示状态栏
@@ -836,17 +1071,32 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
             menuOfSmallBoard.setSelected(true);
         }
         // 棋盘样式
-        if (prop.getBoardStyle() == ChessBoard.BoardStyle.DEFAULT) {
-            menuOfDefaultBoard.setSelected(true);
-        } else {
-            menuOfCustomBoard.setSelected(true);
-        }
+        initBoardStyleMenu();
         // 右键菜单
         initBoardContextMenu();
         // 状态栏
-        this.infoShowLabel.prefWidthProperty().bind(statusToolBar.widthProperty().subtract(120));
         this.timeShowLabel.setText(getTimeStrategyString());
         this.statusToolBar.setVisible(prop.isLinkShowInfo());
+    }
+
+    private void initBoardStyleMenu() {
+        menuOfDefaultBoard.setSelected(true);
+        File[] skinDirectories = new File(PathUtils.getJarPath(), "ui").listFiles(File::isDirectory);
+        if (skinDirectories == null) {
+            return;
+        }
+        Arrays.sort(skinDirectories, Comparator.comparing(File::getName));
+        for (File skinDirectory : skinDirectories) {
+            RadioMenuItem item = new RadioMenuItem(skinDirectory.getName());
+            item.setMnemonicParsing(false);
+            item.setToggleGroup(menuOfDefaultBoard.getToggleGroup());
+            item.setOnAction(this::boardStyleSelected);
+            menuOfBoardStyle.getItems().add(item);
+            if (prop.getBoardStyle() == ChessBoard.BoardStyle.CUSTOM
+                    && skinDirectory.getName().equals(prop.getCustomSkin())) {
+                item.setSelected(true);
+            }
+        }
     }
 
     private void initBoardContextMenu() {
@@ -860,6 +1110,8 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
                 switchPlayer(true);
             } else if ("编辑局面".equals(item.getText())) {
                 editChessBoardClick(null);
+            } else if ("推演局面".equals(item.getText())) {
+                dryRunButtonClick(null);
             } else if ("复制局面图片".equals(item.getText())) {
                 copyImageMenuClick(null);
             } else if ("粘贴局面图片".equals(item.getText())) {
@@ -872,6 +1124,11 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
         });
     }
 
+//    @FXML
+    public void dryRunButtonClick(ActionEvent event) {
+        AnalysisBoardController.open(App.getMainStage(), board.getBoard(), redGo, isReverse.getValue());
+    }
+
     @FXML
     public void copyImageMenuClick(ActionEvent event) {
         WritableImage writableImage = new WritableImage((int) canvas.getWidth(), (int) canvas.getHeight());
@@ -882,10 +1139,12 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
 
     @FXML
     public void pasteImageMenuClick(ActionEvent event) {
-        Image img = ClipboardUtils.getImage();
-        if (img != null) {
-            importFromBufferImage((BufferedImage) img);
+        BufferedImage image = ClipboardUtils.getImage();
+        if (image == null) {
+            DialogUtils.showWarningDialog("提示", "无法读取剪贴板中的图片，请重新复制，或使用“图片导入局面”选择图片文件。");
+            return;
         }
+        importFromBufferImage(image);
     }
 
     @FXML
@@ -920,6 +1179,9 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
      * @param fenCode 传null 新建默认初始局面；传fenCode 则根据fen创建局面
      */
     private void newChessBoard(String fenCode, boolean fromManual) {
+        if (!fromManual) {
+            chessManualHandle.autoSaveIfNeeded();
+        }
         // 重置按钮
         robotRed.setValue(false);
         redButton.setDisable(false);
@@ -931,7 +1193,7 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
         // 引擎停止计算
         engineStop();
         // 绘制棋盘
-        board = new ChessBoard(this.canvas, prop.getBoardSize(), prop.getBoardStyle(), prop.isStepTip(), prop.isManualTip(),
+        board = new ChessBoard(this.canvas, prop.getBoardSize(), prop.getBoardStyle(), prop.getCustomSkin(), prop.isStepTip(), prop.isManualTip(),
                 engine != null && engine.getMultiPV() > 1, prop.isStepSound(), prop.isShowNumber(), fenCode);
         // 设置局面
         redGo = StringUtils.isEmpty(fenCode) ? true : fenCode.contains("w");
@@ -1133,6 +1395,11 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
         }
     }
 
+    @Override
+    public void stopThinking() {
+        this.isThinking = false;
+    }
+
     /**
      * 连线模式下自动点击走棋
      * @param step
@@ -1262,6 +1529,7 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
         prop.setStageHeight(borderPane.getHeight());
         prop.setSplitPos(splitPane.getDividerPositions()[0]);
         prop.setSplitPos2(splitPane2.getDividerPositions()[0]);
+        saveTiledDividerPositions();
 
         prop.save();
 
@@ -1348,6 +1616,8 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
     @FXML
     private CheckMenuItem menuOfShowTactic;
     @FXML
+    private ToggleGroup autoSaveChessManualFormat;
+    @FXML
     private TreeView notationTree;
     @FXML
     private Label manualTitleLabel;
@@ -1387,6 +1657,21 @@ public class Controller implements EngineCallBack, LinkerCallBack, ChessManualCa
     private TextField competitionRedText;
     @FXML
     private TextField competitionBlackText;
+
+    @FXML
+    void autoSaveChessManualSelected(ActionEvent event) {
+        RadioMenuItem item = (RadioMenuItem) event.getSource();
+        item.setSelected(true);
+        prop.setAutoSaveChessManualFormat((String) item.getUserData());
+        prop.save();
+    }
+
+    @FXML
+    void chessManualSettingsClick() {
+        if (ChessManualSettings.showAndWait(App.getMainStage())) {
+            chessManualHandle.applyCommentFontSize();
+        }
+    }
 
     @FXML
     void menuOfShowTacticClick(ActionEvent event) {

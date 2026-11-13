@@ -1,5 +1,6 @@
 package com.sojourners.chess.linker;
 
+import com.sojourners.chess.jna.X11WindowControl;
 import com.sojourners.chess.util.ShellUtils;
 import com.sojourners.chess.util.StringUtils;
 import com.sojourners.chess.config.Properties;

@@ -1,8 +1,6 @@
-.list-cell:even {
-    -fx-background-color: white;
-}
+.list-cell:even,
 .list-cell:odd {
-    -fx-background-color: white;
+    -fx-background-color: -tchess-list-background;
 }
 .list-cell:selected {
     -fx-background-color: #87CEEB;
@@ -10,7 +8,7 @@
 
 .notation-tree .virtual-flow,
 .notation-tree .virtual-flow .clipped-container {
-    -fx-background-color: white;
+    -fx-background-color: -tchess-list-background;
 }
 
 .notation-tree .tree-cell:even {

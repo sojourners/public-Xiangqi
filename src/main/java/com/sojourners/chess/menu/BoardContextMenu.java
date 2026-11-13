@@ -11,8 +11,9 @@ public class BoardContextMenu extends ContextMenu {
 
     /** * 私有构造函数 */
     private BoardContextMenu() {
+        MenuItem analysisMenuItem = new MenuItem("推演局面");
         MenuItem editMenuItem = new MenuItem("编辑局面");
-        getItems().add(editMenuItem);
+        getItems().addAll(analysisMenuItem, editMenuItem);
         getItems().add(new SeparatorMenuItem());
 
         MenuItem copyFenMenuItem = new MenuItem("复制局面FEN");

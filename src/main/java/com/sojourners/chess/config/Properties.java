@@ -4,7 +4,9 @@ import com.sojourners.chess.board.ChessBoard;
 import com.sojourners.chess.enginee.Engine;
 import com.sojourners.chess.model.EngineConfig;
 import com.sojourners.chess.openbook.MoveRule;
+import com.sojourners.chess.recognition.RecognizeMode;
 import com.sojourners.chess.util.PathUtils;
+import javafx.scene.text.Font;
 
 
 import java.io.*;
@@ -20,6 +22,10 @@ public class Properties implements Serializable {
     public static final String DEFAULT_BRANCH_STEP_COLOR = "#FF2F00";
     public static final String DEFAULT_STEP_NUMBER_COLOR = "#FFFFFF";
     public static final double DEFAULT_STEP_OPACITY = 0.5d;
+    public static final double DEFAULT_PIECE_SHADOW_ANGLE = 45d;
+    public static final double DEFAULT_PIECE_SHADOW_LENGTH = 10d;
+    public static final double DEFAULT_PIECE_SHADOW_SIZE = 95d;
+    public static final String DEFAULT_CLOUD_BOOK_URL = "http://www.chessdb.cn/chessdb.php";
 
     private static Properties prop;
 
@@ -52,6 +58,8 @@ public class Properties implements Serializable {
 
     private double splitPos;
     private double splitPos2;
+    private Double engineBookDivider;
+    private Double manualChartDivider;
 
     private long linkScanTime;
     private int linkThreadNum;
@@ -64,6 +72,8 @@ public class Properties implements Serializable {
     private Boolean localBookFirst;
 
     private Boolean useCloudBook;
+
+    private String cloudBookUrl;
 
     private Boolean onlyCloudFinalPhase;
 
@@ -90,6 +100,13 @@ public class Properties implements Serializable {
 
     private String chessManualPath;
 
+    private String autoSaveChessManualFormat;
+
+    private String chessManualAutoSaveDirectory;
+    private int chessManualPlaybackMillis;
+    private int chessManualScoreMillis;
+    private double chessManualCommentFontSize;
+
     private boolean manualTip = true;
 
     /*
@@ -110,9 +127,30 @@ public class Properties implements Serializable {
 
     private ColorTheme colorTheme;
 
+    private boolean pieceShadowEnabled = true;
+    // 包装类型保留旧配置的默认值，同时允许用户明确设置为 0。
+    private Double pieceShadowAngle;
+    private Double pieceShadowLength;
+    private Double pieceShadowSize;
+
+    private ViewMode viewMode;
+
+    private RecognizeMode recognizeMode = RecognizeMode.YOLO;
+
+    private long animationConfirmDelay = 50L;
+
+    private String customSkin = "红黑";
+
+    public enum ViewMode {
+        DEFAULT,
+        TILED
+    }
+
     public enum ColorTheme {
         LIGHT,
-        DARK
+        DARK,
+        EYE_GREEN,
+        WARM_YELLOW
     }
 
     private Properties(ChessBoard.BoardSize boardSize, boolean stepTip,
@@ -174,7 +212,7 @@ public class Properties implements Serializable {
                             1, 16, "",
                             Engine.AnalysisModel.FIXED_TIME, 5000, true,
                             920, 737, 0.64, 0.6,
-                            100, 2, true, true, false,
+                            100, 2, true, true, true,
                             true, true, false, 2000, 9999,
                             MoveRule.BEST_SCORE, true, new ArrayList<>());
                 } catch (Exception e) {
@@ -202,6 +240,14 @@ public class Properties implements Serializable {
                 e.printStackTrace();
             }
         }
+    }
+
+    public String getCustomSkin() {
+        return customSkin;
+    }
+
+    public void setCustomSkin(String customSkin) {
+        this.customSkin = customSkin;
     }
 
     public ChessBoard.BoardStyle getBoardStyle() {
@@ -282,6 +328,14 @@ public class Properties implements Serializable {
 
     public void setUseCloudBook(Boolean useCloudBook) {
         this.useCloudBook = useCloudBook;
+    }
+
+    public String getCloudBookUrl() {
+        return cloudBookUrl == null || cloudBookUrl.isBlank() ? DEFAULT_CLOUD_BOOK_URL : cloudBookUrl;
+    }
+
+    public void setCloudBookUrl(String cloudBookUrl) {
+        this.cloudBookUrl = cloudBookUrl == null ? null : cloudBookUrl.trim();
     }
 
     public Boolean getOnlyCloudFinalPhase() {
@@ -370,6 +424,22 @@ public class Properties implements Serializable {
 
     public void setSplitPos2(double splitPos2) {
         this.splitPos2 = splitPos2;
+    }
+
+    public double getEngineBookDivider() {
+        return engineBookDivider == null ? 0.5 : engineBookDivider;
+    }
+
+    public void setEngineBookDivider(double engineBookDivider) {
+        this.engineBookDivider = engineBookDivider;
+    }
+
+    public double getManualChartDivider() {
+        return manualChartDivider == null ? 0.5 : manualChartDivider;
+    }
+
+    public void setManualChartDivider(double manualChartDivider) {
+        this.manualChartDivider = manualChartDivider;
     }
 
     public double getStageWidth() {
@@ -500,6 +570,52 @@ public class Properties implements Serializable {
         this.chessManualPath = chessManualPath;
     }
 
+    public String getAutoSaveChessManualFormat() {
+        return switch (autoSaveChessManualFormat == null ? "" : autoSaveChessManualFormat) {
+            case "txq", "pgn", "xqf", "cbr" -> autoSaveChessManualFormat;
+            default -> "";
+        };
+    }
+
+    public void setAutoSaveChessManualFormat(String autoSaveChessManualFormat) {
+        this.autoSaveChessManualFormat = autoSaveChessManualFormat;
+    }
+
+    public String getChessManualAutoSaveDirectory() {
+        return chessManualAutoSaveDirectory == null || chessManualAutoSaveDirectory.isBlank()
+                ? new File(System.getProperty("user.home"), "TCHESS自动保存棋谱").getPath()
+                : chessManualAutoSaveDirectory;
+    }
+
+    public void setChessManualAutoSaveDirectory(String chessManualAutoSaveDirectory) {
+        this.chessManualAutoSaveDirectory = chessManualAutoSaveDirectory;
+    }
+
+    public int getChessManualPlaybackMillis() {
+        return chessManualPlaybackMillis > 0 ? chessManualPlaybackMillis : 1000;
+    }
+
+    public void setChessManualPlaybackMillis(int chessManualPlaybackMillis) {
+        this.chessManualPlaybackMillis = chessManualPlaybackMillis;
+    }
+
+    public int getChessManualScoreMillis() {
+        return chessManualScoreMillis > 0 ? chessManualScoreMillis : 500;
+    }
+
+    public void setChessManualScoreMillis(int chessManualScoreMillis) {
+        this.chessManualScoreMillis = chessManualScoreMillis;
+    }
+
+    public double getChessManualCommentFontSize() {
+        return Double.isFinite(chessManualCommentFontSize) && chessManualCommentFontSize > 0
+                ? chessManualCommentFontSize : Font.getDefault().getSize();
+    }
+
+    public void setChessManualCommentFontSize(double chessManualCommentFontSize) {
+        this.chessManualCommentFontSize = chessManualCommentFontSize;
+    }
+
     public boolean isManualTip() {
         return manualTip;
     }
@@ -588,6 +704,78 @@ public class Properties implements Serializable {
         this.colorTheme = colorTheme;
     }
 
+    public boolean isPieceShadowEnabled() {
+        return pieceShadowEnabled;
+    }
+
+    public void setPieceShadowEnabled(boolean pieceShadowEnabled) {
+        this.pieceShadowEnabled = pieceShadowEnabled;
+    }
+
+    /** 阴影方向：0° 向右，顺时针增加。 */
+    public double getPieceShadowAngle() {
+        return normalizeShadowAngle(pieceShadowAngle == null ? DEFAULT_PIECE_SHADOW_ANGLE : pieceShadowAngle);
+    }
+
+    public void setPieceShadowAngle(double pieceShadowAngle) {
+        this.pieceShadowAngle = normalizeShadowAngle(pieceShadowAngle);
+    }
+
+    /** 阴影长度占棋子直径的百分比，随棋盘缩放。 */
+    public double getPieceShadowLength() {
+        return normalizeShadowLength(pieceShadowLength == null ? DEFAULT_PIECE_SHADOW_LENGTH : pieceShadowLength);
+    }
+
+    public void setPieceShadowLength(double pieceShadowLength) {
+        this.pieceShadowLength = normalizeShadowLength(pieceShadowLength);
+    }
+
+    /** 阴影圆直径占棋子直径的百分比，随棋盘缩放。 */
+    public double getPieceShadowSize() {
+        return normalizeShadowSize(pieceShadowSize == null ? DEFAULT_PIECE_SHADOW_SIZE : pieceShadowSize);
+    }
+
+    public void setPieceShadowSize(double pieceShadowSize) {
+        this.pieceShadowSize = normalizeShadowSize(pieceShadowSize);
+    }
+
+    private double normalizeShadowAngle(double angle) {
+        if (!Double.isFinite(angle)) {
+            return DEFAULT_PIECE_SHADOW_ANGLE;
+        }
+        return (angle % 360d + 360d) % 360d;
+    }
+
+    private double normalizeShadowLength(double length) {
+        if (!Double.isFinite(length)) {
+            return DEFAULT_PIECE_SHADOW_LENGTH;
+        }
+        return Math.max(0d, Math.min(50d, length));
+    }
+
+    private double normalizeShadowSize(double size) {
+        if (!Double.isFinite(size)) {
+            return DEFAULT_PIECE_SHADOW_SIZE;
+        }
+        return Math.max(0d, Math.min(100d, size));
+    }
+
+    public ViewMode getViewMode() {
+        return viewMode == null ? ViewMode.DEFAULT : viewMode;
+    }
+
+    public void setViewMode(ViewMode viewMode) {
+        this.viewMode = viewMode;
+    }
+
+    public RecognizeMode getRecognizeMode() {
+        return recognizeMode == null ? RecognizeMode.YOLO : recognizeMode;
+    }
+
+    public void setRecognizeMode(RecognizeMode recognizeMode) {
+        this.recognizeMode = recognizeMode;
+    }
+
     private String colorOrDefault(String color, String defaultColor) {
         return color == null || color.isBlank() ? defaultColor : color;
     }
@@ -601,5 +789,13 @@ public class Properties implements Serializable {
             return DEFAULT_STEP_OPACITY;
         }
         return Math.max(0d, Math.min(1d, opacity));
+    }
+
+    public long getAnimationConfirmDelay() {
+        return animationConfirmDelay;
+    }
+
+    public void setAnimationConfirmDelay(long animationConfirmDelay) {
+        this.animationConfirmDelay = animationConfirmDelay;
     }
 }

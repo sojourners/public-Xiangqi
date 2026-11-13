@@ -3,16 +3,25 @@ package com.sojourners.chess.manual;
 import com.sojourners.chess.model.ManualRecord;
 import com.sojourners.chess.util.StringUtils;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
+/** 象棋桥CBR棋谱读写 */
 public class CbrChessManualImpl implements ChessManualService {
 
     private static final String DEFAULT_FEN = "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w - - 0 1";
+
+    private static final int POSITION_OFFSET = 2112;
+    private static final int NODE_OFFSET = POSITION_OFFSET + 102;
 
     // CBR 文件头部标识: "CCBridge Record"
     private static final byte[] CBR_HEADER = {0x43, 0x43, 0x42, 0x72, 0x69, 0x64, 0x67, 0x65, 0x20, 0x52, 0x65, 0x63, 0x6F, 0x72, 0x64};
@@ -161,7 +170,7 @@ public class CbrChessManualImpl implements ChessManualService {
             char c = (char) ((high << 8) | low);
             sb.append(c);
         }
-        return sb.toString().trim();
+        return sb.toString();
     }
 
     private ManualRecord parseNodeTree(byte[] buffer, int ver) {
@@ -184,7 +193,6 @@ public class CbrChessManualImpl implements ChessManualService {
 
         // 解析着法数据
         int pos = offset + 102;
-        int moveId = 0;
 
         // 使用栈来处理变着 (对应JS中的changeNode数组)
         Stack<ManualRecord> changeNodeStack = new Stack<>();
@@ -223,7 +231,10 @@ public class CbrChessManualImpl implements ChessManualService {
             if (src == dst) {
                 head.setRemark(comment);
                 hasRootComment = true;
-                pos += hasNext ? nextOffset : Integer.MAX_VALUE;
+                if (!hasNext) {
+                    break;
+                }
+                pos += nextOffset;
                 continue;
             }
 
@@ -243,8 +254,7 @@ public class CbrChessManualImpl implements ChessManualService {
             }
 
             // 创建新节点
-            moveId++;
-            ManualRecord step = new ManualRecord(moveId, move, "");
+            ManualRecord step = new ManualRecord(parent.getId() + 1, move, "");
             step.setRemark(comment);
             step.setNext(0);
 
@@ -355,6 +365,124 @@ public class CbrChessManualImpl implements ChessManualService {
 
     @Override
     public void saveChessManual(ChessManual chessManual, File file) {
-        // 暂不实现
+        // 完整编码后再打开文件，避免无效局面或着法截断已有棋谱。
+        byte[] buffer = createCbrFile(chessManual);
+        try {
+            Files.write(file.toPath(), buffer);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to save CBR file: " + file, e);
+        }
+    }
+
+    private byte[] createCbrFile(ChessManual cm) {
+        byte[] header = new byte[NODE_OFFSET];
+        System.arraycopy(CBR_HEADER, 0, header, 0, CBR_HEADER.length);
+        header[19] = 2;
+        Arrays.fill(header, 2210, NODE_OFFSET, (byte) 0xFF);
+
+        writeString(header, 180, cm.getName(), 128);
+        writeString(header, 884, cm.getDate(), 64);
+        writeString(header, 948, cm.getCity(), 64);
+        writeString(header, 1076, cm.getRed(), 64);
+        writeString(header, 1300, cm.getBlack(), 64);
+
+        String fen = cm.getFenCode();
+        if (fen == null || fen.isBlank()) {
+            fen = DEFAULT_FEN;
+        }
+        String[] fields = fen.trim().split("\\s+");
+        fillInitialPosition(header, fields[0]);
+        header[POSITION_OFFSET] = (byte) (fields.length > 1 && "b".equals(fields[1]) ? 2 : 1);
+        int fullMove = fields.length > 5 ? Integer.parseInt(fields[5]) : 1;
+        if (fullMove < 0 || fullMove > 0xFFFF) {
+            throw new IllegalArgumentException("CBR full move number must be between 0 and 65535");
+        }
+        header[POSITION_OFFSET + 4] = (byte) fullMove;
+        header[POSITION_OFFSET + 5] = (byte) (fullMove >>> 8);
+
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        output.writeBytes(header);
+        ManualRecord head = cm.getHead();
+        if (head == null) {
+            head = new ManualRecord(0, "开始局面", 0);
+        }
+        writeNode(output, head, true, false);
+        return output.toByteArray();
+    }
+
+    /** 固定字段使用UTF-16LE，可填满字段，但不截断代理对或覆盖相邻字段。 */
+    private void writeString(byte[] buffer, int offset, String text, int fieldSize) {
+        if (text == null || text.isEmpty()) {
+            return;
+        }
+        int length = Math.min(text.length(), fieldSize / 2);
+        if (length < text.length() && length > 0
+                && Character.isHighSurrogate(text.charAt(length - 1))
+                && Character.isLowSurrogate(text.charAt(length))) {
+            length--;
+        }
+        byte[] bytes = text.substring(0, length).getBytes(StandardCharsets.UTF_16LE);
+        System.arraycopy(bytes, 0, buffer, offset, bytes.length);
+    }
+
+    /** 按FEN原始方向展开，CBR使用从a9到i0的90格棋盘，空格编码为0。 */
+    private void fillInitialPosition(byte[] header, String placement) {
+        String[] rows = placement.split("/", -1);
+        if (rows.length != 10) {
+            throw new IllegalArgumentException("Invalid CBR starting position: " + placement);
+        }
+        for (int row = 0; row < rows.length; row++) {
+            int col = 0;
+            for (char piece : rows[row].toCharArray()) {
+                if (piece >= '1' && piece <= '9') {
+                    col += piece - '0';
+                } else {
+                    Integer code = F2N.get(piece);
+                    if (code == null || code <= 1 || col >= 9) {
+                        throw new IllegalArgumentException("Invalid CBR starting position: " + placement);
+                    }
+                    header[POSITION_OFFSET + 8 + row * 9 + col] = code.byteValue();
+                    col++;
+                }
+            }
+            if (col != 9) {
+                throw new IllegalArgumentException("Invalid CBR starting position: " + placement);
+            }
+        }
+    }
+
+    /** 深度优先保存全部变着；位0表示无后续，位1表示有同级变着，位2表示有注释。 */
+    private void writeNode(ByteArrayOutputStream output, ManualRecord record, boolean root, boolean hasSibling) {
+        int from = 0;
+        int to = 0;
+        if (!root) {
+            String move = record.getMove();
+            if (move == null || !move.matches("[a-i][0-9][a-i][0-9]")) {
+                throw new IllegalArgumentException("Invalid ICCS move: " + move);
+            }
+            from = I2B.get(move.substring(0, 2));
+            to = I2B.get(move.substring(2, 4));
+            if (from == to) {
+                throw new IllegalArgumentException("CBR move must have different source and destination: " + move);
+            }
+        }
+        List<ManualRecord> children = record.getList();
+        String remark = record.getRemark();
+        byte[] comment = remark == null ? new byte[0] : remark.getBytes(StandardCharsets.UTF_16LE);
+        int flags = (children.isEmpty() ? 1 : 0) | (hasSibling ? 2 : 0)
+                | (comment.length > 0 ? 4 : 0);
+        output.write(flags);
+        output.write(0);
+        output.write(from);
+        output.write(to);
+        if (comment.length > 0) {
+            for (int i = 0; i < 4; i++) {
+                output.write(comment.length >>> (i * 8));
+            }
+            output.writeBytes(comment);
+        }
+        for (int i = 0; i < children.size(); i++) {
+            writeNode(output, children.get(i), false, i < children.size() - 1);
+        }
     }
 }
