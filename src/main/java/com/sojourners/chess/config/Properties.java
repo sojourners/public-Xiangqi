@@ -135,7 +135,7 @@ public class Properties implements Serializable {
 
     private ViewMode viewMode;
 
-    private RecognizeMode recognizeMode = RecognizeMode.YOLO;
+    private RecognizeMode recognizeMode = RecognizeMode.MIXED;
 
     private long animationConfirmDelay = 50L;
 
