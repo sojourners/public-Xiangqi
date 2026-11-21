@@ -634,8 +634,11 @@ public class ChessManualHandle {
 
     public void openChessManualFile(ActionEvent actionEvent) {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setInitialDirectory(new File(
-                StringUtils.isNotEmpty(prop.getChessManualPath()) ? prop.getChessManualPath() : PathUtils.getJarPath()));
+        File initialDirectory = new File(
+                StringUtils.isNotEmpty(prop.getChessManualPath()) ? prop.getChessManualPath() : PathUtils.getJarPath());
+        if (initialDirectory.isDirectory()) {
+            fileChooser.setInitialDirectory(initialDirectory);
+        }
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("全部(*.*)", "*.txq", "*.pgn", "*.xqf", "*.cbr"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("txq(*.txq)", "*.txq"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("pgn(*.pgn)", "*.pgn"));
@@ -685,8 +688,11 @@ public class ChessManualHandle {
 
     public void saveAsChessManualFile(ActionEvent event) {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setInitialDirectory(new File(
-                StringUtils.isNotEmpty(prop.getChessManualPath()) ? prop.getChessManualPath() : PathUtils.getJarPath()));
+        File initialDirectory = new File(
+                StringUtils.isNotEmpty(prop.getChessManualPath()) ? prop.getChessManualPath() : PathUtils.getJarPath());
+        if (initialDirectory.isDirectory()) {
+            fileChooser.setInitialDirectory(initialDirectory);
+        }
         fileChooser.setInitialFileName("未命名");
         FileChooser.ExtensionFilter txq = new FileChooser.ExtensionFilter("txq(*.txq)", "*.txq");
         FileChooser.ExtensionFilter pgn = new FileChooser.ExtensionFilter("pgn(*.pgn)", "*.pgn");
