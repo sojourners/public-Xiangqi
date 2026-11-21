@@ -746,6 +746,8 @@ public class XiangqiUtils {
             return null;
         }
         char a = move.charAt(0), b = move.charAt(1), c = move.charAt(2), d = move.charAt(3);
+        if (b >= '1' && b <= '9') b = (char) (b - '1' + '１');
+        if (d >= '1' && d <= '9') d = (char) (d - '1' + '１');
         char piece;
         int fromI = 0, fromJ = 0, toI = 0, toJ = 0;
         boolean isRed = map.containsValue(String.valueOf(d));
