@@ -214,6 +214,9 @@ public class PgnChessManualImpl implements ChessManualService {
             }
             // unknown token, skip
         }
+        if (StringUtils.isEmpty(cm.getFenCode())) {
+            cm.setFenCode("rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w - - 0 1");
+        }
         if (cm.getFenCode().contains(" r ")) {
             cm.setFenCode(cm.getFenCode().replace(" r ", " w "));
         }
