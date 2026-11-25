@@ -235,10 +235,20 @@ public class PgnChessManualImpl implements ChessManualService {
             if (StringUtils.isNotEmpty(cnMove) && mr.getId() > 0) {
                 StringBuilder sb = new StringBuilder();
                 ChessBoard.Step step = XiangqiUtils.translateCnMove(board, sb, cnMove);
+                // 无法解析的着法不会产生 step，保留原文并继续，避免整体导入失败
+                if (step == null) {
+                    mr = mr.getList().isEmpty() ? null : mr.getList().get(mr.getNext());
+                    continue;
+                }
                 mr.setMove(sb.toString());
 
                 int fromI = step.getStart().getY(), toI = step.getEnd().getY();
                 int fromJ = step.getStart().getX(), toJ = step.getEnd().getX();
+                // 畸形着法可能算出越界坐标，越界时跳过落子，防止数组越界崩溃
+                if (fromI < 0 || fromI > 9 || fromJ < 0 || fromJ > 8 || toI < 0 || toI > 9 || toJ < 0 || toJ > 8) {
+                    mr = mr.getList().isEmpty() ? null : mr.getList().get(mr.getNext());
+                    continue;
+                }
                 board[toI][toJ] = board[fromI][fromJ];
                 board[fromI][fromJ] = ' ';
             }
