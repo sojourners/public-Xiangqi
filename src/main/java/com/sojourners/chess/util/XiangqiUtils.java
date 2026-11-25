@@ -751,6 +751,8 @@ public class XiangqiUtils {
         char piece;
         int fromI = 0, fromJ = 0, toI = 0, toJ = 0;
         boolean isRed = map.containsValue(String.valueOf(d));
+        // 普通棋子记法（如“象７退５”）在同一路有多个同类棋子时的候选起点
+        List<Integer> candidates = null;
         if (a == '前' || a == '中' || a == '后') {
             piece = cnMap.get(b);
             piece = isRed ? Character.toUpperCase(piece) : Character.toLowerCase(piece);
@@ -817,14 +819,52 @@ public class XiangqiUtils {
             piece = cnMap.get(a);
             piece = isRed ? Character.toUpperCase(piece) : Character.toLowerCase(piece);
             fromJ = isRed ? 8 - (cnMap.get(b) - '１') : b - '１';
+            // 同一路可能有多个同类棋子，收集所有候选起点，稍后按可走性选出正确的一个
+            candidates = new ArrayList<>();
             for (int i = 0; i < 10; i++) {
                 if (board[i][fromJ] == piece) {
-                    fromI = i;
-                    break;
+                    candidates.add(i);
                 }
+            }
+            if (!candidates.isEmpty()) {
+                fromI = candidates.get(0);
             }
         }
         int dist = (isRed ? cnMap.get(d) - '１' : d - '１') + 1;
+        if (candidates == null || candidates.size() <= 1) {
+            int[] target = computeTarget(fromI, fromJ, piece, c, dist, isRed);
+            toI = target[0];
+            toJ = target[1];
+        } else {
+            // 同一路有多个同类棋子：逐个试算终点，选出真正可走的那个起点。
+            // 例如“象７退５”时 7 路可能有两枚象，底线的象再“退”会越界。
+            boolean resolved = false;
+            for (int cand : candidates) {
+                int[] target = computeTarget(cand, fromJ, piece, c, dist, isRed);
+                int tI = target[0], tJ = target[1];
+                if (tI < 0 || tI > 9 || tJ < 0 || tJ > 8) {
+                    continue;
+                }
+                if (canGo(board, cand, fromJ, tI, tJ)) {
+                    fromI = cand;
+                    toI = tI;
+                    toJ = tJ;
+                    resolved = true;
+                    break;
+                }
+            }
+            if (!resolved) {
+                int[] target = computeTarget(fromI, fromJ, piece, c, dist, isRed);
+                toI = target[0];
+                toJ = target[1];
+            }
+        }
+        sb.append(ChessBoard.stepForEngine(fromJ, fromI, toJ, toI));
+        return new ChessBoard.Step(new ChessBoard.Point(fromJ, fromI), new ChessBoard.Point(toJ, toI));
+    }
+
+    private static int[] computeTarget(int fromI, int fromJ, char piece, char c, int dist, boolean isRed) {
+        int toI = fromI, toJ = fromJ;
         if (c == '进' || c == '退') {
             if (piece == 'r' || piece == 'c' || piece == 'p' || piece == 'k' || piece == 'R' || piece == 'C' || piece == 'P' || piece == 'K') {
                 toJ = fromJ;
@@ -848,8 +888,7 @@ public class XiangqiUtils {
             toI = fromI;
             toJ = isRed ? 8 - dist + 1 : dist - 1;
         }
-        sb.append(ChessBoard.stepForEngine(fromJ, fromI, toJ, toI));
-        return new ChessBoard.Step(new ChessBoard.Point(fromJ, fromI), new ChessBoard.Point(toJ, toI));
+        return new int[]{toI, toJ};
     }
 
     public static ChessBoard.Step translate(char[][] board, StringBuilder sb, String move, boolean hasGo) {
